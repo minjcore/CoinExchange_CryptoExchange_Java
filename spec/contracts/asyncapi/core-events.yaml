@@ -1,0 +1,235 @@
+asyncapi: 2.6.0
+info:
+  title: GtelPay Core Kafka Events
+  version: 1.0.0
+  description: |
+    Kafka carries **domain events (facts)** only — never commands. Commands that cause an
+    effect live on RabbitMQ (core-commands.yaml). Clean split by the two domains:
+      - accounting emits `JournalPosted` (a journal became POSTED)
+      - wallet emits `WalletCredited` (a wallet_tx was written)
+      - bank ingress: `BankDepositReceived`; failures: `CommandFailed`
+    Wallet credit is a **command** (RabbitMQ WALLET_CREDIT) or is triggered by consuming
+    `JournalPosted`; it is intentionally NOT a Kafka topic here.
+    Consumers: Orchestration (Application). Index: integration-surfaces.md §5.
+
+defaultContentType: application/json
+
+servers:
+  production:
+    url: kafka.prod.gtelpay.example:9092
+    protocol: kafka
+    description: Production cluster
+  local:
+    url: localhost:9092
+    protocol: kafka
+
+channels:
+  core.bank.deposit-received:
+    description: Bank webhook parsed; trigger deposit journal flow
+    bindings:
+      kafka:
+        topic: core.bank.deposit-received
+        partitions: 12
+    publish:
+      operationId: publishBankDepositReceived
+      message:
+        $ref: '#/components/messages/BankDepositReceived'
+    subscribe:
+      operationId: onBankDepositReceived
+      message:
+        $ref: '#/components/messages/BankDepositReceived'
+
+  core.accounting.journal-posted:
+    description: coa_trans POSTED; wallet credit for DEPOSIT use case
+    bindings:
+      kafka:
+        topic: core.accounting.journal-posted
+        partitions: 12
+    publish:
+      operationId: publishJournalPosted
+      message:
+        $ref: '#/components/messages/JournalPosted'
+    subscribe:
+      operationId: onJournalPosted
+      message:
+        $ref: '#/components/messages/JournalPosted'
+
+  core.wallet.credited:
+    description: wallet_tx written after credit
+    bindings:
+      kafka:
+        topic: core.wallet.credited
+    publish:
+      message:
+        $ref: '#/components/messages/WalletCredited'
+    subscribe:
+      message:
+        $ref: '#/components/messages/WalletCredited'
+
+  core.operations.command-failed:
+    description: Async failure fan-out (separate from success/command topics)
+    bindings:
+      kafka:
+        topic: core.operations.command-failed
+        partitions: 12
+    publish:
+      operationId: publishCommandFailed
+      message:
+        $ref: '#/components/messages/CommandFailed'
+    subscribe:
+      operationId: onCommandFailed
+      message:
+        $ref: '#/components/messages/CommandFailed'
+
+components:
+  messages:
+    BankDepositReceived:
+      name: BankDepositReceived
+      payload:
+        $ref: '#/components/schemas/BankDepositReceived'
+      headers:
+        type: object
+        properties:
+          messageKey:
+            type: string
+            description: Kafka key = businessRef
+
+    JournalPosted:
+      name: JournalPosted
+      payload:
+        $ref: '#/components/schemas/JournalPosted'
+
+    WalletCredited:
+      name: WalletCredited
+      payload:
+        $ref: '#/components/schemas/WalletCredited'
+
+    CommandFailed:
+      name: CommandFailed
+      payload:
+        $ref: '#/components/schemas/CommandFailedEvent'
+
+  schemas:
+    ErrorCode:
+      type: string
+      description: Aligns with core.foundation Part I §4.3 and OpenAPI ApiResponseError.data.errorCode
+      enum:
+        - COMMON_INVALID_REQUEST
+        - COMMON_NOT_FOUND
+        - COMMON_CONFLICT
+        - COMMON_RETRY_EXHAUSTED
+        - WALLET_INSUFFICIENT_BALANCE
+        - WALLET_NOT_FOUND
+        - WALLET_LOCKED
+        - WALLET_DUPLICATE_CONFLICT
+        - WALLET_POCKET_DEF_INVALID
+        - WALLET_POCKET_EXISTS
+        - WALLET_POCKET_NOT_EMPTY
+        - WALLET_INVALID_TRANSFER
+        - ACCOUNTING_UNBALANCED_JOURNAL
+        - ACCOUNTING_JOURNAL_NOT_FOUND
+        - ACCOUNTING_DUPLICATE_JOURNAL
+        - PAYOUT_BANK_REJECTED
+        - PAYOUT_TIMEOUT
+
+    OriginCommandType:
+      type: string
+      enum: [BANK_DEPOSIT, WALLET_CREDIT, WITHDRAW_PAYOUT, BANK_DEPOSIT_RECEIVED, JOURNAL_POSTED]
+
+    OriginTransport:
+      type: string
+      enum: [HTTP, RABBITMQ, KAFKA]
+
+    CommandFailedEvent:
+      type: object
+      required: [eventId, businessRef, memberId, errorCode, originCommandType, originTransport, retryable, failedAt, source, schemaVersion]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        businessRef:
+          type: string
+          maxLength: 128
+        memberId:
+          type: integer
+          format: int64
+        errorCode:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+          maxLength: 512
+        originCommandType:
+          $ref: '#/components/schemas/OriginCommandType'
+        originTransport:
+          $ref: '#/components/schemas/OriginTransport'
+        originMessageId:
+          type: string
+          format: uuid
+        correlationId:
+          type: string
+          maxLength: 128
+        retryable:
+          type: boolean
+        retryCount:
+          type: integer
+          minimum: 0
+        failedAt:
+          type: string
+          format: date-time
+        source:
+          type: string
+          maxLength: 64
+        schemaVersion:
+          type: string
+          example: "1.0"
+        payload:
+          type: object
+          additionalProperties: true
+
+    BankDepositReceived:
+      type: object
+      required: [businessRef, amount, vaNumber, bankCode, receivedAt]
+      properties:
+        businessRef:
+          type: string
+        amount:
+          type: string
+        vaNumber:
+          type: string
+        bankCode:
+          type: string
+        receivedAt:
+          type: string
+          format: date-time
+
+    JournalPosted:
+      type: object
+      required: [coaTransId, businessRef, useCase, postedAt]
+      properties:
+        coaTransId:
+          type: integer
+          format: int64
+        businessRef:
+          type: string
+        useCase:
+          type: string
+          example: DEPOSIT
+        postedAt:
+          type: string
+          format: date-time
+
+    WalletCredited:
+      type: object
+      required: [walletTxId, memberId, amount, businessRef]
+      properties:
+        walletTxId:
+          type: integer
+          format: int64
+        memberId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+        businessRef:
+          type: string
+

@@ -1,0 +1,487 @@
+openapi: 3.0.3
+info:
+  title: GtelPay Public API
+  description: |
+    Public/mobile/partner HTTP surface for GtelPay fiat wallet orchestration.
+    Implement in Application (BFF); upstream target for API Gateway.
+    Design: `10_core` — `integration-surfaces.md`, `core.wallet.md`, `core.foundation.md`.
+  version: 1.0.0
+  contact:
+    name: GtelPay Platform
+
+servers:
+  - url: https://api.gtelpay.example/v1
+    description: Production (replace host)
+  - url: http://localhost:8080/v1
+    description: Local orchestration
+
+tags:
+  - name: Wallets
+  - name: Payments
+  - name: Transfers
+  - name: Withdrawals
+  - name: Deposits
+  - name: Bank
+
+security:
+  - bearerAuth: []
+
+paths:
+  /wallets/balance:
+    get:
+      tags: [Wallets]
+      operationId: getWalletBalance
+      summary: Get wallet available balance
+      parameters:
+        - $ref: '#/components/parameters/walletType'
+        - $ref: '#/components/parameters/currency'
+      responses:
+        '200':
+          description: Balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseWalletBalance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /payments:
+    post:
+      tags: [Payments]
+      operationId: createPayment
+      summary: Pay with wallet (sync — debit user, post journal, credit merchant)
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePaymentResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Duplicate businessRef (idempotent replay)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePaymentResult'
+        '422':
+          description: Insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /transfers:
+    post:
+      tags: [Transfers]
+      operationId: createTransfer
+      summary: Internal wallet transfer A to B (sync)
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseTransferResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /withdrawals:
+    post:
+      tags: [Withdrawals]
+      operationId: createWithdrawal
+      summary: Request withdraw (sync wallet leg; bank payout async)
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+      responses:
+        '200':
+          description: Withdrawal accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseWithdrawalResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Insufficient balance / freeze failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /deposits/notify:
+    post:
+      tags: [Deposits]
+      operationId: notifyDeposit
+      summary: Partner deposit notify (prefer 202 — async processing)
+      security:
+        - mTLSPartner: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositNotifyRequest'
+      responses:
+        '202':
+          description: Accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositAccepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /deposits/status:
+    get:
+      tags: [Deposits]
+      operationId: getDepositStatus
+      summary: Poll deposit status by businessRef
+      parameters:
+        - name: businessRef
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 128
+      responses:
+        '200':
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bank/webhook:
+    post:
+      tags: [Bank]
+      operationId: bankWebhook
+      summary: Bank webhook (GtelPay) — fast ack; orchestration enqueues S6 BANK_DEPOSIT (see asyncapi/core-commands.yaml)
+      security:
+        - mTLSPartner: []
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankWebhookPayload'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositAccepted'
+        '200':
+          description: Processed synchronously (MVP only)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositStatus'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    mTLSPartner:
+      type: mutualTLS
+      description: Partner or bank channel terminated at API Gateway
+
+  parameters:
+    idempotencyKey:
+      name: X-Idempotency-Key
+      in: header
+      required: true
+      description: Must equal body businessRef for mutations
+      schema:
+        type: string
+        maxLength: 128
+    walletType:
+      name: walletType
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/WalletType'
+    currency:
+      name: currency
+      in: query
+      required: true
+      schema:
+        type: string
+        example: VND
+
+  schemas:
+    WalletType:
+      type: string
+      enum: [USER, MERCHANT]
+
+    ApiEnvelope:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ApiResponseWalletBalance:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/WalletBalanceData'
+
+    WalletBalanceData:
+      type: object
+      properties:
+        memberId:
+          type: integer
+          format: int64
+        walletType:
+          $ref: '#/components/schemas/WalletType'
+        currency:
+          type: string
+        available:
+          type: string
+          description: Decimal amount as string
+        frozen:
+          type: string
+
+    PaymentRequest:
+      type: object
+      required: [businessRef, memberId, merchantId, amount, currency]
+      properties:
+        businessRef:
+          type: string
+          maxLength: 128
+        memberId:
+          type: integer
+          format: int64
+        merchantId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+          description: Gross debit from user wallet
+        currency:
+          type: string
+          example: VND
+        netToMerchant:
+          type: string
+          description: Credit to merchant; defaults to amount if omitted
+
+    ApiResponsePaymentResult:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                coaTransId:
+                  type: integer
+                  format: int64
+                walletTxId:
+                  type: integer
+                  format: int64
+                status:
+                  type: string
+                  enum: [SUCCESS, FAILED]
+
+    TransferRequest:
+      type: object
+      required: [businessRef, fromMemberId, toMemberId, amount, currency]
+      properties:
+        businessRef:
+          type: string
+        fromMemberId:
+          type: integer
+          format: int64
+        toMemberId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+        currency:
+          type: string
+        feeAmount:
+          type: string
+
+    ApiResponseTransferResult:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                coaTransId:
+                  type: integer
+                  format: int64
+                status:
+                  type: string
+
+    WithdrawalRequest:
+      type: object
+      required: [businessRef, memberId, amount, currency]
+      properties:
+        businessRef:
+          type: string
+        memberId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+        currency:
+          type: string
+        useFreeze:
+          type: boolean
+          default: false
+
+    ApiResponseWithdrawalResult:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                status:
+                  type: string
+                  enum: [ACCEPTED, PROCESSING]
+
+    DepositNotifyRequest:
+      type: object
+      required: [businessRef, amount, vaNumber, bankCode, receivedAt]
+      properties:
+        businessRef:
+          type: string
+        amount:
+          type: string
+        vaNumber:
+          type: string
+        bankCode:
+          type: string
+        receivedAt:
+          type: string
+          format: date-time
+
+    BankWebhookPayload:
+      description: Alias for bank channel; maps to BankDepositReceived event
+      allOf:
+        - $ref: '#/components/schemas/DepositNotifyRequest'
+
+    ApiResponseDepositAccepted:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [businessRef, status]
+              properties:
+                businessRef:
+                  type: string
+                status:
+                  type: string
+                  enum: [ACCEPTED]
+
+    ApiResponseDepositStatus:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                status:
+                  type: string
+                  enum: [PENDING, POSTED, WALLET_CREDITED, FAILED]
+                coaTransId:
+                  type: integer
+                  format: int64
+                walletTxId:
+                  type: integer
+                  format: int64
+
+    ApiResponseError:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                errorCode:
+                  type: string
+                  description: Aligns with asyncapi/core-events.yaml ErrorCode
+                  example: WALLET_INSUFFICIENT_BALANCE
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+    Unauthorized:
+      description: Missing or invalid auth
+    NotFound:
+      description: Resource not found

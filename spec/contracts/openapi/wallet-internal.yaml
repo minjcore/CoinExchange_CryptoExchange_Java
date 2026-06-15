@@ -1,0 +1,202 @@
+openapi: 3.0.3
+info:
+  title: GtelPay Wallet Internal API
+  description: |
+    Internal REST for `core.wallet` — the wallet-internal network surface the orchestrator
+    consumes via `WalletGateway` (ADR-038). Internal only — never on the public API Gateway.
+    Amounts are decimal strings (ADR-028 scale 4). Idempotency: `(memberId, walletType, currency,
+    businessRef, txType)` → replay returns the same `walletTxId` (ADR-005).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8082/v1
+    description: Target — wallet pod. Orchestrator calls over HTTP only (ADR-038).
+
+security:
+  - serviceAuth: []
+
+paths:
+  /wallets/provision:
+    post:
+      operationId: provisionWallet
+      summary: Provision wallet if absent (idempotent on member+type+currency)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProvisionRequest' }
+      responses:
+        '200':
+          description: Existing or newly created wallet
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WalletView' }
+
+  /wallets/credit:
+    post:
+      operationId: creditWallet
+      summary: Credit available balance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WalletMutationRequest' }
+      responses:
+        '200':
+          description: Mutation result (or idempotent replay)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WalletTxResult' }
+
+  /wallets/debit:
+    post:
+      operationId: debitWallet
+      summary: Debit available balance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WalletMutationRequest' }
+      responses:
+        '200':
+          description: Mutation result (or idempotent replay)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WalletTxResult' }
+        '422':
+          description: Insufficient balance (WALLET_INSUFFICIENT_BALANCE)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+  /wallets/freeze:
+    post:
+      operationId: freezeWallet
+      summary: Move available → frozen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WalletMutationRequest' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WalletTxResult' }
+
+  /wallets/unfreeze:
+    post:
+      operationId: unfreezeWallet
+      summary: Move frozen → available
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WalletMutationRequest' }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WalletTxResult' }
+
+  /wallets/balance:
+    get:
+      operationId: getWalletBalance
+      summary: Current available / frozen for a wallet
+      parameters:
+        - { name: memberId, in: query, required: true, schema: { type: integer, format: int64 } }
+        - { name: walletType, in: query, required: true, schema: { $ref: '#/components/schemas/WalletType' } }
+        - { name: currency, in: query, required: true, schema: { type: string, example: VND } }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BalanceView' }
+        '404':
+          description: Wallet not found (WALLET_NOT_FOUND)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiError' }
+
+components:
+  securitySchemes:
+    serviceAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    WalletType:
+      type: string
+      enum: [USER, MERCHANT, PARTNER]
+    WalletTxType:
+      type: string
+      enum:
+        - DEPOSIT_CREDIT
+        - PAYMENT_DEBIT
+        - PAYMENT_CREDIT
+        - TRANSFER_DEBIT
+        - TRANSFER_CREDIT
+        - WITHDRAW_FREEZE
+        - WITHDRAW_RELEASE
+        - WITHDRAW_SETTLE
+        - ADJUSTMENT_CREDIT
+        - ADJUSTMENT_DEBIT
+    WalletStatus:
+      type: string
+      enum: [ACTIVE, LOCKED, CLOSED]
+
+    ProvisionRequest:
+      type: object
+      required: [memberId, walletType, currency]
+      properties:
+        memberId: { type: integer, format: int64 }
+        walletType: { $ref: '#/components/schemas/WalletType' }
+        currency: { type: string, example: VND }
+
+    WalletMutationRequest:
+      type: object
+      required: [memberId, walletType, currency, amount, businessRef, txType]
+      properties:
+        memberId: { type: integer, format: int64 }
+        walletType: { $ref: '#/components/schemas/WalletType' }
+        currency: { type: string, example: VND }
+        amount: { type: string, description: decimal string, scale 4, example: "100000.0000" }
+        businessRef: { type: string, maxLength: 128 }
+        txType: { $ref: '#/components/schemas/WalletTxType' }
+        coaTransId: { type: integer, format: int64, nullable: true }
+        useCase: { type: string, nullable: true }
+        remark: { type: string, nullable: true }
+
+    WalletView:
+      type: object
+      properties:
+        walletId: { type: integer, format: int64 }
+        memberId: { type: integer, format: int64 }
+        walletType: { $ref: '#/components/schemas/WalletType' }
+        currency: { type: string }
+        status: { $ref: '#/components/schemas/WalletStatus' }
+
+    WalletTxResult:
+      type: object
+      properties:
+        walletTxId: { type: integer, format: int64 }
+        walletId: { type: integer, format: int64 }
+        available: { type: string }
+        frozen: { type: string }
+        idempotentReplay: { type: boolean }
+
+    BalanceView:
+      type: object
+      properties:
+        memberId: { type: integer, format: int64 }
+        walletType: { $ref: '#/components/schemas/WalletType' }
+        currency: { type: string }
+        available: { type: string }
+        frozen: { type: string }
+
+    ApiError:
+      type: object
+      properties:
+        code: { type: integer }
+        message: { type: string }
+        timestamp: { type: string, format: date-time }

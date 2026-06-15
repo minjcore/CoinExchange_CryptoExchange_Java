@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: GtelPay Accounting Internal API
+  description: |
+    TRD-aligned REST for `core.accounting`. Often **internal only** — do not expose on public API Gateway.
+    TRD JSON uses `reference_id`; maps to contract `businessRef`.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8081/v1
+    description: Internal accounting service or in-process facade
+
+security:
+  - serviceAuth: []
+
+paths:
+  /journal-entries:
+    post:
+      operationId: createJournal
+      summary: Create journal (coa_trans header)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJournalRequest'
+      responses:
+        '201':
+          description: Journal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalHeader'
+
+  /journal-entries/{id}/lines:
+    post:
+      operationId: addJournalLines
+      summary: Add journal_entry rows (coa_trans_data)
+      parameters:
+        - $ref: '#/components/parameters/journalId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddJournalLinesRequest'
+      responses:
+        '204':
+          description: Lines added
+
+  /journal-entries/{id}/post:
+    post:
+      operationId: postJournal
+      summary: Post journal (POSTED)
+      parameters:
+        - $ref: '#/components/parameters/journalId'
+      responses:
+        '200':
+          description: Posted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostJournalResult'
+
+  /journal-entries/{id}/reverse:
+    post:
+      operationId: reverseJournal
+      summary: Reverse journal
+      parameters:
+        - $ref: '#/components/parameters/journalId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseJournalRequest'
+      responses:
+        '200':
+          description: Reversal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReverseJournalResult'
+
+  /accounts/{id}/balance:
+    get:
+      operationId: getAccountBalance
+      summary: COA account balance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: account code e.g. 2110
+        - name: asOf
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountBalance'
+
+  /reports/trial-balance:
+    get:
+      operationId: getTrialBalance
+      summary: Trial balance report
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  securitySchemes:
+    serviceAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    journalId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  schemas:
+    CreateJournalRequest:
+      type: object
+      required: [reference_id, use_case]
+      properties:
+        reference_id:
+          type: string
+          description: businessRef
+        use_case:
+          type: string
+          example: DEPOSIT
+        description:
+          type: string
+        posting_date:
+          type: string
+          format: date
+
+    JournalHeader:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        reference_id:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, POSTED, REVERSED]
+
+    JournalLine:
+      type: object
+      required: [account_code, amount, side]
+      properties:
+        account_code:
+          type: string
+        amount:
+          type: string
+        side:
+          type: string
+          enum: [DEBIT, CREDIT]
+        currency:
+          type: string
+          default: VND
+
+    AddJournalLinesRequest:
+      type: object
+      required: [lines]
+      properties:
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalLine'
+
+    PostJournalResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+        posted_at:
+          type: string
+          format: date-time
+
+    ReverseJournalRequest:
+      type: object
+      properties:
+        reference_id:
+          type: string
+        reason:
+          type: string
+
+    ReverseJournalResult:
+      type: object
+      properties:
+        original_id:
+          type: integer
+          format: int64
+        reversal_id:
+          type: integer
+          format: int64
+
+    AccountBalance:
+      type: object
+      properties:
+        account_code:
+          type: string
+        balance:
+          type: string
+        currency:
+          type: string

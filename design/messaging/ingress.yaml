@@ -1,0 +1,65 @@
+asyncapi: 2.6.0
+info:
+  title: Platform ingress & operations — Kafka Events
+  version: 1.0.0
+  description: |
+    Cross-cutting Kafka topics — not owned by accounting or wallet domain modules.
+    Bank ingress and async failure fan-out.
+
+defaultContentType: application/json
+
+channels:
+  core.bank.deposit-received:
+    description: Bank webhook parsed (optional mirror of S1 → worker path)
+    bindings:
+      kafka:
+        topic: core.bank.deposit-received
+        partitions: 12
+    publish:
+      operationId: publishBankDepositReceived
+      message:
+        $ref: '#/components/messages/BankDepositReceived'
+
+  core.operations.command-failed:
+    description: Worker/async failure fan-out for ops
+    bindings:
+      kafka:
+        topic: core.operations.command-failed
+        partitions: 12
+    publish:
+      operationId: publishCommandFailed
+      message:
+        $ref: '#/components/messages/CommandFailed'
+
+components:
+  messages:
+    BankDepositReceived:
+      name: BankDepositReceived
+      payload:
+        $ref: '#/components/schemas/BankDepositReceived'
+    CommandFailed:
+      name: CommandFailed
+      payload:
+        $ref: '#/components/schemas/CommandFailedEvent'
+  schemas:
+    BankDepositReceived:
+      type: object
+      required: [businessRef, amount, vaNumber, bankCode, receivedAt]
+      properties:
+        businessRef: { type: string }
+        amount: { type: string }
+        vaNumber: { type: string }
+        bankCode: { type: string }
+        receivedAt: { type: string, format: date-time }
+    CommandFailedEvent:
+      type: object
+      required: [eventId, businessRef, memberId, errorCode, retryable, failedAt, schemaVersion]
+      properties:
+        eventId: { type: string, format: uuid }
+        businessRef: { type: string }
+        memberId: { type: integer, format: int64 }
+        errorCode: { type: string }
+        message: { type: string }
+        retryable: { type: boolean }
+        failedAt: { type: string, format: date-time }
+        schemaVersion: { type: string }

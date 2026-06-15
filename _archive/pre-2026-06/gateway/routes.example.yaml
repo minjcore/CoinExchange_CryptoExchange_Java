@@ -1,0 +1,39 @@
+# API Gateway route sheet (example — Kong / similar)
+# Import paths from openapi/gtelpay-public.yaml
+# Upstream: gtelpay-app (orchestration / Application)
+
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: gtelpay-orchestration
+    url: http://gtelpay-app:8080
+    routes:
+      - name: gtelpay-public-v1
+        paths:
+          - /api/gtelpay/v1
+        strip_path: true
+        methods: [GET, POST]
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 120
+          - name: request-transformer
+            config:
+              add:
+                headers:
+                  - "X-Gateway:gtelpay-edge"
+
+# Path mapping (strip /api/gtelpay prefix → app serves /v1/...)
+# | Gateway path                    | Upstream path              | Timeout ms |
+# |---------------------------------|----------------------------|------------|
+# | POST /api/gtelpay/v1/payments   | POST /v1/payments          | 10000      |
+# | POST /api/gtelpay/v1/transfers  | POST /v1/transfers         | 10000      |
+# | POST /api/gtelpay/v1/withdrawals| POST /v1/withdrawals       | 10000      |
+# | GET  /api/gtelpay/v1/wallets/balance | GET /v1/wallets/balance | 3000   |
+# | POST /api/gtelpay/v1/bank/webhook  | POST /v1/bank/webhook   | 5000       |
+# | POST /api/gtelpay/v1/deposits/notify | POST /v1/deposits/notify | 5000   |
+# | GET  /api/gtelpay/v1/deposits/status | GET /v1/deposits/status | 3000   |
+#
+# Do NOT route accounting-internal paths on public gateway.
+# See openapi/accounting-internal.yaml

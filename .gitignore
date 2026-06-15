@@ -1,0 +1,7 @@
+node_modules/
+*.pdf
+*.html
+target/
+.DS_Store
+.firecrawl/
+sandbox/

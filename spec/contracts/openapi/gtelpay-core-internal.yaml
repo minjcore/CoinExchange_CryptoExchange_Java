@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: GtelPay Core Internal API
+  description: |
+    **app-orchestration** inbound — caller **paymentorches only** (service auth).
+    **GtelPay Core** — implement trong `app-orchestration` pod.
+
+    **Không phải public API.** Mobile / partner / Gateway → `gtelpay-public.yaml`
+    tại **paymentorches** (ngoài repo).
+
+    Orch nhận lệnh nghiệp vụ core (payment, balance, deposit notify…) rồi sequence
+    `WalletGateway` + `LedgerGateway` + S3/S6.
+
+    Schemas: tạm `$ref` shared components từ `gtelpay-public.yaml` trong lúc tách file.
+  version: 0.1.0-draft
+  contact:
+    name: GtelPay Core
+
+servers:
+  - url: http://localhost:8080/v1
+    description: app-orchestration pod (core internal)
+
+security:
+  - serviceAuth: []
+
+tags:
+  - name: Wallets
+  - name: Payments
+  - name: Transfers
+  - name: Withdrawals
+  - name: Deposits
+
+paths:
+  /wallets/balance:
+    get:
+      tags: [Wallets]
+      operationId: getWalletBalance
+      summary: Balance read (core)
+      parameters:
+        - $ref: 'gtelpay-public.yaml#/components/parameters/memberIdHeader'
+        - $ref: 'gtelpay-public.yaml#/components/parameters/walletIdQuery'
+      responses:
+        '200':
+          description: Balance
+          content:
+            application/json:
+              schema:
+                $ref: 'gtelpay-public.yaml#/components/schemas/WalletBalanceData'
+
+  /payments:
+    post:
+      tags: [Payments]
+      operationId: createPayment
+      summary: Sync payment — wallet + ledger sequence
+      parameters:
+        - $ref: 'gtelpay-public.yaml#/components/parameters/idempotencyKey'
+        - $ref: 'gtelpay-public.yaml#/components/parameters/memberIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'gtelpay-public.yaml#/components/schemas/CreatePaymentRequest'
+      responses:
+        '200':
+          description: Payment completed
+          content:
+            application/json:
+              schema:
+                $ref: 'gtelpay-public.yaml#/components/schemas/PaymentResult'
+
+  /transfers:
+    post:
+      tags: [Transfers]
+      operationId: createTransfer
+      summary: Internal transfer (core)
+      parameters:
+        - $ref: 'gtelpay-public.yaml#/components/parameters/idempotencyKey'
+        - $ref: 'gtelpay-public.yaml#/components/parameters/memberIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'gtelpay-public.yaml#/components/schemas/CreateTransferRequest'
+      responses:
+        '200':
+          description: Transfer completed
+
+  /withdrawals:
+    post:
+      tags: [Withdrawals]
+      operationId: createWithdrawal
+      summary: Withdraw accept — wallet leg + ledger (core)
+      parameters:
+        - $ref: 'gtelpay-public.yaml#/components/parameters/idempotencyKey'
+        - $ref: 'gtelpay-public.yaml#/components/parameters/memberIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'gtelpay-public.yaml#/components/schemas/CreateWithdrawalRequest'
+      responses:
+        '200':
+          description: Withdrawal accepted
+
+  /deposits/notify:
+    post:
+      tags: [Deposits]
+      operationId: notifyDeposit
+      summary: Deposit instruction — core async (202)
+      description: |
+        paymentorches đã validate kênh (VA, bank ref…) — core ghi ledger + wallet path.
+        Webhook bank thô → paymentorches (`gtelpay-public`), không gọi path này trực tiếp.
+      parameters:
+        - $ref: 'gtelpay-public.yaml#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: 'gtelpay-public.yaml#/components/schemas/NotifyDepositRequest'
+      responses:
+        '202':
+          description: Accepted for async processing
+
+  /deposits/{businessRef}/status:
+    get:
+      tags: [Deposits]
+      operationId: getDepositStatus
+      summary: Deposit status read model
+      parameters:
+        - name: businessRef
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Status
+
+components:
+  securitySchemes:
+    serviceAuth:
+      type: http
+      scheme: bearer
+      description: Service token — paymentorches → core only

@@ -1,0 +1,49 @@
+asyncapi: 2.6.0
+info:
+  title: core.wallet — Kafka Events
+  version: 1.0.0
+  description: |
+    Wallet domain emits **facts** only. Credit commands live in messaging/commands.yaml.
+    Owner: core.wallet adapter.
+
+defaultContentType: application/json
+
+channels:
+  core.wallet.credited:
+    description: A wallet_tx CREDIT (or settle debit) was committed
+    bindings:
+      kafka:
+        topic: core.wallet.credited
+    publish:
+      operationId: publishWalletCredited
+      message:
+        $ref: '#/components/messages/WalletCredited'
+    subscribe:
+      operationId: onWalletCredited
+      message:
+        $ref: '#/components/messages/WalletCredited'
+
+components:
+  messages:
+    WalletCredited:
+      name: WalletCredited
+      payload:
+        $ref: '#/components/schemas/WalletCredited'
+  schemas:
+    WalletCredited:
+      type: object
+      required: [walletTxId, memberId, amount, businessRef, txType]
+      properties:
+        walletTxId:
+          type: integer
+          format: int64
+        memberId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+        businessRef:
+          type: string
+        txType:
+          type: string
+          description: WalletTxType enum name

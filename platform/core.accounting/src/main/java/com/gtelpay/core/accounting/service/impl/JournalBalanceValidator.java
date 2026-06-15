@@ -1,0 +1,57 @@
+package com.gtelpay.core.accounting.service.impl;
+
+import com.gtelpay.core.accounting.domain.CoaTransDataEntity;
+import com.gtelpay.core.accounting.domain.LineSide;
+import com.gtelpay.core.foundation.exception.ErrorCode;
+import com.gtelpay.core.foundation.exception.AccountingException;
+import com.gtelpay.core.foundation.util.MoneyUtil;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public final class JournalBalanceValidator {
+
+    private JournalBalanceValidator() {
+    }
+
+    static void assertBalanced(List<CoaTransDataEntity> lines) {
+        BigDecimal debits = BigDecimal.ZERO;
+        BigDecimal credits = BigDecimal.ZERO;
+        for (CoaTransDataEntity line : lines) {
+            if (line.getSide() == LineSide.DEBIT) {
+                debits = debits.add(line.getAmount());
+            } else {
+                credits = credits.add(line.getAmount());
+            }
+        }
+        if (debits.compareTo(credits) != 0) {
+            throw new AccountingException(
+                    ErrorCode.ACCOUNTING_UNBALANCED_JOURNAL,
+                    "sum(DR)=" + debits + " sum(CR)=" + credits);
+        }
+    }
+
+    public static BigDecimal transitNet(String transitAccount, List<CoaTransDataEntity> lines) {
+        BigDecimal net = BigDecimal.ZERO;
+        for (CoaTransDataEntity line : lines) {
+            if (!transitAccount.equals(line.getAccountCode())) {
+                continue;
+            }
+            if (line.getSide() == LineSide.DEBIT) {
+                net = net.add(line.getAmount());
+            } else {
+                net = net.subtract(line.getAmount());
+            }
+        }
+        return net.setScale(MoneyUtil.MONEY_SCALE, MoneyUtil.MONEY_ROUNDING);
+    }
+
+    static void assertTransitZero(String transitAccount, List<CoaTransDataEntity> lines) {
+        BigDecimal net = transitNet(transitAccount, lines);
+        if (net.compareTo(BigDecimal.ZERO) != 0) {
+            throw new AccountingException(
+                    ErrorCode.ACCOUNTING_UNBALANCED_JOURNAL,
+                    "transit " + transitAccount + " net=" + net + " (expected 0)");
+        }
+    }
+}

@@ -1,0 +1,34 @@
+---
+description: Hard scope and autonomy limits for the 10_core workspace
+alwaysApply: true
+---
+
+# Phạm vi làm việc: chỉ trong `10_core`
+
+Workspace là `10_core`. Tuyệt đối không thao tác ra ngoài nó.
+
+## Cấm ra khỏi `10_core`
+
+- KHÔNG đọc, ghi, liệt kê, hay tìm kiếm ở thư mục cha (`/Users/khangdc/Desktop/core`) hoặc các sibling (`00_framework`, `01_wallet_rpc`, …).
+- KHÔNG chạy `ls`, `find`, `grep`, `git` trỏ tới đường dẫn ngoài `10_core`. Mọi lệnh shell phải có `working_directory` nằm trong `10_core` và không dùng path tuyệt đối ra ngoài.
+- Nếu một việc cần dữ liệu ngoài `10_core` → DỪNG và hỏi, không tự ý vượt rào.
+
+```bash
+# ❌ SAI — ra ngoài 10_core
+ls -la /Users/khangdc/Desktop/core
+find /Users/khangdc/Desktop/core -name pom.xml
+
+# ✅ ĐÚNG — trong 10_core
+ls -la /Users/khangdc/Desktop/core/10_core/adr
+```
+
+## Không tự đẻ tài liệu
+
+- KHÔNG tự tạo file mới (`.md`, ADR, runbook, …) khi user chưa xác nhận cụ thể từng file.
+- Khi user nói chung chung ("bổ sung tài liệu") → đề xuất danh sách ngắn + hỏi chốt TRƯỚC khi viết, không gen hàng loạt.
+- Ưu tiên sửa file có sẵn hơn tạo file mới.
+
+## Trung thực về tham chiếu
+
+- Chỉ trích số mục (`§`), tên bảng, error code… khi đã ĐỌC trực tiếp file nguồn trong `10_core`. Không suy đoán số mục.
+- Nếu chưa đọc file nguồn thì không trích chi tiết của nó.

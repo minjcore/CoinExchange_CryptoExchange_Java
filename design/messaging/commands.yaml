@@ -1,0 +1,238 @@
+asyncapi: 2.6.0
+info:
+  title: GtelPay Core RabbitMQ Commands
+  version: 1.0.0
+  description: |
+    RabbitMQ command queues for worker consumers (deposit, wallet credit, payout).
+    Every message uses a **full-body envelope** — idempotency and routing fields live in
+    the JSON body, not only AMQP headers.
+
+    Index: integration-surfaces.md §6. Kafka events: core-events.yaml.
+
+defaultContentType: application/json
+
+servers:
+  production:
+    url: amqp.prod.gtelpay.example:5672
+    protocol: amqp
+    description: Production broker (vhost core)
+  local:
+    url: localhost:5672
+    protocol: amqp
+    description: Local broker
+
+channels:
+  core.commands.bank-deposit:
+    description: |
+      After S1 deposit notify / bank webhook **202** — orchestration publishes full
+      `BankDepositCommand` for accounting worker (journal PENDING → POSTED).
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: core.commands
+          type: topic
+          durable: true
+        bindingVersion: 0.2.0
+    publish:
+      operationId: publishBankDepositCommand
+      message:
+        $ref: '#/components/messages/BankDepositCommand'
+    subscribe:
+      operationId: onBankDepositCommand
+      message:
+        $ref: '#/components/messages/BankDepositCommand'
+
+  core.commands.wallet-credit:
+    description: |
+      Explicit wallet credit command (alternative to consuming JournalPosted on Kafka).
+      Consumer: wallet worker.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: core.commands
+          type: topic
+          durable: true
+        bindingVersion: 0.2.0
+    publish:
+      operationId: publishWalletCreditCommand
+      message:
+        $ref: '#/components/messages/WalletCreditCommand'
+    subscribe:
+      operationId: onWalletCreditCommand
+      message:
+        $ref: '#/components/messages/WalletCreditCommand'
+
+  core.commands.withdraw-payout:
+    description: |
+      Bank payout leg after S1 withdrawal **200** (wallet debit/freeze already done).
+      Consumer: payout / bank adapter worker.
+    bindings:
+      amqp:
+        is: routingKey
+        exchange:
+          name: core.commands
+          type: topic
+          durable: true
+        bindingVersion: 0.2.0
+    publish:
+      operationId: publishWithdrawPayoutCommand
+      message:
+        $ref: '#/components/messages/WithdrawPayoutCommand'
+    subscribe:
+      operationId: onWithdrawPayoutCommand
+      message:
+        $ref: '#/components/messages/WithdrawPayoutCommand'
+
+components:
+  messages:
+    BankDepositCommand:
+      name: BankDepositCommand
+      payload:
+        $ref: '#/components/schemas/CommandEnvelope'
+      examples:
+        - payload:
+            messageId: "550e8400-e29b-41d4-a716-446655440000"
+            businessRef: "dep-20260605-001"
+            memberId: 100234
+            commandType: BANK_DEPOSIT
+            occurredAt: "2026-06-05T10:15:30Z"
+            correlationId: "trace-abc123"
+            source: orchestration
+            schemaVersion: "1.0"
+            payload:
+              amount: "500000.0000"
+              vaNumber: "9704188888888"
+              bankCode: "VCB"
+              receivedAt: "2026-06-05T10:15:28Z"
+
+    WalletCreditCommand:
+      name: WalletCreditCommand
+      payload:
+        $ref: '#/components/schemas/CommandEnvelope'
+
+    WithdrawPayoutCommand:
+      name: WithdrawPayoutCommand
+      payload:
+        $ref: '#/components/schemas/CommandEnvelope'
+
+  schemas:
+    CommandType:
+      type: string
+      enum:
+        - BANK_DEPOSIT
+        - WALLET_CREDIT
+        - WITHDRAW_PAYOUT
+
+    CommandEnvelope:
+      type: object
+      description: |
+        Full-body wrapper for all RabbitMQ commands. Field names align with OpenAPI /
+        Kafka (ADR-002). `businessRef` is the idempotency key (same as
+        `X-Idempotency-Key` on S1). `memberId` is the platform member id (**mid**).
+      required:
+        - messageId
+        - businessRef
+        - memberId
+        - commandType
+        - occurredAt
+        - schemaVersion
+        - payload
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          description: |
+            Transport id — unique per physical publish. Used for dedup table and
+            causation chain; **not** the business idempotency key.
+        businessRef:
+          type: string
+          maxLength: 128
+          description: |
+            Business idempotency key. Same value as HTTP `X-Idempotency-Key` and body
+            `businessRef`; maps to `business_ref` in DB.
+        memberId:
+          type: integer
+          format: int64
+          description: Platform member id (**mid**) — routing affinity and shard key.
+        commandType:
+          $ref: '#/components/schemas/CommandType'
+        occurredAt:
+          type: string
+          format: date-time
+          description: UTC timestamp when orchestration accepted the command.
+        correlationId:
+          type: string
+          maxLength: 128
+          description: End-to-end trace id (HTTP request → queue → optional Kafka event).
+        causationId:
+          type: string
+          format: uuid
+          description: Optional `messageId` of the message that caused this publish.
+        source:
+          type: string
+          maxLength: 64
+          example: orchestration
+          description: Publishing service or adapter name.
+        schemaVersion:
+          type: string
+          example: "1.0"
+        payload:
+          oneOf:
+            - $ref: '#/components/schemas/BankDepositPayload'
+            - $ref: '#/components/schemas/WalletCreditPayload'
+            - $ref: '#/components/schemas/WithdrawPayoutPayload'
+          description: |
+            Command-specific body — **full** OpenAPI-aligned fields (not a stub).
+            Consumer selects schema by `commandType`.
+
+    BankDepositPayload:
+      type: object
+      description: Same semantics as OpenAPI DepositNotifyRequest / Kafka BankDepositReceived.
+      required: [amount, vaNumber, bankCode, receivedAt]
+      properties:
+        amount:
+          type: string
+        vaNumber:
+          type: string
+        bankCode:
+          type: string
+        receivedAt:
+          type: string
+          format: date-time
+
+    WalletCreditPayload:
+      type: object
+      description: Wallet credit command body (canonical home — commands live on RabbitMQ; Kafka only emits the WalletCredited event).
+      required: [walletType, currency, amount]
+      properties:
+        walletType:
+          type: string
+          enum: [USER, MERCHANT, PARTNER]
+        currency:
+          type: string
+        amount:
+          type: string
+        coaTransId:
+          type: integer
+          format: int64
+        txType:
+          type: string
+          description: WalletTxType enum name (IMPLEMENTATION.md §2.1)
+
+    WithdrawPayoutPayload:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: string
+        currency:
+          type: string
+        bankAccountNo:
+          type: string
+        bankCode:
+          type: string
+        useFreeze:
+          type: boolean
+          default: false

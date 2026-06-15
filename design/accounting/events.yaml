@@ -1,0 +1,48 @@
+asyncapi: 2.6.0
+info:
+  title: core.accounting — Kafka Events
+  version: 1.0.0
+  description: |
+    Accounting domain emits **facts** only. Commands live in messaging/commands.yaml.
+    Owner: core.accounting adapter.
+
+defaultContentType: application/json
+
+channels:
+  core.accounting.journal-posted:
+    description: A journal (coa_trans) reached POSTED
+    bindings:
+      kafka:
+        topic: core.accounting.journal-posted
+        partitions: 12
+    publish:
+      operationId: publishJournalPosted
+      message:
+        $ref: '#/components/messages/JournalPosted'
+    subscribe:
+      operationId: onJournalPosted
+      message:
+        $ref: '#/components/messages/JournalPosted'
+
+components:
+  messages:
+    JournalPosted:
+      name: JournalPosted
+      payload:
+        $ref: '#/components/schemas/JournalPosted'
+  schemas:
+    JournalPosted:
+      type: object
+      required: [coaTransId, businessRef, useCase, postedAt]
+      properties:
+        coaTransId:
+          type: integer
+          format: int64
+        businessRef:
+          type: string
+        useCase:
+          type: string
+          example: DEPOSIT
+        postedAt:
+          type: string
+          format: date-time

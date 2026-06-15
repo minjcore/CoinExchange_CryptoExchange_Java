@@ -1,0 +1,770 @@
+openapi: 3.0.3
+info:
+  title: GtelPay Public API
+  description: |
+    **Public channel API** — mobile, partner, merchant portal, API Gateway.
+    **Implement tại paymentorches** — service điều phối kênh thanh toán của GtelPay;
+    **không** phải bank/PSP (bank webhook vào đây; outbound IBFT/QR/VA qua adapter).
+
+    Luồng: Client → Gateway → **paymentorches** (`gtelpay-public`) →
+    **GtelPay Core** (`gtelpay-core-internal.yaml`).
+
+    Design: `integration-surfaces.md` §1–§2.
+  version: 1.0.0
+  contact:
+    name: GtelPay Platform
+
+servers:
+  - url: https://api.gtelpay.example/v1
+    description: Production — paymentorches (public edge)
+  - url: http://localhost:8070/v1
+    description: Local paymentorches (not core pod)
+
+tags:
+  - name: Wallets
+  - name: Pockets
+  - name: Payments
+  - name: Transfers
+  - name: Withdrawals
+  - name: Deposits
+  - name: Bank
+
+security:
+  - bearerAuth: []
+
+paths:
+  /wallets/balance:
+    get:
+      tags: [Wallets]
+      operationId: getWalletBalance
+      summary: Get wallet available balance
+      description: |
+        Target a specific pocket via `walletId`, or `pocketCode`/`label`; if none given,
+        the member's `'default'` pocket is used (ADR-040). Orchestration resolves to a
+        concrete `wallet_id` before reading.
+      parameters:
+        - $ref: '#/components/parameters/walletType'
+        - $ref: '#/components/parameters/currency'
+        - $ref: '#/components/parameters/walletIdQuery'
+        - $ref: '#/components/parameters/pocketCodeQuery'
+      responses:
+        '200':
+          description: Balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseWalletBalance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /wallets/pocket-defs:
+    get:
+      tags: [Pockets]
+      operationId: listPocketDefs
+      summary: List available pocket definitions (catalog to create pockets from)
+      description: USER pocket kinds defined in `wallet_pocket_def` (ADR-040), active only.
+      responses:
+        '200':
+          description: Pocket definitions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePocketDefList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /wallets/pockets:
+    get:
+      tags: [Pockets]
+      operationId: listPockets
+      summary: List the caller's wallet pockets (USER)
+      parameters:
+        - $ref: '#/components/parameters/currency'
+      responses:
+        '200':
+          description: Pockets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePocketList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Pockets]
+      operationId: createPocket
+      summary: Create a USER pocket from a pocket definition (§11A.1)
+      description: |
+        No money moves — no ledger posting. Rejects unknown/inactive `pocketCode`,
+        a second pocket of a `multi_allowed=false` def, or a duplicate `label`.
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePocketRequest'
+      responses:
+        '201':
+          description: Pocket created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePocket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Duplicate label, or pocket of this def already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /wallets/pockets/{walletId}/close:
+    post:
+      tags: [Pockets]
+      operationId: closePocket
+      summary: Close a USER pocket (§11A.2) — requires zero balance
+      description: |
+        Requires `available = 0` and `frozen = 0`. The `'default'` pocket is not closable.
+        No ledger posting.
+      parameters:
+        - $ref: '#/components/parameters/walletIdPath'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '200':
+          description: Pocket closed (idempotent if already CLOSED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePocket'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Pocket not empty, or is the default pocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /wallets/pocket-transfers:
+    post:
+      tags: [Pockets]
+      operationId: createPocketTransfer
+      summary: Move funds between two pockets of the same member (§11A.3, sync)
+      description: |
+        Reuses the internal transfer saga (`TRANSFER_DEBIT`/`TRANSFER_CREDIT`); ledger
+        posts 2110 DR/CR net zero. Default fee 0. Only the two pockets are locked.
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PocketTransferRequest'
+      responses:
+        '200':
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseTransferResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Same source/destination pocket, or LOCKED/CLOSED pocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+        '422':
+          description: Insufficient balance in source pocket
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /payments:
+    post:
+      tags: [Payments]
+      operationId: createPayment
+      summary: Pay with wallet (sync — debit user, post journal, credit merchant)
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePaymentResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Duplicate businessRef (idempotent replay)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePaymentResult'
+        '422':
+          description: Insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /transfers:
+    post:
+      tags: [Transfers]
+      operationId: createTransfer
+      summary: Internal wallet transfer A to B (sync)
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseTransferResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /withdrawals:
+    post:
+      tags: [Withdrawals]
+      operationId: createWithdrawal
+      summary: Request withdraw (sync wallet leg; bank payout async)
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+      responses:
+        '200':
+          description: Withdrawal accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseWithdrawalResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          description: Insufficient balance / freeze failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /deposits/notify:
+    post:
+      tags: [Deposits]
+      operationId: notifyDeposit
+      summary: Partner deposit notify (prefer 202 — async processing)
+      security:
+        - mTLSPartner: []
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositNotifyRequest'
+      responses:
+        '202':
+          description: Accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositAccepted'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /deposits/status:
+    get:
+      tags: [Deposits]
+      operationId: getDepositStatus
+      summary: Poll deposit status by businessRef
+      parameters:
+        - name: businessRef
+          in: query
+          required: true
+          schema:
+            type: string
+            maxLength: 128
+      responses:
+        '200':
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bank/webhook:
+    post:
+      tags: [Bank]
+      operationId: bankWebhook
+      summary: Bank webhook (GtelPay) — fast ack; orchestration enqueues S6 BANK_DEPOSIT (see asyncapi/core-commands.yaml)
+      security:
+        - mTLSPartner: []
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BankWebhookPayload'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositAccepted'
+        '200':
+          description: Processed synchronously (MVP only)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseDepositStatus'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    mTLSPartner:
+      type: mutualTLS
+      description: Partner or bank channel terminated at API Gateway
+
+  parameters:
+    idempotencyKey:
+      name: X-Idempotency-Key
+      in: header
+      required: true
+      description: Must equal body businessRef for mutations
+      schema:
+        type: string
+        maxLength: 128
+    walletType:
+      name: walletType
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/WalletType'
+    currency:
+      name: currency
+      in: query
+      required: true
+      schema:
+        type: string
+        example: VND
+    walletIdQuery:
+      name: walletId
+      in: query
+      required: false
+      description: Target a specific pocket directly (ADR-040). Overrides pocketCode.
+      schema:
+        type: integer
+        format: int64
+    pocketCodeQuery:
+      name: pocketCode
+      in: query
+      required: false
+      description: Pocket definition code (e.g. SPENDING). Ignored if walletId given; default pocket if omitted.
+      schema:
+        type: string
+        maxLength: 32
+    walletIdPath:
+      name: walletId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  schemas:
+    WalletType:
+      type: string
+      enum: [USER, MERCHANT]
+
+    ApiEnvelope:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 0
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ApiResponseWalletBalance:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/WalletBalanceData'
+
+    WalletBalanceData:
+      type: object
+      properties:
+        memberId:
+          type: integer
+          format: int64
+        walletType:
+          $ref: '#/components/schemas/WalletType'
+        currency:
+          type: string
+        available:
+          type: string
+          description: Decimal amount as string
+        frozen:
+          type: string
+        walletId:
+          type: integer
+          format: int64
+          description: The resolved pocket id (ADR-040)
+        pocketCode:
+          type: string
+        label:
+          type: string
+
+    PocketDefData:
+      type: object
+      description: A pocket definition from the catalog (wallet_pocket_def, ADR-040)
+      properties:
+        code:
+          type: string
+          example: SAVINGS
+        name:
+          type: string
+          example: Tiết kiệm
+        description:
+          type: string
+        isDefault:
+          type: boolean
+        multiAllowed:
+          type: boolean
+          description: Whether a member may hold more than one pocket of this def
+
+    PocketData:
+      type: object
+      description: An instantiated pocket (a wallet row)
+      properties:
+        walletId:
+          type: integer
+          format: int64
+        pocketCode:
+          type: string
+        label:
+          type: string
+        available:
+          type: string
+        frozen:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, LOCKED, CLOSED]
+
+    CreatePocketRequest:
+      type: object
+      required: [businessRef, pocketCode]
+      properties:
+        businessRef:
+          type: string
+          maxLength: 128
+        pocketCode:
+          type: string
+          description: Must reference an active wallet_pocket_def
+          example: GOAL
+        label:
+          type: string
+          description: User display name; defaults to the def name
+          example: Quỹ du lịch
+        currency:
+          type: string
+          example: VND
+
+    PocketTransferRequest:
+      type: object
+      required: [businessRef, fromWalletId, toWalletId, amount]
+      description: Both pockets must belong to the calling member (ADR-040 §11A.3)
+      properties:
+        businessRef:
+          type: string
+          maxLength: 128
+        fromWalletId:
+          type: integer
+          format: int64
+        toWalletId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+          description: Gross debited from source pocket
+        currency:
+          type: string
+          example: VND
+        feeAmount:
+          type: string
+          description: Default 0 for own-pocket moves
+
+    ApiResponsePocketDefList:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PocketDefData'
+
+    ApiResponsePocketList:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/PocketData'
+
+    ApiResponsePocket:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/PocketData'
+
+    PaymentRequest:
+      type: object
+      required: [businessRef, memberId, merchantId, amount, currency]
+      properties:
+        businessRef:
+          type: string
+          maxLength: 128
+        memberId:
+          type: integer
+          format: int64
+        merchantId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+          description: Gross debit from user wallet
+        currency:
+          type: string
+          example: VND
+        netToMerchant:
+          type: string
+          description: Credit to merchant; defaults to amount if omitted
+
+    ApiResponsePaymentResult:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                coaTransId:
+                  type: integer
+                  format: int64
+                walletTxId:
+                  type: integer
+                  format: int64
+                status:
+                  type: string
+                  enum: [SUCCESS, FAILED]
+
+    TransferRequest:
+      type: object
+      required: [businessRef, fromMemberId, toMemberId, amount, currency]
+      properties:
+        businessRef:
+          type: string
+        fromMemberId:
+          type: integer
+          format: int64
+        toMemberId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+        currency:
+          type: string
+        feeAmount:
+          type: string
+
+    ApiResponseTransferResult:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                coaTransId:
+                  type: integer
+                  format: int64
+                status:
+                  type: string
+
+    WithdrawalRequest:
+      type: object
+      required: [businessRef, memberId, amount, currency]
+      properties:
+        businessRef:
+          type: string
+        memberId:
+          type: integer
+          format: int64
+        amount:
+          type: string
+        currency:
+          type: string
+        useFreeze:
+          type: boolean
+          default: false
+
+    ApiResponseWithdrawalResult:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                status:
+                  type: string
+                  enum: [ACCEPTED, PROCESSING]
+
+    DepositNotifyRequest:
+      type: object
+      required: [businessRef, amount, vaNumber, bankCode, receivedAt]
+      properties:
+        businessRef:
+          type: string
+        amount:
+          type: string
+        vaNumber:
+          type: string
+        bankCode:
+          type: string
+        receivedAt:
+          type: string
+          format: date-time
+
+    BankWebhookPayload:
+      description: Alias for bank channel; maps to BankDepositReceived event
+      allOf:
+        - $ref: '#/components/schemas/DepositNotifyRequest'
+
+    ApiResponseDepositAccepted:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [businessRef, status]
+              properties:
+                businessRef:
+                  type: string
+                status:
+                  type: string
+                  enum: [ACCEPTED]
+
+    ApiResponseDepositStatus:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                businessRef:
+                  type: string
+                status:
+                  type: string
+                  enum: [PENDING, POSTED, WALLET_CREDITED, FAILED]
+                coaTransId:
+                  type: integer
+                  format: int64
+                walletTxId:
+                  type: integer
+                  format: int64
+
+    ApiResponseError:
+      allOf:
+        - $ref: '#/components/schemas/ApiEnvelope'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                errorCode:
+                  type: string
+                  description: Aligns with asyncapi/core-events.yaml ErrorCode
+                  example: WALLET_INSUFFICIENT_BALANCE
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponseError'
+    Unauthorized:
+      description: Missing or invalid auth
+    NotFound:
+      description: Resource not found
