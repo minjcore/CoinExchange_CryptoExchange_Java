@@ -9,11 +9,16 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Immutable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
+// ADR-001: journal lines are write-once. @Immutable makes Hibernate refuse to emit UPDATEs —
+// a hard ORM guard on top of the INV-04 CI check. Lines are only ever INSERTed (persistLine);
+// corrections are new reversing journals, never edits.
 @Entity
+@Immutable
 @Table(name = "coa_trans_data", schema = "accounting")
 public class CoaTransDataEntity {
 

@@ -4,7 +4,9 @@ import com.gtelpay.core.accounting.domain.CoaTransDataEntity;
 import com.gtelpay.core.accounting.domain.CoaTransEntity;
 import com.gtelpay.core.accounting.domain.JournalStatus;
 import com.gtelpay.core.accounting.domain.LineSide;
+import com.gtelpay.core.accounting.domain.PeriodStatus;
 import com.gtelpay.core.accounting.repository.CoaAccountRepository;
+import com.gtelpay.core.accounting.repository.CoaPeriodRepository;
 import com.gtelpay.core.accounting.repository.CoaTransDataRepository;
 import com.gtelpay.core.accounting.repository.CoaTransRepository;
 import com.gtelpay.core.accounting.service.CreateJournalCommand;
@@ -40,14 +42,31 @@ public class JournalServiceImpl implements JournalService {
     private final CoaTransRepository coaTransRepository;
     private final CoaTransDataRepository coaTransDataRepository;
     private final CoaAccountRepository coaAccountRepository;
+    private final CoaPeriodRepository coaPeriodRepository;
 
     public JournalServiceImpl(
             CoaTransRepository coaTransRepository,
             CoaTransDataRepository coaTransDataRepository,
-            CoaAccountRepository coaAccountRepository) {
+            CoaAccountRepository coaAccountRepository,
+            CoaPeriodRepository coaPeriodRepository) {
         this.coaTransRepository = coaTransRepository;
         this.coaTransDataRepository = coaTransDataRepository;
         this.coaAccountRepository = coaAccountRepository;
+        this.coaPeriodRepository = coaPeriodRepository;
+    }
+
+    // ADR-023: posting is prohibited into a CLOSED or LOCKED period. Period = "yyyy-MM" of the
+    // journal's posting_date. No row → OPEN by default.
+    private void assertPeriodOpen(LocalDate postingDate) {
+        LocalDate date = postingDate != null ? postingDate : LocalDate.now();
+        String periodCode = String.format("%04d-%02d", date.getYear(), date.getMonthValue());
+        coaPeriodRepository.findById(periodCode).ifPresent(period -> {
+            if (period.getStatus() != PeriodStatus.OPEN) {
+                throw new AccountingException(
+                        ErrorCode.ACCOUNTING_PERIOD_CLOSED,
+                        "accounting period " + periodCode + " is " + period.getStatus());
+            }
+        });
     }
 
     @Override
@@ -81,6 +100,7 @@ public class JournalServiceImpl implements JournalService {
             throw new AccountingException(
                     ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND, "journal not postable: " + journal.getStatus());
         }
+        assertPeriodOpen(journal.getPostingDate());
         List<CoaTransDataEntity> lines = coaTransDataRepository.findByCoaTransId(coaTransId);
         JournalBalanceValidator.assertBalanced(lines);
         // ADR-010: transit net-zero for EVERY use case at post time (not just deposit) — no
@@ -107,6 +127,8 @@ public class JournalServiceImpl implements JournalService {
             throw new AccountingException(
                     ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND, "deposit journal not PENDING");
         }
+
+        assertPeriodOpen(journal.getPostingDate());
 
         BigDecimal normalizedFee = MoneyUtil.normalizeAllowZero(fee);
 

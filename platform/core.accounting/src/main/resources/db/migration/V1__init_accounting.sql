@@ -32,3 +32,9 @@ CREATE TABLE accounting.coa_trans_data (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_coa_trans_data_journal ON accounting.coa_trans_data (coa_trans_id);
+
+-- ADR-023: accounting periods. Absence of a row = OPEN. Mark CLOSED/LOCKED to block posting.
+CREATE TABLE IF NOT EXISTS accounting.coa_period (
+    period_code VARCHAR(7) PRIMARY KEY,   -- yyyy-MM
+    status      VARCHAR(16) NOT NULL DEFAULT 'OPEN'
+);
