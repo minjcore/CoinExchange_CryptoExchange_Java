@@ -9,7 +9,7 @@
 | Author | Engineering |
 | Date | June 2026 |
 
-**Related:** [`core.foundation.md`](./core.foundation.md), [`integration-surfaces.md`](./integration-surfaces.md), [`wallet.md`](./wallet.md), [`openapi/accounting-internal.yaml`](./openapi/accounting-internal.yaml), [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml).  
+**Related:** [`core.foundation.md`](./core.foundation.md), [`integration-surfaces.md`](./integration-surfaces.md), [`wallet.md`](./wallet.md), [`spec/contracts/open-api/accounting-internal.yaml`](../contracts/open-api/accounting-internal.yaml), [`spec/contracts/async-api/core-events.yaml`](../contracts/async-api/core-events.yaml).  
 **ADR:** [ADR-001](./adr/ADR-001-immutable-ledger.md), [ADR-002](./adr/ADR-002-core-foundation-shared-library.md)
 
 ---

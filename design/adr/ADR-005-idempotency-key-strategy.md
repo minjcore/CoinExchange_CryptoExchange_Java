@@ -52,7 +52,7 @@ This ADR records the keying rules already scattered across `IMPLEMENTATION.md` D
 ### Negative / trade-offs
 
 - Derived sub-keys (`:settle`, `:release`) are a string convention orchestration must apply consistently — documented in D5 and [`operations.md`](../operations.md).
-- Clients must generate a stable `X-Idempotency-Key` and reuse it on retry; a fresh key per retry defeats idempotency (client contract in `openapi/`).
+- Clients must generate a stable `X-Idempotency-Key` and reuse it on retry; a fresh key per retry defeats idempotency (client contract in `spec/contracts/open-api/`).
 - `tx_type` becomes part of correctness, not just labeling — its enum is locked in [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §2.1.
 
 ### Implementation notes

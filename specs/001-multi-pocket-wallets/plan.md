@@ -25,7 +25,7 @@ runtime code committed here; `platform/core.wallet` + `app-orchestration` are th
 
 **Primary artifacts touched**:
 - DDL — `spec/implementation.md` §3 (`wallet_pocket_def`, `wallet.pocket_code`, `label`, partial unique index) — **drafted**
-- Contracts — `spec/contracts/openapi/gtelpay-public.yaml` pocket endpoints + schemas — **drafted**
+- Contracts — `spec/contracts/open-api/gtelpay-public.yaml` pocket endpoints + schemas — **drafted**
 - Behavior — `spec/processes.md` §11A; `design-v2/orchestration.md` §1.2 / §3.7 — **drafted**
 - Data model design — `design/platform/data-model.md` §3.1 — **drafted**
 - Conformance — `design-v2/acceptance.md` (pocket Gherkin) — **to extend** (ADR-040 AC/TC)
@@ -83,7 +83,7 @@ specs/001-multi-pocket-wallets/
 ```text
 adr/ADR-040-user-multi-pocket-wallets.md          # authority
 spec/implementation.md          §3               # DDL: wallet_pocket_def, wallet.pocket_code, indexes
-spec/contracts/openapi/gtelpay-public.yaml         # pocket endpoints + schemas
+spec/contracts/open-api/gtelpay-public.yaml         # pocket endpoints + schemas
 spec/processes.md               §11A              # create / close / pocket-to-pocket behavior
 design-v2/orchestration.md      §1.2, §3.7        # pocket→wallet_id resolution, pocket ops
 design/platform/data-model.md   §3.1              # ERD + member-vs-balance separation

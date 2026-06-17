@@ -54,5 +54,5 @@ Wallet module does not prefer one path over another — orchestration owns wirin
 
 ## References
 
-- [`asyncapi/core-events.yaml`](../asyncapi/core-events.yaml)
-- [`asyncapi/core-commands.yaml`](../asyncapi/core-commands.yaml)
+- [`spec/contracts/async-api/core-events.yaml`](../spec/contracts/async-api/core-events.yaml)
+- [`spec/contracts/async-api/core-commands.yaml`](../spec/contracts/async-api/core-commands.yaml)

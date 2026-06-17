@@ -361,4 +361,4 @@ Scenario Outline: Global invariants hold after any completed flow
 | Flow narrative + failure/compensation design | [`core.business-processes.md`](./core.business-processes.md) §3–§15 |
 | `tx_type` enum | [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) §2.1 |
 | Idempotency keys & sub-keys | [ADR-005](./adr/ADR-005-idempotency-key-strategy.md) |
-| Wire payloads | `openapi/`, `asyncapi/` |
+| Wire payloads | `open-api/`, `async-api/` |

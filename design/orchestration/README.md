@@ -26,7 +26,7 @@ Chi tiết: [`../spec/integration-surfaces.md`](../spec/integration-surfaces.md)
 | 3 | [`failures.md`](./failures.md) | Saga, compensation, edge cases |
 | 4 | [`../design-v2/orchestration.md`](../design-v2/orchestration.md) | Behavior đầy đủ (Part II) |
 | 5 | [`http-public.yaml`](./http-public.yaml) | Public ref → paymentorches (`gtelpay-public`) |
-| 6 | [`../spec/contracts/openapi/gtelpay-core-internal.yaml`](../spec/contracts/openapi/gtelpay-core-internal.yaml) | Core inbound — app-orchestration |
+| 6 | [`../spec/contracts/open-api/gtelpay-core-internal.yaml`](../spec/contracts/open-api/gtelpay-core-internal.yaml) | Core inbound — app-orchestration |
 
 ### Use case → doc map
 

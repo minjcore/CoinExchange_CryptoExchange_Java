@@ -4,7 +4,7 @@
 |-------|-------|
 | Status | Accepted |
 | Date | 2026-06-12 |
-| Source | [`spec/integration-surfaces.md`](../spec/integration-surfaces.md) §5.1, §7 · [`spec/contracts/asyncapi/core-commands.yaml`](../spec/contracts/asyncapi/core-commands.yaml) |
+| Source | [`spec/integration-surfaces.md`](../spec/integration-surfaces.md) §5.1, §7 · [`spec/contracts/async-api/core-commands.yaml`](../spec/contracts/async-api/core-commands.yaml) |
 | Related | [ADR-006](ADR-006-two-phase-deposit.md), [ADR-013](ADR-013-outbox-at-least-once-messaging.md), [ADR-035](ADR-035-rabbitmq-workers-not-temporal-v1.md), [ADR-005](ADR-005-idempotency-key-strategy.md), [ADR-038](ADR-038-orchestrator-separate-service-gateway-seam.md) |
 
 ---
@@ -25,7 +25,7 @@ Cần chốt **đường gọi** từ app-orchestration sang accounting cho phas
 
 3. **Không phải HTTP trực tiếp orch → accounting pod** trên luồng nạp tiền khuyến nghị — RabbitMQ tách thời gian (webhook nhanh, ghi sổ nền). HTTP sync `LedgerGateway` vẫn dùng cho **thanh toán / chuyển** ([ADR-027](ADR-027-sync-payment-transfer-three-commits.md)); deposit **ưu tiên** queue ([`integration-surfaces.md`](../spec/integration-surfaces.md) §5).
 
-4. **Wire contract:** [`asyncapi/core-commands.yaml`](../spec/contracts/asyncapi/core-commands.yaml) — envelope full-body; `businessRef` = idempotency ([ADR-005](ADR-005-idempotency-key-strategy.md), F6 [ADR-012](ADR-012-orchestration-integration-forbidden-rules.md)).
+4. **Wire contract:** [`spec/contracts/async-api/core-commands.yaml`](../spec/contracts/async-api/core-commands.yaml) — envelope full-body; `businessRef` = idempotency ([ADR-005](ADR-005-idempotency-key-strategy.md), F6 [ADR-012](ADR-012-orchestration-integration-forbidden-rules.md)).
 
 5. **Publish an toàn:** ghi outbox trong cùng transaction với bước saga (nếu có) rồi relay publish **at-least-once** ([ADR-013](ADR-013-outbox-at-least-once-messaging.md)). Consumer idempotent trên `(commandType, businessRef)`.
 
@@ -96,5 +96,5 @@ paymentorches ──HTTP──► app-orchestration (202)
 ## References
 
 - [`spec/integration-surfaces.md`](../spec/integration-surfaces.md) — §5.1, §7
-- [`spec/contracts/asyncapi/core-commands.yaml`](../spec/contracts/asyncapi/core-commands.yaml)
-- [`spec/contracts/openapi/accounting-internal.yaml`](../spec/contracts/openapi/accounting-internal.yaml) — sync path (non-deposit)
+- [`spec/contracts/async-api/core-commands.yaml`](../spec/contracts/async-api/core-commands.yaml)
+- [`spec/contracts/open-api/accounting-internal.yaml`](../spec/contracts/open-api/accounting-internal.yaml) — sync path (non-deposit)

@@ -48,8 +48,8 @@ Behavior đầy đủ (Part II, reference synthesis): [`design-v2/orchestration.
 | Bước | Đọc | Mục đích |
 |------|-----|----------|
 | D1 | [`spec/integration-surfaces.md`](spec/integration-surfaces.md) §1–§2 | Luồng + bảng contract YAML |
-| D2 | [`spec/contracts/openapi/`](spec/contracts/openapi/) | HTTP payloads |
-| D3 | [`spec/contracts/asyncapi/`](spec/contracts/asyncapi/) | Kafka events + RabbitMQ commands |
+| D2 | [`spec/contracts/open-api/`](spec/contracts/open-api/) | HTTP payloads |
+| D3 | [`spec/contracts/async-api/`](spec/contracts/async-api/) | Kafka events + RabbitMQ commands |
 | D4 | [`design/messaging/`](design/messaging/) | Ai publish/consume gì |
 
 ### Flow E — Implement
@@ -81,7 +81,7 @@ Behavior đầy đủ (Part II, reference synthesis): [`design-v2/orchestration.
 ```
 10_core/
 ├── spec/                 # Binding: foundation, TRD, processes, implementation, wire index
-│   ├── contracts/        # openapi/, asyncapi/, gateway/ (YAML truth)
+│   ├── contracts/        # open-api/, async-api/, gateway/ (YAML truth)
 │   └── trd/
 ├── design/               # Modular theo domain (mỏng, đọc cạnh YAML)
 │   └── platform|accounting|wallet|orchestration|messaging/
@@ -108,7 +108,7 @@ Behavior đầy đủ (Part II, reference synthesis): [`design-v2/orchestration.
 
 Các file `core.*.md`, `IMPLEMENTATION.md`, `integration-surfaces.md`, `TERMINOLOGY.md` ở root là **stub redirect** → `spec/`. Không xóa để giữ link cũ.
 
-`openapi/`, `asyncapi/`, `gateway/`, `_legacy/` ở root: stub README → `spec/contracts/` hoặc `_archive/`.
+`open-api/`, `async-api/`, `gateway/`, `_legacy/` ở root: stub README → `spec/contracts/` hoặc `_archive/`.
 
 ## Tooling
 

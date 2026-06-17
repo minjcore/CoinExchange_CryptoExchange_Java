@@ -4,7 +4,7 @@
 **Last updated:** 2026-06-10  
 **Scope:** `10_core/` — `core.wallet`. Terms: [`TERMINOLOGY.md`](./TERMINOLOGY.md). **Status:** Implemented — `platform/core.wallet` (`WalletCommandService` / `WalletQueryService`, Flyway `V1__init_wallet.sql`); see §9 for the concurrency contract.
 
-**Related:** [`integration-surfaces.md`](./integration-surfaces.md), [`core.foundation.md`](./core.foundation.md), [`openapi/README.md`](./openapi/README.md).  
+**Related:** [`integration-surfaces.md`](./integration-surfaces.md), [`core.foundation.md`](./core.foundation.md), [`spec/contracts/open-api/README.md`](../contracts/open-api/README.md).  
 **ADR:** [ADR-002 — `core.foundation` shared library](./adr/ADR-002-core-foundation-shared-library.md).
 
 **Integration:** Surface matrix and orchestration step order → [`integration-surfaces.md`](./integration-surfaces.md) §4. `wallet_*` detail → this doc; DR/CR → [`core.foundation.md`](./core.foundation.md) Part II §8+.
@@ -165,7 +165,7 @@ On first need (or member onboarding hook from Application):
 ### FR-2 Query balance
 
 - Input: `memberId`, `walletType`, `currency`.
-- Output: `available`, `frozen`, `status` — aligns with public OpenAPI `WalletBalanceData` (schema names in [`openapi/gtelpay-public.yaml`](./openapi/gtelpay-public.yaml); wire spec is integration docs).
+- Output: `available`, `frozen`, `status` — aligns with public OpenAPI `WalletBalanceData` (schema names in [`spec/contracts/open-api/gtelpay-public.yaml`](../contracts/open-api/gtelpay-public.yaml); wire spec is integration docs).
 
 ### FR-3 Credit
 
@@ -219,7 +219,7 @@ Example from foundation §8: user receives **99,000** net on 100,000 deposit —
 
 ### 5.2 Payment (wallet pay — sync)
 
-Orchestration order (Application — see [`openapi/gtelpay-core-internal.yaml`](./openapi/gtelpay-core-internal.yaml) `createPayment`):
+Orchestration order (Application — see [`spec/contracts/open-api/gtelpay-core-internal.yaml`](../contracts/open-api/gtelpay-core-internal.yaml) `createPayment`):
 
 1. **Debit** user `available` (gross `amount` from request).
 2. Accounting: create journal → lines → **POSTED**.
@@ -339,11 +339,11 @@ HTTP/Kafka parsing stays in Application; payload shapes from OpenAPI / AsyncAPI.
 | Kafka | `core.wallet.credited` | Out | After `wallet_tx` commit |
 | Kafka | `core.operations.command-failed` | Out | Failure fan-out |
 
-Kafka payloads: [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml). RabbitMQ full-body envelope (`businessRef`, `memberId`, `messageId`, `payload`): [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml). Field `businessRef` = column `business_ref`.
+Kafka payloads: [`spec/contracts/async-api/core-events.yaml`](../contracts/async-api/core-events.yaml). RabbitMQ full-body envelope (`businessRef`, `memberId`, `messageId`, `payload`): [`spec/contracts/async-api/core-commands.yaml`](../contracts/async-api/core-commands.yaml). Field `businessRef` = column `business_ref`.
 
 ### 7.4 Public HTTP
 
-Paths and schemas: [`openapi/gtelpay-core-internal.yaml`](./openapi/gtelpay-core-internal.yaml) (orch inbound); public channel [`gtelpay-public.yaml`](./openapi/gtelpay-public.yaml) (paymentorches). Wallet module **does not** embed HTTP routes.
+Paths and schemas: [`spec/contracts/open-api/gtelpay-core-internal.yaml`](../contracts/open-api/gtelpay-core-internal.yaml) (orch inbound); public channel [`spec/contracts/open-api/gtelpay-public.yaml`](../contracts/open-api/gtelpay-public.yaml) (paymentorches). Wallet module **does not** embed HTTP routes.
 
 ---
 

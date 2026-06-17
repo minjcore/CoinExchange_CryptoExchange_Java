@@ -48,4 +48,4 @@ COA **2110 / 2120 / 2130** = aggregate liabilities (accounting). **`wallet_balan
 
 ## Integration
 
-Contract index: [`integration-surfaces.md`](./integration-surfaces.md). Wire: `openapi/`, `asyncapi/`.
+Contract index: [`integration-surfaces.md`](./integration-surfaces.md). Wire: `spec/contracts/open-api/`, `spec/contracts/async-api/`.

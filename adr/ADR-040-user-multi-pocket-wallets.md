@@ -62,20 +62,20 @@ The question is how to represent a pocket without breaking the per-wallet concur
 This is a mainstream pattern, not a bespoke risk. **Primary provenance is in-house** — the pattern
 was learned from this project's own reference architecture, then confirmed against industry tiers.
 
-**Source of record (where we actually took it from):** the `00_framework` reference codebase
+**Source of record (where we actually took it from):** the `00_framework_temporaty_referrence_only` reference codebase
 (BizzanCloud-derived, retained for technical reference only — not production). There,
 `member_wallet` is keyed by **`(member_id, coin_id)`**, so **one member already owns many wallet
 rows** (one per coin), and **account is separate from balance** (`Member` identity vs `MemberWallet`
 numbers). ADR-040 lifts that structure directly:
 
-| Reference (`00_framework`) | ADR-040 (GtelPay) |
+| Reference (`00_framework_temporaty_referrence_only`) | ADR-040 (GtelPay) |
 |----------------------------|-------------------|
 | one member → many `member_wallet` rows, discriminated by `coin_id` | one USER → many `wallet` rows, discriminated by `pocket_code`/`label` |
 | pocket = a full wallet row (not a sub-balance column) | same — pocket = a full `wallet` row |
 | `Member` (account) ⊥ `MemberWallet` (balance) | `wallet.member_id` ref ⊥ `wallet_balance` (numbers only) — [`design/platform/data-model.md`](../design/platform/data-model.md) §3.1 |
 
 What GtelPay **adds beyond the reference** (the reference has none of these): COA double-entry
-ledger (00_framework only logs `member_transaction`, no balanced DR/CR), idempotency triple,
+ledger (00_framework_temporaty_referrence_only only logs `member_transaction`, no balanced DR/CR), idempotency triple,
 immutable ledger + transit net-zero, and the wallet⊥accounting schema split.
 
 **Industry confirmation** (the pattern is not idiosyncratic) — three tiers:

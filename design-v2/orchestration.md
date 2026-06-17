@@ -43,13 +43,13 @@ Idempotency triple `(wallet_id, business_ref, tx_type)` is therefore naturally p
 
 | ID | Protocol | Spec | Orch role |
 |----|----------|------|-----------|
-| S1 | HTTPS inbound | `openapi/gtelpay-core-internal.yaml` | Implement — paymentorches → orch |
-| *(public)* | HTTPS | `openapi/gtelpay-public.yaml` | **paymentorches** |
-| — | HTTPS outbound | `openapi/wallet-internal.yaml` | `WalletGateway` → wallet pod |
-| S2 | HTTPS outbound | `openapi/accounting-internal.yaml` | `LedgerGateway` → accounting pod |
-| S3 | Kafka | `asyncapi/core-events.yaml` | Publish / consume |
-| S6 | RabbitMQ | `asyncapi/core-commands.yaml` | Publish commands |
-| S4 | Gateway config (ref) | `gateway/routes.example.yaml` | Platform — không orch layer |
+| S1 | HTTPS inbound | `spec/contracts/open-api/gtelpay-core-internal.yaml` | Implement — paymentorches → orch |
+| *(public)* | HTTPS | `spec/contracts/open-api/gtelpay-public.yaml` | **paymentorches** |
+| — | HTTPS outbound | `spec/contracts/open-api/wallet-internal.yaml` | `WalletGateway` → wallet pod |
+| S2 | HTTPS outbound | `spec/contracts/open-api/accounting-internal.yaml` | `LedgerGateway` → accounting pod |
+| S3 | Kafka | `spec/contracts/async-api/core-events.yaml` | Publish / consume |
+| S6 | RabbitMQ | `spec/contracts/async-api/core-commands.yaml` | Publish commands |
+| S4 | Gateway config (ref) | `spec/contracts/gateway/routes.example.yaml` | Platform — không orch layer |
 | S5 | Library envelope | `foundation.md` §4 | Wire shape S1/S2/S6 |
 
 Chi tiết: [`integration-surfaces.md`](../spec/integration-surfaces.md) §1.1.
@@ -188,7 +188,7 @@ Detail of claims and roles is product config — not stored in domain modules.
 | DLQ | Poison messages → `core.commands.dlq` |
 | Aging | Pending PENDING deposit / stuck frozen → alert |
 | Reconciliation | W5 + A3 nightly; report-only |
-| CommandFailed | Kafka fan-out for ops ([`asyncapi/core-events.yaml`](../asyncapi/core-events.yaml)) |
+| CommandFailed | Kafka fan-out for ops ([`spec/contracts/async-api/core-events.yaml`](../spec/contracts/async-api/core-events.yaml)) |
 
 ---
 
@@ -797,7 +797,7 @@ Wallet stores only `available` + `frozen` ([`wallet.md`](./wallet.md) §2.1). Or
 | Topic | Reference suggests | Status |
 |-------|-------------------|--------|
 | Bank SLA / poll interval T2 | Stripe settlement, MT scale | [ADR-033](../adr/ADR-033-bank-poll-t2-frozen-tmax.md) — values ops-owned |
-| Webhook signature algorithm detail | Adyen webhooks | In `openapi/` — verify per integration |
+| Webhook signature algorithm detail | Adyen webhooks | In `spec/contracts/open-api/` — verify per integration |
 | Temporal / durable workflow mandate | temporal-saga | [ADR-035](../adr/ADR-035-rabbitmq-workers-not-temporal-v1.md) — RabbitMQ v1 |
 
 ---

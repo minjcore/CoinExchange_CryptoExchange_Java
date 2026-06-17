@@ -13,15 +13,21 @@ public enum WalletTxType {
     WITHDRAW_FREEZE(TxDirection.FREEZE, false),
     WITHDRAW_RELEASE(TxDirection.UNFREEZE, false),
     WITHDRAW_SETTLE(TxDirection.DEBIT, true),
+    // IBFT mirrors the withdraw freeze/settle/release pattern (wallet.md §6, ADR-007).
+    // IBFT_SETTLE MUST deduct from frozen (true) — debiting available here would double-spend
+    // the funds already held by IBFT_FREEZE.
+    IBFT_FREEZE(TxDirection.FREEZE, false),
+    IBFT_RELEASE(TxDirection.UNFREEZE, false),
+    IBFT_SETTLE(TxDirection.DEBIT, true),
     ADJUSTMENT_CREDIT(TxDirection.CREDIT, false),
     ADJUSTMENT_DEBIT(TxDirection.DEBIT, false);
 
     private static final Set<WalletTxType> CREDIT_TYPES = EnumSet.of(
             DEPOSIT_CREDIT, PAYMENT_CREDIT, TRANSFER_CREDIT, ADJUSTMENT_CREDIT);
     private static final Set<WalletTxType> DEBIT_TYPES = EnumSet.of(
-            PAYMENT_DEBIT, TRANSFER_DEBIT, ADJUSTMENT_DEBIT, WITHDRAW_SETTLE);
-    private static final Set<WalletTxType> FREEZE_TYPES = EnumSet.of(WITHDRAW_FREEZE);
-    private static final Set<WalletTxType> UNFREEZE_TYPES = EnumSet.of(WITHDRAW_RELEASE);
+            PAYMENT_DEBIT, TRANSFER_DEBIT, ADJUSTMENT_DEBIT, WITHDRAW_SETTLE, IBFT_SETTLE);
+    private static final Set<WalletTxType> FREEZE_TYPES = EnumSet.of(WITHDRAW_FREEZE, IBFT_FREEZE);
+    private static final Set<WalletTxType> UNFREEZE_TYPES = EnumSet.of(WITHDRAW_RELEASE, IBFT_RELEASE);
 
     private final TxDirection direction;
     private final boolean deductFromFrozen;

@@ -190,9 +190,9 @@ Deposit phase A may be intentionally unbalanced on 2110 (no user liability yet) 
 
 | Surface | Role |
 |---------|------|
-| S2 [`openapi/accounting-internal.yaml`](../openapi/accounting-internal.yaml) | create / lines / post / reverse / balance |
+| S2 [`spec/contracts/open-api/accounting-internal.yaml`](../spec/contracts/open-api/accounting-internal.yaml) | create / lines / post / reverse / balance |
 | S6 `BANK_DEPOSIT` command | Worker creates deposit journal |
-| S3 `JournalPosted` | [`asyncapi/core-events.yaml`](../asyncapi/core-events.yaml) |
+| S3 `JournalPosted` | [`spec/contracts/async-api/core-events.yaml`](../spec/contracts/async-api/core-events.yaml) |
 | Step order | [`orchestration.md`](./orchestration.md), [`integration-surfaces.md`](../integration-surfaces.md) §4 |
 
 Accounting module does not parse S1 public HTTP.

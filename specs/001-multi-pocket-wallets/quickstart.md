@@ -15,7 +15,7 @@ means asserting the **artifacts** are coherent and the **acceptance scenarios** 
 | Check | Where | Pass condition |
 |-------|-------|----------------|
 | DDL has pocket columns + indexes | `spec/implementation.md` §3 | `pocket_code`, `label`, `uq_wallet_member_type_ccy_label`, `uq_wallet_single_nonuser`, `wallet_pocket_def` present |
-| OpenAPI parses & has pocket ops | `spec/contracts/openapi/gtelpay-public.yaml` | `listPocketDefs/listPockets/createPocket/closePocket/createPocketTransfer` present; YAML valid |
+| OpenAPI parses & has pocket ops | `spec/contracts/open-api/gtelpay-public.yaml` | `listPocketDefs/listPockets/createPocket/closePocket/createPocketTransfer` present; YAML valid |
 | Behavior documented | `spec/processes.md` §11A | create/close/pocket-transfer flows present |
 | Orchestration resolution | `design-v2/orchestration.md` §1.2/§3.7 | member+pocket→wallet_id rule present |
 | Constitution gate | this plan §Constitution Check | all 7 principles ✅ |

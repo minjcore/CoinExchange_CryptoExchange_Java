@@ -16,7 +16,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import java.time.Instant;
 
 /**
- * Wallet-internal HTTP surface ({@code spec/contracts/openapi/wallet-internal.yaml}, ADR-038).
+ * Wallet-internal HTTP surface ({@code spec/contracts/open-api/wallet-internal.yaml}, ADR-038).
  * Thin adapter over the wallet domain services; the orchestrator's {@code WalletGateway}
  * calls this instead of the domain classes once split out of the JVM.
  */

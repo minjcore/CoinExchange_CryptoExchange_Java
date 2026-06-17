@@ -108,7 +108,7 @@ Full table: [`../adr/README.md`](../adr/README.md).
 
 ## Wire contracts
 
-- Public HTTP: [`../spec/contracts/openapi/gtelpay-public.yaml`](../spec/contracts/openapi/gtelpay-public.yaml)
-- Accounting internal: `spec/contracts/openapi/accounting-internal.yaml`
-- Kafka events: `spec/contracts/asyncapi/core-events.yaml`
-- RabbitMQ commands: `spec/contracts/asyncapi/core-commands.yaml`
+- Public HTTP: [`../spec/contracts/open-api/gtelpay-public.yaml`](../spec/contracts/open-api/gtelpay-public.yaml)
+- Accounting internal: `spec/contracts/open-api/accounting-internal.yaml`
+- Kafka events: `spec/contracts/async-api/core-events.yaml`
+- RabbitMQ commands: `spec/contracts/async-api/core-commands.yaml`

@@ -71,12 +71,12 @@ Sync payment/transfer = **3 separate commits** (wallet debit → ledger POSTED �
 
 | ID | Transport | Spec |
 |----|-----------|------|
-| Public HTTPS | `contracts/openapi/gtelpay-public.yaml` | **paymentorches** |
-| Core inbound | `contracts/openapi/gtelpay-core-internal.yaml` | **app-orchestration** |
-| S2 | Accounting internal | `contracts/openapi/accounting-internal.yaml` |
-| — | Wallet internal | `contracts/openapi/wallet-internal.yaml` |
-| S3 | Kafka events | `contracts/asyncapi/core-events.yaml` |
-| S6 | RabbitMQ commands | `contracts/asyncapi/core-commands.yaml` |
+| Public HTTPS | `spec/contracts/open-api/gtelpay-public.yaml` | **paymentorches** |
+| Core inbound | `spec/contracts/open-api/gtelpay-core-internal.yaml` | **app-orchestration** |
+| S2 | Accounting internal | `spec/contracts/open-api/accounting-internal.yaml` |
+| — | Wallet internal | `spec/contracts/open-api/wallet-internal.yaml` |
+| S3 | Kafka events | `spec/contracts/async-api/core-events.yaml` |
+| S6 | RabbitMQ commands | `spec/contracts/async-api/core-commands.yaml` |
 
 ## 7. Decisions index
 

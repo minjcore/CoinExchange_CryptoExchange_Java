@@ -993,7 +993,7 @@ T+1d   FR-10 bank statement match 1111
 | postJournal | B | Internal — prefer confirmDeposit for deposit |
 | getJournal | query | status, business_ref, lines |
 
-OpenAPI: `spec/contracts/openapi/accounting-internal.yaml`.
+OpenAPI: `spec/contracts/open-api/accounting-internal.yaml`.
 
 ---
 ## Chương 18. SQL invariant CI (ADR-031) {#chương-18-sql-invariant-ci-adr-031}

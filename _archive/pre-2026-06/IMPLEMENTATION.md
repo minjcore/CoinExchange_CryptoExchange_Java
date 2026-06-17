@@ -15,8 +15,8 @@
 
 | Decision | Choice |
 |----------|--------|
-| Where | New Maven parent **`core/`** (sibling to `00_framework/`), **not** inside legacy exchange modules |
-| Legacy | `00_framework/wallet` = crypto wallet cũ — **do not** extend for fiat `core.wallet` |
+| Where | New Maven parent **`core/`** (sibling to `00_framework_temporaty_referrence_only/`), **not** inside legacy exchange modules |
+| Legacy | `00_framework_temporaty_referrence_only/wallet` = crypto wallet cũ — **do not** extend for fiat `core.wallet` |
 | Parent POM | `core/pom.xml` — Java **17**, Spring Boot **3.3.x** only on `app-*` modules |
 | GroupId | `com.gtelpay.core` (adjust to org standard) |
 | Build | `mvn -pl core.wallet -am test` per module; parent aggregates all |
@@ -296,7 +296,7 @@ Pure Java; **no** `spring-*` on compile classpath.
 | `SortParam` | `request` | field + ASC/DESC |
 | `PageResult<T>` | `page` | `content`, `total`, `page`, `size`; empty → `content=[]`, `total=0` |
 | `ApiResponse<T>` | `response` | `code` int 0=ok; `message`; `data`; `timestamp` Instant |
-| `ErrorCode` | `exception` | enum — mirror [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml) `ErrorCode` |
+| `ErrorCode` | `exception` | enum — mirror [`async-api/core-events.yaml`](./async-api/core-events.yaml) `ErrorCode` |
 | `BaseException` | `exception` | `ErrorCode code`, `String message` |
 | `WalletException` | `exception` | extends BaseException |
 | `AccountingException` | `exception` | extends BaseException |
@@ -541,7 +541,7 @@ Wrap responses: `ApiResponse.ok(data)`; map `BaseException` in `GlobalExceptionH
 | **In-process** (v1 dev) | Same JVM | `@Autowired JournalService` directly in use cases |
 | HTTP client (prod split) | Separate accounting pod | `AccountingClient` implements same interface, RestTemplate/WebClient |
 
-OpenAPI [`accounting-internal.yaml`](./openapi/accounting-internal.yaml) is the contract for HTTP mode.
+OpenAPI [`accounting-internal.yaml`](./open-api/accounting-internal.yaml) is the contract for HTTP mode.
 
 ### 9.3 S6 — publish
 
@@ -682,6 +682,6 @@ Flyway: configure **per datasource** — `spring.flyway.schemas=wallet` on walle
 | Table columns / FR | [`core.wallet.md`](./core.wallet.md), [`core.accounting.trd.md`](./core.accounting.trd.md) |
 | DR/CR / transit | [`core.foundation.md`](./core.foundation.md) Part II §8–16 |
 | Step order | [`integration-surfaces.md`](./integration-surfaces.md) §4 |
-| HTTP / Kafka / RabbitMQ payloads | `openapi/`, `asyncapi/` |
+| HTTP / Kafka / RabbitMQ payloads | `open-api/`, `async-api/` |
 | Shared types | [`core.foundation.md`](./core.foundation.md) Part I §4 |
 | **This file** | Layout, DDL, algorithms, phases, class names |

@@ -12,12 +12,12 @@ Design docs for architecture and integration; **TRDs** describe service requirem
 - `core.business-processes.md` — end-to-end flows, failure/compensation (design-level)
 - `core.acceptance-specs.md` — Given/When/Then conformance scenarios
 - `integration-surfaces.md` — HTTP/Kafka/RabbitMQ/Gateway contract index (not domain schema)
-- `openapi/` — **gtelpay-public.yaml**, **accounting-internal.yaml** (Gateway / partners / BFF; see [`openapi/README.md`](openapi/README.md))
-- `asyncapi/core-events.yaml` — Kafka topics + payloads
-- `asyncapi/core-commands.yaml` — RabbitMQ worker commands + full-body envelope
+- `open-api/` — **gtelpay-public.yaml**, **accounting-internal.yaml** (Gateway / partners / BFF; see [`open-api/README.md`](open-api/README.md))
+- `async-api/core-events.yaml` — Kafka topics + payloads
+- `async-api/core-commands.yaml` — RabbitMQ worker commands + full-body envelope
 - `gateway/routes.example.yaml` — example API Gateway routes
 - `adr/` — ADRs: [001](adr/ADR-001-immutable-ledger.md) ledger, [002](adr/ADR-002-core-foundation-shared-library.md) shared lib = `core.foundation`
-- `00_framework.design.md` — legacy repo reference, outside `10_core` contracts
+- `00_framework_temporaty_referrence_only.design.md` — legacy repo reference, outside `10_core` contracts
 - [`_legacy/`](./_legacy/) — snapshot index (pre-`design/` move); canonical files remain at root
 
 **TRD (Technical Requirements Document)**

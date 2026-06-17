@@ -4,7 +4,7 @@
 
 | Artifact | Path |
 |----------|------|
-| S2 internal HTTP | [`api-internal.yaml`](./api-internal.yaml) (= [`spec/contracts/openapi/accounting-internal.yaml`](../../spec/contracts/openapi/accounting-internal.yaml)) |
+| S2 internal HTTP | [`api-internal.yaml`](./api-internal.yaml) (= [`spec/contracts/open-api/accounting-internal.yaml`](../../spec/contracts/open-api/accounting-internal.yaml)) |
 | Journal tables | [`model.md`](./model.md) |
 | DR/CR templates | [`postings.md`](./postings.md) |
 | Step order | [`../orchestration/flows.md`](../orchestration/flows.md) |

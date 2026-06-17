@@ -54,4 +54,22 @@ public final class JournalBalanceValidator {
                     "transit " + transitAccount + " net=" + net + " (expected 0)");
         }
     }
+
+    /**
+     * ADR-010: every transit account (COA group 3, code prefix "3") used in a journal must net to
+     * zero when it POSTs — for ALL use cases, not just deposit. Enforced inline at post time so a
+     * payment/transfer/withdraw/IBFT cannot POST with funds stranded in 3200/3300/3400/3500/...
+     */
+    static void assertAllTransitZero(List<CoaTransDataEntity> lines) {
+        java.util.Set<String> transitCodes = new java.util.LinkedHashSet<>();
+        for (CoaTransDataEntity line : lines) {
+            String code = line.getAccountCode();
+            if (code != null && code.startsWith("3")) {
+                transitCodes.add(code);
+            }
+        }
+        for (String code : transitCodes) {
+            assertTransitZero(code, lines);
+        }
+    }
 }

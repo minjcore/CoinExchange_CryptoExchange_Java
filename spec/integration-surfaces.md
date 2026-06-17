@@ -40,12 +40,12 @@ Lớp 1 và lớp 3 **không** gọi thẳng nhau. Mọi thứ đi qua lớp 2.
 
 | Ai code | Ai gọi | File |
 |---------|--------|------|
-| paymentorches | Client, Gateway | [`openapi/gtelpay-public.yaml`](./openapi/gtelpay-public.yaml) |
-| app-orchestration | paymentorches | [`openapi/gtelpay-core-internal.yaml`](./openapi/gtelpay-core-internal.yaml) |
-| wallet | app-orchestration | [`openapi/wallet-internal.yaml`](./openapi/wallet-internal.yaml) |
-| accounting | app-orchestration | [`openapi/accounting-internal.yaml`](./openapi/accounting-internal.yaml) |
-| app-orchestration (+ worker) | nội bộ | [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml) (RabbitMQ) |
-| app-orchestration / domain | nội bộ | [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml) (Kafka) |
+| paymentorches | Client, Gateway | [`spec/contracts/open-api/gtelpay-public.yaml`](./contracts/open-api/gtelpay-public.yaml) |
+| app-orchestration | paymentorches | [`spec/contracts/open-api/gtelpay-core-internal.yaml`](./contracts/open-api/gtelpay-core-internal.yaml) |
+| wallet | app-orchestration | [`spec/contracts/open-api/wallet-internal.yaml`](./contracts/open-api/wallet-internal.yaml) |
+| accounting | app-orchestration | [`spec/contracts/open-api/accounting-internal.yaml`](./contracts/open-api/accounting-internal.yaml) |
+| app-orchestration (+ worker) | nội bộ | [`spec/contracts/async-api/core-commands.yaml`](./contracts/async-api/core-commands.yaml) (RabbitMQ) |
+| app-orchestration / domain | nội bộ | [`spec/contracts/async-api/core-events.yaml`](./contracts/async-api/core-events.yaml) (Kafka) |
 
 Format response chung (`ApiResponse`, lỗi, phân trang): [`foundation.md`](./foundation.md) — thư viện dùng chung, không phải API riêng.
 
@@ -115,7 +115,7 @@ Chi tiết ví: [`trd/wallet.md` §5](./trd/wallet.md). Chi tiết sổ: [`found
 
 ## 6. Kafka (event)
 
-Chi tiết schema: [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml).
+Chi tiết schema: [`spec/contracts/async-api/core-events.yaml`](./contracts/async-api/core-events.yaml).
 
 | Topic | Ai gửi | Ai nhận | Ảnh hưởng ví |
 |-------|--------------|-------------|---------------|
@@ -131,7 +131,7 @@ Khóa phân vùng: `businessRef` (nạp/thanh toán) hoặc `memberId`.
 
 ## 7. RabbitMQ (lệnh worker)
 
-Chi tiết schema: [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml).
+Chi tiết schema: [`spec/contracts/async-api/core-commands.yaml`](./contracts/async-api/core-commands.yaml).
 
 **ADR:** [ADR-041](../adr/ADR-041-rabbitmq-orch-to-accounting-worker.md) (orch → accounting qua `BANK_DEPOSIT`) · [ADR-013](../adr/ADR-013-outbox-at-least-once-messaging.md) · [ADR-035](../adr/ADR-035-rabbitmq-workers-not-temporal-v1.md) · [ADR-005](../adr/ADR-005-idempotency-key-strategy.md)
 
@@ -203,7 +203,7 @@ Routing key khi publish: `{commandType}.{memberId}` chữ thường, vd. `bank_d
 
 ### 8.1 app-orchestration (paymentorches gọi vào)
 
-Đường dẫn đầy đủ: [`openapi/gtelpay-core-internal.yaml`](./openapi/gtelpay-core-internal.yaml).
+Đường dẫn đầy đủ: [`spec/contracts/open-api/gtelpay-core-internal.yaml`](./contracts/open-api/gtelpay-core-internal.yaml).
 
 | Path | `operationId` | Trả về | Ví? |
 |------|-----------------|--------|-----|
@@ -216,7 +216,7 @@ Routing key khi publish: `{commandType}.{memberId}` chữ thường, vd. `bank_d
 
 ### 8.2 paymentorches (API công khai)
 
-Đường dẫn đầy đủ: [`openapi/gtelpay-public.yaml`](./openapi/gtelpay-public.yaml). Thêm pocket, `bankWebhook`, auth kênh — **không** code trong app-orchestration.
+Đường dẫn đầy đủ: [`spec/contracts/open-api/gtelpay-public.yaml`](./contracts/open-api/gtelpay-public.yaml). Thêm pocket, `bankWebhook`, auth kênh — **không** code trong app-orchestration.
 
 API ghi sổ nội bộ **không** mở ra Gateway công khai.
 
@@ -269,8 +269,8 @@ Sơ đồ: [`correlation-id-map.md`](./correlation-id-map.md).
 | Ranh giới wallet ↔ accounting? | [`foundation.md`](./foundation.md) Part I §3 |
 | Nạp tiền, transit 3100? | [`foundation.md`](./foundation.md) Part II §8 |
 | Yêu cầu accounting? | [`trd/accounting.md`](./trd/accounting.md) |
-| Lint OpenAPI? | [`openapi/README.md`](./openapi/README.md) |
-| Envelope RabbitMQ? | [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml) · §7 |
+| Lint OpenAPI? | [`spec/contracts/open-api/README.md`](./contracts/open-api/README.md) |
+| Envelope RabbitMQ? | [`spec/contracts/async-api/core-commands.yaml`](./contracts/async-api/core-commands.yaml) · §7 |
 | Ngân hàng / NAPAS / NĐ 52? | [`trd/references/banking/`](./trd/references/banking/) · §13 |
 | Sổ bất biến? | [ADR-001](./adr/ADR-001-immutable-ledger.md) |
 | Tất cả ADR? | [`adr/README.md`](./adr/README.md) |

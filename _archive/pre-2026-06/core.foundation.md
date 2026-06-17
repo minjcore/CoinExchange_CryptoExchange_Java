@@ -6,7 +6,7 @@
 **Status:** Design only — not implemented in repo.
 
 **Related:** [ADR-002](./adr/ADR-002-core-foundation-shared-library.md), [`TERMINOLOGY.md`](./TERMINOLOGY.md), [`integration-surfaces.md`](./integration-surfaces.md), [`core.wallet.md`](./core.wallet.md), [`core.accounting.trd.md`](./core.accounting.trd.md).  
-**Wire:** [`openapi/`](./openapi/), [`asyncapi/`](./asyncapi/).
+**Wire:** [`open-api/`](./open-api/), [`async-api/`](./async-api/).
 
 This file has **two parts:** **Part I** (sections below) = `core.foundation` only. **Part II** = fiat accounting fund flow (`coa_*`, use cases §8–16) kept in this file for document history; service FR/NFR also appear in [`core.accounting.trd.md`](./core.accounting.trd.md).
 
@@ -24,7 +24,7 @@ This file has **two parts:** **Part I** (sections below) = `core.foundation` onl
 - **Pagination** (`PageRequest`, `PageResult`)
 - **Util** — minimal, when needed (id, time — only when reused)
 
-**Not in foundation (v1):** Duplicate command/event DTOs, port interfaces, Kafka/HTTP adapters. Wire shapes live in **`openapi/`** and **`asyncapi/`**; Application maps JSON → domain service method parameters.
+**Not in foundation (v1):** Duplicate command/event DTOs, port interfaces, Kafka/HTTP adapters. Wire shapes live in **`open-api/`** and **`async-api/`**; Application maps JSON → domain service method parameters.
 
 Foundation **does not** contain wallet or accounting business rules, **does not** include persistence, and **there is no Java module in the repo yet** — `10_core` is design-only.
 
@@ -44,7 +44,7 @@ Foundation **does not** contain wallet or accounting business rules, **does not*
 | `Wallet`, `CoaTrans` entities / repositories | `core.wallet`, `core.accounting` |
 | Spring MVC, security filters, Kafka listeners | Application |
 | COA posting rules, zero transit | Part II below / `core.accounting` |
-| OpenAPI / AsyncAPI YAML | `openapi/`, `asyncapi/` (wire source of truth) |
+| OpenAPI / AsyncAPI YAML | `open-api/`, `async-api/` (wire source of truth) |
 
 ---
 

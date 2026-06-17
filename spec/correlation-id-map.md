@@ -27,8 +27,8 @@
 | Khóa | Wire / header | DB / domain | Vai trò | Bắt buộc? | Xuyên suốt? |
 |------|---------------|-------------|---------|-----------|-------------|
 | **`businessRef`** | S1 body + `X-Idempotency-Key`; S3 payload; S6 envelope | `coa_trans.reference_id`, `wallet_tx.business_ref` | **Idempotency nghiệp vụ** — cùng ref + cùng semantics → không double effect | Mutations S1: yes | **Yes** — một giá trị, mọi surface |
-| **`reference_id`** | S2 [`accounting-internal.yaml`](./contracts/openapi/accounting-internal.yaml) JSON | `coa_trans.reference_id` (= cùng giá trị `businessRef`) | Tên TRD/S2 cho cùng khóa idempotent accounting | S2 create journal: yes | **Yes** — alias của `businessRef` |
-| **`correlationId`** | HTTP ingress: `X-Request-Id` / W3C trace → orchestration **MDC/log** (convention §7 — **chưa wire** [`gtelpay-public.yaml`](./contracts/openapi/gtelpay-public.yaml)); S6 envelope + S3 events (optional, wired AsyncAPI) | Không persist DB | **Trace** (= `request_id` tại HTTP ingress, copy sang tên này) — không idempotency | Optional | Một giá trị trace xuyên hop; **≠** `businessRef` |
+| **`reference_id`** | S2 [`accounting-internal.yaml`](./contracts/open-api/accounting-internal.yaml) JSON | `coa_trans.reference_id` (= cùng giá trị `businessRef`) | Tên TRD/S2 cho cùng khóa idempotent accounting | S2 create journal: yes | **Yes** — alias của `businessRef` |
+| **`correlationId`** | HTTP ingress: `X-Request-Id` / W3C trace → orchestration **MDC/log** (convention §7 — **chưa wire** [`gtelpay-public.yaml`](./contracts/open-api/gtelpay-public.yaml)); S6 envelope + S3 events (optional, wired AsyncAPI) | Không persist DB | **Trace** (= `request_id` tại HTTP ingress, copy sang tên này) — không idempotency | Optional | Một giá trị trace xuyên hop; **≠** `businessRef` |
 | **`messageId`** | S6 envelope only | Không | Dedup **một lần publish** AMQP | S6: yes | Per physical message — đổi mỗi retry publish |
 | **`eventId`** | S3 Kafka events | Không | Dedup event consumer | S3: yes | Per event publish |
 | **`coaTransId`** | S2 response; S3 `JournalPosted`; wallet command context | `coa_trans.id`; `wallet_tx.coa_trans_id` (no FK) | Liên kết journal ↔ wallet leg | After post | Correlation only |
@@ -190,7 +190,7 @@ Spec **chưa** chuẩn hóa HTTP `X-Request-Id`. Nếu team cần request trace:
 |-------|----------------|---------|
 | HTTP ingress | `X-Request-Id` hoặc W3C Trace Context | Gateway/Orchestration sinh nếu client không gửi |
 | Orchestration MDC | `correlationId` | Copy từ trace header — **không** ghi DB |
-| S6 publish | `correlationId` trên envelope | [`core-commands.yaml`](./contracts/asyncapi/core-commands.yaml) |
+| S6 publish | `correlationId` trên envelope | [`core-commands.yaml`](./contracts/async-api/core-commands.yaml) |
 | Log | `businessRef` + `correlationId` | [`implementation.md`](./implementation.md) §12 |
 
 **Không** dùng `request_id` / `correlationId` làm idempotency key — retry business phải reuse `X-Idempotency-Key`.

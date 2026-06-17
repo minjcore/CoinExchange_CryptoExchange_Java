@@ -43,5 +43,5 @@
 
 ## References
 
-- [`openapi/gtelpay-public.yaml`](../openapi/gtelpay-public.yaml)
+- [`spec/contracts/open-api/gtelpay-public.yaml`](../spec/contracts/open-api/gtelpay-public.yaml)
 - [`design-v2/acceptance.md`](../design-v2/acceptance.md) — X-E10

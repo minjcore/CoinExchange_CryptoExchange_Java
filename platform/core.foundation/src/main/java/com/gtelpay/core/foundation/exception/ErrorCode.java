@@ -1,7 +1,7 @@
 package com.gtelpay.core.foundation.exception;
 
 /**
- * Stable error identifiers — names align with asyncapi/core-events.yaml {@code ErrorCode} enum.
+ * Stable error identifiers — names align with async-api/core-events.yaml {@code ErrorCode} enum.
  * {@link #apiCode()} is the numeric {@code ApiResponse.code} (0 reserved for success).
  */
 public enum ErrorCode {

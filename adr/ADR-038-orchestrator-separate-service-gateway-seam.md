@@ -15,7 +15,7 @@
 
 ## Decision
 
-1. **The orchestrator is a separate service.** It calls the domains **over the network** — `core.accounting` via S2 ([`accounting-internal.yaml`](../spec/contracts/openapi/accounting-internal.yaml)); `core.wallet` via the wallet-internal HTTP surface ([`wallet-internal.yaml`](../spec/contracts/openapi/wallet-internal.yaml)).
+1. **The orchestrator is a separate service.** It calls the domains **over the network** — `core.accounting` via S2 ([`accounting-internal.yaml`](../spec/contracts/open-api/accounting-internal.yaml)); `core.wallet` via the wallet-internal HTTP surface ([`wallet-internal.yaml`](../spec/contracts/open-api/wallet-internal.yaml)).
 2. **Gateway seam is the boundary.** Use cases depend only on `WalletGateway` / `LedgerGateway` interfaces — never on domain service classes directly. The network boundary is the design.
 3. **In-process is transitional, not the design.** The current `InProcessWalletGateway` / `InProcessLedgerGateway` (delegating to domain services in one JVM) is a **temporary** implementation while the HTTP surfaces are built. It must not be documented as an architectural option; it is a migration step that the seam makes invisible to use cases.
 4. **Thin orchestrator preserved.** Only IO + sequencing + fee/auth/idempotency-key propagation live here; domain logic stays in the cores. Saga semantics unchanged ([ADR-008](ADR-008-saga-compensation-no-2pc.md)).
@@ -57,4 +57,4 @@
 
 - [`spec/trd/wallet.md`](../spec/trd/wallet.md) §7.2 — wallet service API (consumed via the seam)
 - [`spec/architecture-overview.md`](../spec/architecture-overview.md) §2 — orchestrator wraps cores
-- [`spec/contracts/openapi/accounting-internal.yaml`](../spec/contracts/openapi/accounting-internal.yaml) — S2
+- [`spec/contracts/open-api/accounting-internal.yaml`](../spec/contracts/open-api/accounting-internal.yaml) — S2

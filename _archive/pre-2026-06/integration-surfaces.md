@@ -21,10 +21,10 @@
 
 | Channel | Exposure | Spec file |
 |---------|----------|-----------|
-| HTTP S1 | Public (via Gateway → BFF) | [`openapi/gtelpay-public.yaml`](./openapi/gtelpay-public.yaml) |
-| HTTP S2 | Internal (orchestration only) | [`openapi/accounting-internal.yaml`](./openapi/accounting-internal.yaml) |
-| Kafka S3 | Internal | [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml) |
-| RabbitMQ S6 | Internal | [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml) |
+| HTTP S1 | Public (via Gateway → BFF) | [`open-api/gtelpay-public.yaml`](./open-api/gtelpay-public.yaml) |
+| HTTP S2 | Internal (orchestration only) | [`open-api/accounting-internal.yaml`](./open-api/accounting-internal.yaml) |
+| Kafka S3 | Internal | [`async-api/core-events.yaml`](./async-api/core-events.yaml) |
+| RabbitMQ S6 | Internal | [`async-api/core-commands.yaml`](./async-api/core-commands.yaml) |
 
 **AsyncAPI** = format YAML mô tả topic/queue + message body (giống OpenAPI cho HTTP). File này = index surface + step order; chi tiết field → bảng trên.
 
@@ -34,12 +34,12 @@
 
 | ID | Surface | Protocol | Spec | Producer | Consumer |
 |----|---------|----------|------|----------|----------|
-| S1 | Public product API | HTTPS | [`openapi/gtelpay-public.yaml`](./openapi/gtelpay-public.yaml) | Orchestration (BFF) | Mobile, partners, **API Gateway** |
-| S2 | Accounting API | HTTPS (internal) | [`openapi/accounting-internal.yaml`](./openapi/accounting-internal.yaml) | `core.accounting` (adapter) | Orchestration only |
-| S3 | Domain events (internal) | Kafka | [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml) | Orchestration, accounting, wallet adapters | Orchestration, wallet consumer |
+| S1 | Public product API | HTTPS | [`open-api/gtelpay-public.yaml`](./open-api/gtelpay-public.yaml) | Orchestration (BFF) | Mobile, partners, **API Gateway** |
+| S2 | Accounting API | HTTPS (internal) | [`open-api/accounting-internal.yaml`](./open-api/accounting-internal.yaml) | `core.accounting` (adapter) | Orchestration only |
+| S3 | Domain events (internal) | Kafka | [`async-api/core-events.yaml`](./async-api/core-events.yaml) | Orchestration, accounting, wallet adapters | Orchestration, wallet consumer |
 | S4 | Gateway routes (public edge) | Config | [`gateway/routes.example.yaml`](./gateway/routes.example.yaml) | DevOps | Edge proxy → BFF only |
 | S5 | Shared envelope (errors, paging) | Library (design) | [`core.foundation.md`](./core.foundation.md) Part I §4 | — | Application, `core.*` |
-| S6 | Worker commands (internal) | AMQP (RabbitMQ) | [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml) | Orchestration | Accounting worker, wallet worker, payout worker |
+| S6 | Worker commands (internal) | AMQP (RabbitMQ) | [`async-api/core-commands.yaml`](./async-api/core-commands.yaml) | Orchestration | Accounting worker, wallet worker, payout worker |
 
 **Default runtime flow:**
 
@@ -57,7 +57,7 @@ Orchestration **must not** write `wallet_*` / `coa_*` directly ([§9](#9-forbidd
 
 | Role | Read first | Then |
 |------|------------|------|
-| API Gateway | S4, S1 | `openapi/README.md` (lint) |
+| API Gateway | S4, S1 | `open-api/README.md` (lint) |
 | BFF / orchestration | This file §4, S1+S2+S3+S6 | `core.foundation.md` Part I §3, Part II §8+ (step order) |
 | Implement `core.wallet` | [`core.wallet.md`](./core.wallet.md) | S3 events + S6 `WALLET_CREDIT` consumer; do not implement S1/S2 inside wallet module |
 | Implement `core.accounting` | `core.accounting.trd.md` | S2; consume S6 `BANK_DEPOSIT`; publish `JournalPosted` (S3) |
@@ -101,7 +101,7 @@ Orchestration **must not** write `wallet_*` / `coa_*` directly ([§9](#9-forbidd
 
 ## 5. Kafka topics
 
-Schema detail: [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml).
+Schema detail: [`async-api/core-events.yaml`](./async-api/core-events.yaml).
 
 | Topic | Published by | Consumed by | Wallet effect |
 |-------|--------------|-------------|---------------|
@@ -117,7 +117,7 @@ Partition key: `businessRef` (deposit/pay) or `memberId`.
 
 ## 6. RabbitMQ command queues (S6)
 
-Schema detail: [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml).
+Schema detail: [`async-api/core-commands.yaml`](./async-api/core-commands.yaml).
 
 **Transport split:** S6 = point-to-point worker commands. S3 = domain event fan-out. Orchestration may publish both when workers need a queue and other services need events.
 
@@ -183,7 +183,7 @@ AMQP routing key (publish): `{commandType}.{memberId}` lowercase, e.g. `bank_dep
 
 ## 7. Public HTTP quick map (S1)
 
-Full paths: [`openapi/gtelpay-public.yaml`](./openapi/gtelpay-public.yaml).
+Full paths: [`open-api/gtelpay-public.yaml`](./open-api/gtelpay-public.yaml).
 
 | Path | `operationId` | Sync response | Wallet? |
 |------|-----------------|---------------|---------|
@@ -244,6 +244,6 @@ Internal journal API (S2) is **not** routed on the public Gateway.
 | Boundary between two cores? | [`core.foundation.md`](./core.foundation.md) Part I §3 |
 | Transit 3100, deposit DR/CR? | [`core.foundation.md`](./core.foundation.md) Part II §8 |
 | Accounting NFR / API FR? | [`core.accounting.trd.md`](./core.accounting.trd.md) |
-| Lint OpenAPI? | [`openapi/README.md`](./openapi/README.md) |
-| RabbitMQ command envelope? | [`asyncapi/core-commands.yaml`](./asyncapi/core-commands.yaml) · §6 |
+| Lint OpenAPI? | [`open-api/README.md`](./open-api/README.md) |
+| RabbitMQ command envelope? | [`async-api/core-commands.yaml`](./async-api/core-commands.yaml) · §6 |
 | Immutable ledger? | [ADR-001](./adr/ADR-001-immutable-ledger.md) |

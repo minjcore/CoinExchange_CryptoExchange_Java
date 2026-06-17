@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * S6 RabbitMQ wiring for the accounting worker (asyncapi/core-commands.yaml).
+ * S6 RabbitMQ wiring for the accounting worker (async-api/core-commands.yaml).
  * Disabled unless {@code accounting.amqp.enabled=true} so tests / brokerless runs don't
  * open a connection. Exchange {@code core.commands} (topic), queue bound on the
  * bank-deposit routing key.

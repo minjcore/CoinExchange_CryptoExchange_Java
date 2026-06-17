@@ -11,10 +11,10 @@
 
 ## Decision
 
-1. **S1** [`openapi/gtelpay-public.yaml`](../openapi/gtelpay-public.yaml) — public HTTP shapes.
-2. **S2** [`openapi/accounting-internal.yaml`](../openapi/accounting-internal.yaml) — internal journal API.
-3. **S3** [`asyncapi/core-events.yaml`](../asyncapi/core-events.yaml) — Kafka events.
-4. **S6** [`asyncapi/core-commands.yaml`](../asyncapi/core-commands.yaml) — RabbitMQ full-body envelope.
+1. **S1** [`spec/contracts/open-api/gtelpay-public.yaml`](../spec/contracts/open-api/gtelpay-public.yaml) — public HTTP shapes.
+2. **S2** [`spec/contracts/open-api/accounting-internal.yaml`](../spec/contracts/open-api/accounting-internal.yaml) — internal journal API.
+3. **S3** [`spec/contracts/async-api/core-events.yaml`](../spec/contracts/async-api/core-events.yaml) — Kafka events.
+4. **S6** [`spec/contracts/async-api/core-commands.yaml`](../spec/contracts/async-api/core-commands.yaml) — RabbitMQ full-body envelope.
 5. Foundation v1 **does not** duplicate command DTOs — Application maps wire → domain methods.
 6. Field names consistent across S1/S3/S6 ([ADR-012](ADR-012-orchestration-integration-forbidden-rules.md) F4).
 7. Gateway routes via S4 config to orchestration only — not domain modules.
@@ -37,7 +37,7 @@
 
 | ID | Expected | Maps to |
 |----|----------|---------|
-| TC-018-01 | openapi/README lint green | CI |
+| TC-018-01 | `spec/contracts/open-api/README` lint green | CI |
 | TC-018-02 | S6 sample validates against asyncapi schema | Contract test |
 | TC-018-03 | S1 idempotency header documented | X-E02 |
 | TC-018-04 | No duplicate DTO in foundation | AC-018-05, ADR-002 |
@@ -47,4 +47,4 @@
 ## References
 
 - [`integration-surfaces.md`](../integration-surfaces.md)
-- [`openapi/README.md`](../openapi/README.md)
+- [`spec/contracts/open-api/README.md`](../spec/contracts/open-api/README.md)

@@ -196,7 +196,7 @@ paths:
     post:
       tags: [Bank]
       operationId: bankWebhook
-      summary: Bank webhook (GtelPay) — fast ack; orchestration enqueues S6 BANK_DEPOSIT (see asyncapi/core-commands.yaml)
+      summary: Bank webhook (GtelPay) — fast ack; orchestration enqueues S6 BANK_DEPOSIT (see async-api/core-commands.yaml)
       security:
         - mTLSPartner: []
       parameters:
@@ -471,7 +471,7 @@ components:
               properties:
                 errorCode:
                   type: string
-                  description: Aligns with asyncapi/core-events.yaml ErrorCode
+                  description: Aligns with async-api/core-events.yaml ErrorCode
                   example: WALLET_INSUFFICIENT_BALANCE
 
   responses:

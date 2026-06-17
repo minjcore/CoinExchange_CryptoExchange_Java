@@ -9,7 +9,7 @@ Workspace là `10_core`. Tuyệt đối không thao tác ra ngoài nó.
 
 ## Cấm ra khỏi `10_core`
 
-- KHÔNG đọc, ghi, liệt kê, hay tìm kiếm ở thư mục cha (`/Users/khangdc/Desktop/core`) hoặc các sibling (`00_framework`, `01_wallet_rpc`, …).
+- KHÔNG đọc, ghi, liệt kê, hay tìm kiếm ở thư mục cha (`/Users/khangdc/Desktop/core`) hoặc các sibling (`00_framework_temporaty_referrence_only`, `01_wallet_rpc`, …).
 - KHÔNG chạy `ls`, `find`, `grep`, `git` trỏ tới đường dẫn ngoài `10_core`. Mọi lệnh shell phải có `working_directory` nằm trong `10_core` và không dùng path tuyệt đối ra ngoài.
 - Nếu một việc cần dữ liệu ngoài `10_core` → DỪNG và hỏi, không tự ý vượt rào.
 

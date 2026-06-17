@@ -513,7 +513,7 @@ Identical pattern to withdraw (freeze → settle/release, transit 3400) plus Nap
 | Reconciliation (W5) | Periodic wallet ↔ COA control compare; **report-only**, no auto-COA mutation |
 | Compensation over rollback | Every effect that can be left dangling must have a defined compensating action |
 
-> These are stated in domain terms (steps, states, keys) so the design survives a language/runtime change (e.g. Java → Go): only the wire (`openapi/`, `asyncapi/`) and idempotency keys are contractual; the recovery semantics above are the spec.
+> These are stated in domain terms (steps, states, keys) so the design survives a language/runtime change (e.g. Java → Go): only the wire (`spec/contracts/open-api/`, `spec/contracts/async-api/`) and idempotency keys are contractual; the recovery semantics above are the spec.
 
 ---
 
@@ -543,7 +543,7 @@ Wire/IdP specifics live at the Gateway; the **binding rules** below are the desi
 | Rule | Decision |
 |------|----------|
 | Public S1 | Bearer JWT (OIDC) terminated at / validated behind the Gateway |
-| Partner / bank channel | mTLS (`notifyDeposit`, `bankWebhook`) — see `openapi/gtelpay-public.yaml` |
+| Partner / bank channel | mTLS (`notifyDeposit`, `bankWebhook`) — see `spec/contracts/open-api/gtelpay-public.yaml` |
 | `memberId` source | Derived from the **token subject**, never trusted from the request body for authorization. Body `memberId` is for routing only and must match the principal |
 | Authorization scope | A user acts only on own wallet; a merchant on own merchant wallet; a partner on own escrow. Server enforces token-subject ↔ target wallet owner |
 | Internal accounting API (S2) | Service-to-service auth; RBAC roles from `trd/accounting.md` NFR-6: Accountant, Auditor, Admin, ReadOnly |

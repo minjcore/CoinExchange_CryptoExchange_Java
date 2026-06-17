@@ -1,1 +1,0 @@
-See spec/contracts/asyncapi/

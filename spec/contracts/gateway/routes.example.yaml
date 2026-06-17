@@ -1,5 +1,5 @@
 # API Gateway route sheet (example — Kong / similar)
-# Import paths from openapi/gtelpay-public.yaml (paymentorches upstream — not core pod)
+# Import paths from open-api/gtelpay-public.yaml (paymentorches upstream — not core pod)
 # Upstream: gtelpay-app (orchestration / Application)
 
 _format_version: "3.0"
@@ -36,4 +36,4 @@ services:
 # | GET  /api/gtelpay/v1/deposits/status | GET /v1/deposits/status | 3000   |
 #
 # Do NOT route accounting-internal paths on public gateway.
-# See openapi/accounting-internal.yaml
+# See open-api/accounting-internal.yaml

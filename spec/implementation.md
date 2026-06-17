@@ -15,8 +15,8 @@
 
 | Decision | Choice |
 |----------|--------|
-| Where | New Maven parent **`core/`** (sibling to `00_framework/`), **not** inside legacy exchange modules |
-| Legacy | `00_framework/wallet` = crypto wallet cũ — **do not** extend for fiat `core.wallet` |
+| Where | New Maven parent **`core/`** (sibling to `00_framework_temporaty_referrence_only/`), **not** inside legacy exchange modules |
+| Legacy | `00_framework_temporaty_referrence_only/wallet` = crypto wallet cũ — **do not** extend for fiat `core.wallet` |
 | Parent POM | `core/pom.xml` — Java **17**, Spring Boot **3.3.x** only on `app-*` modules |
 | GroupId | `com.gtelpay.core` (adjust to org standard) |
 | Build | `mvn -pl core.wallet -am test` per module; parent aggregates all |
@@ -343,7 +343,7 @@ Pure Java; **no** `spring-*` on compile classpath.
 | `SortParam` | `request` | field + ASC/DESC |
 | `PageResult<T>` | `page` | `content`, `total`, `page`, `size`; empty → `content=[]`, `total=0` |
 | `ApiResponse<T>` | `response` | `code` int 0=ok; `message`; `data`; `timestamp` Instant |
-| `ErrorCode` | `exception` | enum — mirror [`asyncapi/core-events.yaml`](./asyncapi/core-events.yaml) `ErrorCode` |
+| `ErrorCode` | `exception` | enum — mirror [`spec/contracts/async-api/core-events.yaml`](./contracts/async-api/core-events.yaml) `ErrorCode` |
 | `BaseException` | `exception` | `ErrorCode code`, `String message` |
 | `WalletException` | `exception` | extends BaseException |
 | `AccountingException` | `exception` | extends BaseException |
@@ -569,11 +569,11 @@ Each service method `@Transactional` — orchestration method **not** wrapping a
 
 **Code gap (hiện tại):** use case vẫn `@Autowired` `WalletCommandService` / `JournalService` trong cùng JVM — **vi phạm ADR-038**, cần thay bằng `HttpWalletGateway` / `HttpLedgerGateway`. Không document như kiến trúc đích.
 
-Target: core inbound = auth + validate + map wire; delegate **chỉ** qua gateway interfaces — orchestration **không** scan domain JAR. Spec: [`gtelpay-core-internal.yaml`](./contracts/openapi/gtelpay-core-internal.yaml). Xem [`integration-surfaces.md`](./integration-surfaces.md) §2.1.
+Target: core inbound = auth + validate + map wire; delegate **chỉ** qua gateway interfaces — orchestration **không** scan domain JAR. Spec: [`gtelpay-core-internal.yaml`](./contracts/open-api/gtelpay-core-internal.yaml). Xem [`integration-surfaces.md`](./integration-surfaces.md) §2.1.
 
 ### 9.1 Core inbound → orchestration classes
 
-**Spec:** [`gtelpay-core-internal.yaml`](./contracts/openapi/gtelpay-core-internal.yaml). **Code gap:** Vert.x routes vẫn map từ `gtelpay-public` paths trong monolith IT.
+**Spec:** [`gtelpay-core-internal.yaml`](./contracts/open-api/gtelpay-core-internal.yaml). **Code gap:** Vert.x routes vẫn map từ `gtelpay-public` paths trong monolith IT.
 
 **Implemented (Vert.x route → use case):**
 
@@ -607,8 +607,8 @@ Wrap responses: `ApiResponse.ok(data)`; map exceptions in `ApiExceptionHandler` 
 
 | Đích | Wire spec | Kiến trúc |
 |------|-----------|-----------|
-| **Wallet** | [`wallet-internal.yaml`](./openapi/wallet-internal.yaml) | `WalletGateway` HTTP → wallet pod |
-| **Accounting** | [`accounting-internal.yaml`](./openapi/accounting-internal.yaml) | `LedgerGateway` S2 HTTP → accounting pod |
+| **Wallet** | [`wallet-internal.yaml`](./contracts/open-api/wallet-internal.yaml) | `WalletGateway` HTTP → wallet pod |
+| **Accounting** | [`accounting-internal.yaml`](./contracts/open-api/accounting-internal.yaml) | `LedgerGateway` S2 HTTP → accounting pod |
 
 | Gap | Hiện trạng code | Cần làm |
 |-----|-----------------|---------|
@@ -757,6 +757,6 @@ Flyway: configure **per datasource** — `spring.flyway.schemas=wallet` on walle
 | Table columns / FR | [`trd/wallet.md`](./trd/wallet.md), [`trd/accounting.md`](./trd/accounting.md) |
 | DR/CR / transit | [`foundation.md`](./foundation.md) Part II §8–16 |
 | Step order | [`integration-surfaces.md`](./integration-surfaces.md) §4 |
-| HTTP / Kafka / RabbitMQ payloads | `openapi/`, `asyncapi/` |
+| HTTP / Kafka / RabbitMQ payloads | `spec/contracts/open-api/`, `spec/contracts/async-api/` |
 | Shared types | [`foundation.md`](./foundation.md) Part I §4 |
 | **This file** | Layout, DDL, algorithms, phases, class names |

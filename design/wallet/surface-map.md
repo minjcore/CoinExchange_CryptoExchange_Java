@@ -4,7 +4,7 @@
 
 | Artifact | Path |
 |----------|------|
-| S1 public HTTP | [`../orchestration/http-public.yaml`](../orchestration/http-public.yaml) (= [`spec/contracts/openapi/gtelpay-public.yaml`](../../spec/contracts/openapi/gtelpay-public.yaml)) |
+| S1 public HTTP | [`../orchestration/http-public.yaml`](../orchestration/http-public.yaml) (= [`spec/contracts/open-api/gtelpay-public.yaml`](../../spec/contracts/open-api/gtelpay-public.yaml)) |
 | Wallet `tx_type` | [`operations.md`](./operations.md) |
 | Wallet tables | [`model.md`](./model.md) |
 | Step order | [`../orchestration/flows.md`](../orchestration/flows.md) |

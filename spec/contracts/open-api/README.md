@@ -8,8 +8,8 @@ Use these with API Gateway, client SDK generation, and AsyncAPI tooling — not 
 | [`gtelpay-core-internal.yaml`](./gtelpay-core-internal.yaml) | **app-orchestration** — paymentorches → core inbound |
 | [`accounting-internal.yaml`](./accounting-internal.yaml) | **app-orchestration** → accounting pod (`LedgerGateway`) |
 | [`wallet-internal.yaml`](./wallet-internal.yaml) | **app-orchestration** → wallet pod (`WalletGateway`) |
-| [`../asyncapi/core-events.yaml`](../asyncapi/core-events.yaml) | Kafka producers/consumers |
-| [`../asyncapi/core-commands.yaml`](../asyncapi/core-commands.yaml) | RabbitMQ worker commands (full-body envelope) |
+| [`../async-api/core-events.yaml`](../async-api/core-events.yaml) | Kafka producers/consumers |
+| [`../async-api/core-commands.yaml`](../async-api/core-commands.yaml) | RabbitMQ worker commands (full-body envelope) |
 | [`../gateway/routes.example.yaml`](../gateway/routes.example.yaml) | Kong-style upstream → **paymentorches** (not core) |
 
 ## Validate (optional)
@@ -17,10 +17,10 @@ Use these with API Gateway, client SDK generation, and AsyncAPI tooling — not 
 ```bash
 cd 10_core
 npm install -g @redocly/cli   # once
-redocly lint spec/contracts/openapi/gtelpay-public.yaml
-redocly lint spec/contracts/openapi/gtelpay-core-internal.yaml
-redocly lint spec/contracts/openapi/accounting-internal.yaml
-redocly lint spec/contracts/openapi/wallet-internal.yaml
+redocly lint spec/contracts/open-api/gtelpay-public.yaml
+redocly lint spec/contracts/open-api/gtelpay-core-internal.yaml
+redocly lint spec/contracts/open-api/accounting-internal.yaml
+redocly lint spec/contracts/open-api/wallet-internal.yaml
 ```
 
 AsyncAPI: [https://www.asyncapi.com/tools/generator](https://www.asyncapi.com/tools/generator)

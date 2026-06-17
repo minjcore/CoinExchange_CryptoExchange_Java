@@ -81,10 +81,10 @@ Monolith: [`../design-v2/accounting.md`](../design-v2/accounting.md) · [`../des
 
 | Transport | Canonical YAML | Copy trong `design/` |
 |-----------|----------------|----------------------|
-| HTTP public | [`../spec/contracts/openapi/gtelpay-public.yaml`](../spec/contracts/openapi/gtelpay-public.yaml) | `orchestration/http-public.yaml` |
-| HTTP internal | `spec/contracts/openapi/accounting-internal.yaml` | `accounting/api-internal.yaml` |
-| Kafka | `spec/contracts/asyncapi/core-events.yaml` | `accounting/events.yaml`, `wallet/events.yaml` |
-| RabbitMQ | `spec/contracts/asyncapi/core-commands.yaml` | `messaging/commands.yaml` |
+| HTTP public | [`../spec/contracts/open-api/gtelpay-public.yaml`](../spec/contracts/open-api/gtelpay-public.yaml) | `orchestration/http-public.yaml` |
+| HTTP internal | `spec/contracts/open-api/accounting-internal.yaml` | `accounting/api-internal.yaml` |
+| Kafka | `spec/contracts/async-api/core-events.yaml` | `accounting/events.yaml`, `wallet/events.yaml` |
+| RabbitMQ | `spec/contracts/async-api/core-commands.yaml` | `messaging/commands.yaml` |
 
 **Rule:** `spec/contracts/` là wire truth; bản trong `design/` để đọc cạnh domain doc.
 

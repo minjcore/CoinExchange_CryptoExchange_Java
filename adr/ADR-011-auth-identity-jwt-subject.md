@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-06-08 |
 | Source | [`core.business-processes.md`](../core.business-processes.md) §17, [`design-v2/orchestration.md`](../design-v2/orchestration.md) §19 |
-| Related | [`openapi/gtelpay-public.yaml`](../openapi/gtelpay-public.yaml), [ADR-005](ADR-005-idempotency-key-strategy.md) |
+| Related | [`spec/contracts/open-api/gtelpay-public.yaml`](../spec/contracts/open-api/gtelpay-public.yaml), [ADR-005](ADR-005-idempotency-key-strategy.md) |
 
 ---
 

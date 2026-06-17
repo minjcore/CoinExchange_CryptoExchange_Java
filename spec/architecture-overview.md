@@ -132,14 +132,14 @@ Chi tiết: [`design/platform/boundaries.md`](../design/platform/boundaries.md) 
 
 | ID | Surface | Protocol | Spec | Vai trò tại app-orchestration |
 |----|---------|----------|------|------------------------------|
-| **—** | Core inbound API | HTTPS | [`gtelpay-core-internal.yaml`](./contracts/openapi/gtelpay-core-internal.yaml) | **Implement** — paymentorches → orch |
-| *(ref)* | Public channel | HTTPS | [`gtelpay-public.yaml`](./contracts/openapi/gtelpay-public.yaml) | **paymentorches** |
-| **S2** | Accounting client | HTTPS | [`accounting-internal.yaml`](./contracts/openapi/accounting-internal.yaml) | **Call** `LedgerGateway` → accounting pod |
-| — | Wallet client | HTTPS | [`wallet-internal.yaml`](./contracts/openapi/wallet-internal.yaml) | **Call** `WalletGateway` → wallet pod |
-| **S3** | Domain events | Kafka | [`core-events.yaml`](./contracts/asyncapi/core-events.yaml) | Publish / consume trong orch |
+| **—** | Core inbound API | HTTPS | [`spec/contracts/open-api/gtelpay-core-internal.yaml`](./contracts/open-api/gtelpay-core-internal.yaml) | **Implement** — paymentorches → orch |
+| *(ref)* | Public channel | HTTPS | [`spec/contracts/open-api/gtelpay-public.yaml`](./contracts/open-api/gtelpay-public.yaml) | **paymentorches** |
+| **S2** | Accounting client | HTTPS | [`spec/contracts/open-api/accounting-internal.yaml`](./contracts/open-api/accounting-internal.yaml) | **Call** `LedgerGateway` → accounting pod |
+| — | Wallet client | HTTPS | [`spec/contracts/open-api/wallet-internal.yaml`](./contracts/open-api/wallet-internal.yaml) | **Call** `WalletGateway` → wallet pod |
+| **S3** | Domain events | Kafka | [`spec/contracts/async-api/core-events.yaml`](./contracts/async-api/core-events.yaml) | Publish / consume trong orch |
 | **S4** | Gateway routes (tham chiếu) | Config | [`routes.example.yaml`](./contracts/gateway/routes.example.yaml) | Platform config — không gắn domain |
 | **S5** | Wire envelope | Library | [`foundation.md`](./foundation.md) Part I §4 | Shape S1/S2/S6 |
-| **S6** | Worker commands | RabbitMQ | [`core-commands.yaml`](./contracts/asyncapi/core-commands.yaml) | **Publish** từ orch |
+| **S6** | Worker commands | RabbitMQ | [`spec/contracts/async-api/core-commands.yaml`](./contracts/async-api/core-commands.yaml) | **Publish** từ orch |
 
 | Domain | Gọi từ orch | Deploy |
 |--------|-------------|--------|

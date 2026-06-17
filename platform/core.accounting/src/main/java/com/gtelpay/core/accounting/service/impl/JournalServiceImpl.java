@@ -83,6 +83,9 @@ public class JournalServiceImpl implements JournalService {
         }
         List<CoaTransDataEntity> lines = coaTransDataRepository.findByCoaTransId(coaTransId);
         JournalBalanceValidator.assertBalanced(lines);
+        // ADR-010: transit net-zero for EVERY use case at post time (not just deposit) — no
+        // payment/transfer/withdraw/IBFT can POST with funds stranded in a 3xxx transit.
+        JournalBalanceValidator.assertAllTransitZero(lines);
         journal.setStatus(JournalStatus.POSTED);
         journal.setPostedAt(Instant.now());
         coaTransRepository.save(journal);

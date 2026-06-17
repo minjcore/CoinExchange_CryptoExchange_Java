@@ -72,6 +72,6 @@ Step order ngắn: [`design/orchestration/flows.md`](../design/orchestration/flo
 | [`implementation.md`](implementation.md) | `IMPLEMENTATION.md` | Repo layout, D1–D5, build order |
 | [`integration-surfaces.md`](integration-surfaces.md) | `integration-surfaces.md` | HTTP/Kafka/RabbitMQ/Gateway index |
 | [`terminology.md`](terminology.md) | `TERMINOLOGY.md` | Naming quick lookup |
-| [`contracts/`](contracts/) | `openapi/`, `asyncapi/`, `gateway/` | Wire truth (YAML) |
+| [`contracts/`](contracts/) | `spec/contracts/open-api/`, `spec/contracts/async-api/`, `spec/contracts/gateway/` | Wire truth (YAML) |
 
 Root filenames (`core.foundation.md`, …) là **redirect stubs** — nội dung canonical nằm ở đây.

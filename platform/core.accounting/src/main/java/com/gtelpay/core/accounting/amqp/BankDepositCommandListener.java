@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 /**
- * Consumes {@code BANK_DEPOSIT} (asyncapi/core-commands.yaml) and drives the two-phase
+ * Consumes {@code BANK_DEPOSIT} (async-api/core-commands.yaml) and drives the two-phase
  * deposit journal PENDING → POSTED (foundation §8, use-cases.md UC-1).
  * Idempotent on {@code businessRef}: createJournal + confirmDeposit are replay-safe;
  * a redelivery after POSTED is a no-op.

@@ -288,7 +288,7 @@ SUM(available + frozen) GROUP BY wallet_type  vs  accounting control 2110/2120/2
 | `WALLET_LOCKED` | mutation on LOCKED |
 | `WALLET_DUPLICATE_CONFLICT` | same triple, different amount |
 
-Mapped to HTTP via orchestration ([`asyncapi/core-events.yaml`](../asyncapi/core-events.yaml) ErrorCode).
+Mapped to HTTP via orchestration ([`spec/contracts/async-api/core-events.yaml`](../spec/contracts/async-api/core-events.yaml) ErrorCode).
 
 ---
 

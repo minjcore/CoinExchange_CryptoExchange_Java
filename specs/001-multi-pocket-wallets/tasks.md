@@ -22,8 +22,8 @@ phrased as **author / finalize / verify** against the real files, not greenfield
 
 ## Path Conventions
 
-Artifacts (this repo): `adr/`, `spec/implementation.md`, `spec/contracts/openapi/`,
-`spec/contracts/asyncapi/`, `spec/processes.md`, `design-v2/orchestration.md`,
+Artifacts (this repo): `adr/`, `spec/implementation.md`, `spec/contracts/open-api/`,
+`spec/contracts/async-api/`, `spec/processes.md`, `design-v2/orchestration.md`,
 `design-v2/acceptance.md`, `design/platform/data-model.md`.
 
 ---
@@ -46,7 +46,7 @@ Artifacts (this repo): `adr/`, `spec/implementation.md`, `spec/contracts/openapi
 - [X] T004 [P] Author migration `V_n__pocket_def.sql` (create + seed `wallet_pocket_def`) per data-model.md §Migration
 - [X] T005 [P] Author migration `V_n+1__wallet_pockets.sql` (ALTER wallet ADD pocket_code/label DEFAULTs; swap UNIQUE; add partial unique) — backfill via DEFAULT, reversible
 - [X] T006 [P] Register `WALLET_POCKET_DEF_INVALID`, `WALLET_POCKET_EXISTS`, `WALLET_POCKET_NOT_EMPTY`, `WALLET_INVALID_TRANSFER` in `core.foundation` ErrorCode (per `spec/foundation.md` §4.3 error table)
-- [X] T007 [P] Add the same `WALLET_POCKET_*` codes to `spec/contracts/asyncapi/core-events.yaml` ErrorCode enum (align with ADR-018)
+- [X] T007 [P] Add the same `WALLET_POCKET_*` codes to `spec/contracts/async-api/core-events.yaml` ErrorCode enum (align with ADR-018)
 - [X] T008 Finalize pocket→`wallet_id` resolution rule in `design-v2/orchestration.md` §1.2 (verify table: walletId | pocketCode/label | default | non-USER single)
 
 **Checkpoint**: schema + contracts + error vocab ready — stories can proceed.
@@ -58,7 +58,7 @@ Artifacts (this repo): `adr/`, `spec/implementation.md`, `spec/contracts/openapi
 **Goal**: a USER lists pocket kinds and creates named pockets from the catalog.
 **Independent test**: create one pocket from a def, see it listed with zero balance (quickstart Q1).
 
-- [X] T009 [US1] Verify OpenAPI ops `listPocketDefs`, `listPockets`, `createPocket` + schemas (`PocketDefData`, `PocketData`, `CreatePocketRequest`, `ApiResponsePocket*`) in `spec/contracts/openapi/gtelpay-public.yaml`
+- [X] T009 [US1] Verify OpenAPI ops `listPocketDefs`, `listPockets`, `createPocket` + schemas (`PocketDefData`, `PocketData`, `CreatePocketRequest`, `ApiResponsePocket*`) in `spec/contracts/open-api/gtelpay-public.yaml`
 - [X] T010 [US1] Finalize create behavior + rules in `spec/processes.md` §11A.1 (no ledger; def-invalid / multi_allowed / duplicate-label handling)
 - [X] T011 [P] [US1] Add Gherkin to `design-v2/acceptance.md` (pocket feature): create happy (TC-040-01), duplicate label (TC-040-02), multi_allowed GOAL (TC-040-03), default-not-deletable provisioning
 - [X] T012 [P] [US1] Document create validation rules in `design/platform/data-model.md` §3.1 (pocket_code active, multi_allowed, label unique) — verify consistency with FR-001/002/003
