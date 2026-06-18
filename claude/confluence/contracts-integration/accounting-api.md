@@ -8,7 +8,7 @@
 
 ## Tổng quan
 
-`app-accounting` expose 4 endpoints HTTP (Internal HTTP / S2).
+`app-accounting` expose 4 endpoints HTTP (Internal HTTP / s2-http-internal).
 Không expose ra ngoài — chỉ `app-orchestration` được gọi.
 
 Trong deposit flow, `app-orchestration` KHÔNG gọi trực tiếp — dùng outbox → RabbitMQ → `app-accounting-worker`.
@@ -95,11 +95,11 @@ POST /journals/9001/void
 
 ---
 
-## Identity Map (S2 ↔ end-to-end)
+## Identity Map (s2-http-internal ↔ end-to-end)
 
-| S2 field | End-to-end | DB column |
-|----------|-----------|----------|
-| `reference_id` | `businessRef` (S6) = `X-Idempotency-Key` (S1) | `coa_trans.business_ref` |
+| s2-http-internal field | End-to-end | DB column |
+|------------------------|-----------|----------|
+| `reference_id` | `businessRef` (s6-rabbitmq-cmds) = `X-Idempotency-Key` (s1-http-public) | `coa_trans.business_ref` |
 | `coa_trans_id` | → `coaTransId` trong WALLET_CREDIT command | `coa_trans.id` (BIGINT) |
 
 ---

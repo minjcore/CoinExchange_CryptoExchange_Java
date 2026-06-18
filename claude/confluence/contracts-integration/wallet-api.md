@@ -2,16 +2,16 @@
 
 > **CF page ID:** 51610183 | **Parent:** 🔌 Contracts & Integration (51315085)
 > **Source of truth:** `specs/contracts/open-api/wallet-internal.yaml`
-> **Callers:** `app-orchestration` (sync), `app-wallet-worker` (async via S6)
+> **Callers:** `app-orchestration` (sync), `app-wallet-worker` (async via s6-rabbitmq-cmds)
 
 ---
 
 ## Tổng quan
 
-`app-wallet` expose 6 endpoints HTTP (Internal HTTP / S2).
+`app-wallet` expose 6 endpoints HTTP (Internal HTTP / s2-http-internal).
 Không expose ra ngoài.
 
-Deposit async path: `app-wallet-worker` nhận `WALLET_CREDIT` từ RabbitMQ → gọi `POST /wallets/{walletId}/credit`.
+Deposit async path: `app-wallet-worker` nhận `WALLET_CREDIT` từ s6-rabbitmq-cmds → gọi `POST /wallets/{walletId}/credit`.
 Sync path: `app-orchestration` gọi trực tiếp cho payment, transfer, balance read.
 
 ---
@@ -128,11 +128,11 @@ POST /wallets
 
 ---
 
-## Identity Map (S2 ↔ end-to-end)
+## Identity Map (s2-http-internal ↔ end-to-end)
 
-| S2 field | End-to-end | DB column |
-|----------|-----------|----------|
-| `business_ref` | `businessRef` (S6/S1) = `X-Idempotency-Key` | `wallet_tx.business_ref` |
+| s2-http-internal field | End-to-end | DB column |
+|------------------------|-----------|----------|
+| `business_ref` | `businessRef` (s6-rabbitmq-cmds / s1-http-public) = `X-Idempotency-Key` | `wallet_tx.business_ref` |
 | `coa_trans_id` | `coaTransId` từ WALLET_CREDIT command | `wallet_tx.coa_trans_id` (no FK) |
 
 ---

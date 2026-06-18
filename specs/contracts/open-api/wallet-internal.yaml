@@ -4,14 +4,14 @@ info:
   title: Wallet Internal API
   version: "1.0.0"
   description: |
-    S2 internal HTTP contract for app-wallet.
+    s2-http-internal contract for app-wallet.
 
     Callers:
       Sync path  → app-orchestration (payment, transfer, balance read)
-      Async path → app-wallet-worker (consumes WALLET_CREDIT via S6, calls this API)
+      Async path → app-wallet-worker (consumes WALLET_CREDIT via s6-rabbitmq-cmds, calls this API)
 
     Identity map:
-      business_ref (this API) = businessRef (S6 envelope) = wallet_tx.business_ref (DB)
+      business_ref (this API) = businessRef (s6-rabbitmq-cmds envelope) = wallet_tx.business_ref (DB)
 
     Idempotency key per operation: (walletId, business_ref, tx_type)
       duplicate with same amount → return existing tx (idempotent_replay=true)
@@ -283,7 +283,7 @@ components:
           maxLength: 128
           description: |
             Idempotency key.
-            = businessRef (S6) = X-Idempotency-Key (S1) = wallet_tx.business_ref (DB).
+            = businessRef (s6-rabbitmq-cmds) = X-Idempotency-Key (s1-http-public) = wallet_tx.business_ref (DB).
           example: dep-20260618-abc123
         tx_type:
           type: string

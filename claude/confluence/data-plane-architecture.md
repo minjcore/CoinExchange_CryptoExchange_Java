@@ -47,7 +47,7 @@ Data Plane hot path (1 process):
 
 ```
 External client / Bank webhook
-    │ HTTP (S1 — gtelpay-public.yaml)
+    │ HTTP (s1-http-public — gtelpay-public.yaml)
     ▼
 ┌─────────────────────────────────────────────────────┐
 │              app-orchestration                       │
@@ -118,7 +118,7 @@ Rule:     DP never calls CP synchronously. CP never handles live customer traffi
 | 🏛️ Architecture & Principles | Correlation & Idempotency | businessRef flow end-to-end |
 | 📋 Domain TRDs | Accounting TRD | FR/NFR core.accounting, two-phase posting |
 | 📋 Domain TRDs | Wallet TRD | FR/NFR core.wallet, balance invariants |
-| 🔌 Contracts & Integration | Integration Surfaces | S1–S6 surface catalog, use case matrix |
+| 🔌 Contracts & Integration | Integration Surfaces | s1–s6 surface catalog, use case matrix |
 | 🔌 Contracts & Integration | Core Platform Design | COA, fund flow, foundation scope |
 | 🏗️ Build & Process | Business Process: Deposit | Full deposit flow, DR/CR, non-happy paths |
 | 🏗️ Build & Process | Implementation Decisions | Module layout, build phases, DDL decisions |

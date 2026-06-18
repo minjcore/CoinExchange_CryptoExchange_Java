@@ -15,11 +15,11 @@ Orchestration là lớp application điều phối `core.wallet` và `core.accou
 ## Architecture diagram
 
 ```
-External ──S1──► Gateway ──S1──► Orchestration (BFF)
-                                    ├──► core.wallet      (sync HTTP via app-wallet)
-                                    ├──► core.accounting  (sync HTTP via app-accounting)
-                                    ├──► S6 RabbitMQ      (worker commands, async)
-                                    └──► S3 Kafka         (domain events, async)
+External ──s1-http-public──► Gateway ──s1-http-public──► Orchestration (BFF)
+                                           ├──► core.wallet      (sync HTTP via app-wallet)
+                                           ├──► core.accounting  (sync HTTP via app-accounting)
+                                           ├──► s6-rabbitmq-cmds (worker commands, async)
+                                           └──► s3-kafka-events  (domain events, async)
 ```
 
 ---
@@ -28,10 +28,10 @@ External ──S1──► Gateway ──S1──► Orchestration (BFF)
 
 | Khối | Thành phần | Vai trò |
 |------|-----------|---------|
-| Public edge | API Gateway, bank webhook | Route vào orchestration qua S1 |
+| Public edge | API Gateway, bank webhook | Route vào orchestration qua s1-http-public |
 | Application | `app-orchestration` | Điều phối flow, fee computation, outbox, auth |
 | Domain cores | `core.wallet`, `core.accounting`, `core.shared` | Business capability, không cross-import |
-| Async infra | RabbitMQ S6, Kafka S3, workers | Command handling, event fan-out |
+| Async infra | s6-rabbitmq-cmds, s3-kafka-events, workers | Command handling, event fan-out |
 | Storage | PostgreSQL schemas `wallet` + `accounting` | Tách schema, cùng DB v1 |
 
 ---
@@ -52,21 +52,21 @@ External ──S1──► Gateway ──S1──► Orchestration (BFF)
 
 | Luồng | Client response | Wallet ↔ Accounting | Messaging |
 |-------|----------------|---------------------|-----------|
-| **Deposit** | Async → **202** | Async qua worker | S6 `BANK_DEPOSIT` → `WALLET_CREDIT` |
+| **Deposit** | Async → **202** | Async qua worker | s6-rabbitmq-cmds `BANK_DEPOSIT` → `WALLET_CREDIT` |
 | **Payment** | Sync → **200** | Sync: debit → post → credit | — |
 | **Transfer** | Sync → **200** | Sync: debit A → post → credit B | — |
-| **Withdraw** | Sync accept → **200** | Sync freeze + async payout | S6 `WITHDRAW_PAYOUT` |
+| **Withdraw** | Sync accept → **200** | Sync freeze + async payout | s6-rabbitmq-cmds `WITHDRAW_PAYOUT` |
 | **Balance read** | Sync → **200** | Query wallet only | — |
 
 ---
 
-## Surface Map S1–S6
+## Surface Map (s1–s6)
 
-| ID | Surface | Protocol | Orchestration role |
-|----|---------|---------|-------------------|
-| S1 | Public product API | HTTPS | **Implement** |
-| S2 | Accounting internal | HTTPS | **Call** (sync use cases only) |
-| S3 | Domain events | Kafka | Publish / consume |
-| S4 | Gateway routes | Config | Edge → BFF |
-| S5 | Shared envelope | Library | `ApiResponse`, errors |
-| S6 | Worker commands | RabbitMQ | **Publish** full-body envelope |
+| Surface | Description | Protocol | Orchestration role |
+|---------|-------------|---------|-------------------|
+| s1-http-public | Public product API | HTTPS | **Implement** |
+| s2-http-internal | Accounting internal | HTTPS | **Call** (sync use cases only) |
+| s3-kafka-events | Domain events | Kafka | Publish / consume |
+| s4-gateway-config | Gateway routes | Config | Edge → BFF |
+| s5-shared-envelope | Shared envelope | Library | `ApiResponse`, errors |
+| s6-rabbitmq-cmds | Worker commands | RabbitMQ | **Publish** full-body envelope |

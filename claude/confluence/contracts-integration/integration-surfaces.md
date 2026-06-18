@@ -8,21 +8,21 @@
 
 ## Surface Catalog
 
-| ID | Surface | Protocol | Producer | Consumer |
-|----|---------|---------|---------|---------|
-| S1 | Public product API | HTTPS | `app-orchestration` | Mobile, partner, API Gateway |
-| S2 | Accounting API | HTTPS (internal) | `app-accounting` | `app-orchestration` only |
-| S3 | Domain events | Kafka | Workers | Orchestration, downstream |
-| S4 | Gateway routing | Config | DevOps | Edge proxy |
-| S5 | Shared envelope | Library | — | All `app-*` and `core.*` |
-| S6 | Worker commands | RabbitMQ | `app-orchestration` (outbox) | Workers |
+| Surface | Description | Protocol | Producer | Consumer |
+|---------|-------------|---------|---------|---------|
+| s1-http-public | Public product API | HTTPS | `app-orchestration` | Mobile, partner, API Gateway |
+| s2-http-internal | Accounting API | HTTPS (internal) | `app-accounting` | `app-orchestration` only |
+| s3-kafka-events | Domain events | Kafka | Workers | Orchestration, downstream |
+| s4-gateway-config | Gateway routing | Config | DevOps | Edge proxy |
+| s5-shared-envelope | Shared envelope | Library | — | All `app-*` and `core.*` |
+| s6-rabbitmq-cmds | Worker commands | RabbitMQ | `app-orchestration` (outbox) | Workers |
 
 ---
 
 ## Use Case × Surface Matrix
 
-| Use case | S1 | S2 | S6 queue | Wallet |
-|----------|----|----|---------|--------|
+| Use case | s1-http-public | s2-http-internal | s6-rabbitmq-cmds queue | Wallet |
+|----------|----------------|------------------|------------------------|--------|
 | **Deposit** | `POST /deposits/notify` → **202** | Phase A+B (via worker, not direct) | `BANK_DEPOSIT` → `WALLET_CREDIT` | Credit USER after POSTED |
 | **Payment** | `POST /v1/payments` → **200** | Create + post (sync) | — | Debit USER → credit MERCHANT |
 | **Transfer** | `createTransfer` → **200** | Post via transit 3300 | — | Debit A → credit B |
@@ -31,9 +31,9 @@
 
 ---
 
-## S6 Command Envelope (RabbitMQ)
+## s6-rabbitmq-cmds Command Envelope
 
-Mọi message trên S6 dùng chung envelope:
+Mọi message trên s6-rabbitmq-cmds dùng chung envelope:
 
 ```json
 {
@@ -80,7 +80,7 @@ Mọi message trên S6 dùng chung envelope:
 
 | # | Rule |
 |---|------|
-| F1 | Partner / Gateway must not call S2 directly or write to `coa_*` / `wallet_*` |
+| F1 | Partner / Gateway must not call s2-http-internal directly or write to `coa_*` / `wallet_*` |
 | F2 | `core.wallet` must not import `core.accounting` |
 | F3 | `core.accounting` must not mutate `wallet_balance` |
 | F4 | Kafka payload field names must match OpenAPI field names for the same command |

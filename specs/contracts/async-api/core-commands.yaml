@@ -1,10 +1,10 @@
 asyncapi: "2.6.0"
 
 info:
-  title: GtelPay Core — S6 Worker Commands
+  title: GtelPay Core — s6-rabbitmq-cmds Worker Commands
   version: "1.0.0"
   description: |
-    RabbitMQ command channels (Surface S6).
+    RabbitMQ command channels (Surface s6-rabbitmq-cmds).
     Producer: app-orchestration (via transactional outbox).
     Consumers: app-accounting-worker (BANK_DEPOSIT), app-wallet-worker (WALLET_CREDIT).
 
@@ -113,7 +113,7 @@ components:
           maxLength: 64
           description: |
             End-to-end idempotency key.
-            = X-Idempotency-Key (S1) = coa_trans.business_ref = wallet_tx.business_ref.
+            = X-Idempotency-Key (s1-http-public) = coa_trans.business_ref = wallet_tx.business_ref.
         messageId:
           type: string
           description: Per-publish AMQP dedup key. Not a business key.

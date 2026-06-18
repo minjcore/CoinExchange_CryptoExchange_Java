@@ -1,9 +1,9 @@
-# Core Commands & Events Contract (S6 + S3)
+# Core Commands & Events Contract (s6-rabbitmq-cmds + s3-kafka-events)
 
 > **CF page ID:** 51643061 | **Parent:** 🔌 Contracts & Integration (51315085)
 > **Source of truth:**
->   - `specs/contracts/async-api/core-commands.yaml` (S6 RabbitMQ)
->   - `specs/contracts/async-api/core-events.yaml` (S3 Kafka)
+>   - `specs/contracts/async-api/core-commands.yaml` (s6-rabbitmq-cmds RabbitMQ)
+>   - `specs/contracts/async-api/core-events.yaml` (s3-kafka-events Kafka)
 
 ---
 
@@ -13,12 +13,12 @@ Hai channel async của platform:
 
 | Surface | Protocol | Direction | Contract file |
 |---------|---------|-----------|--------------|
-| S6 — Worker Commands | RabbitMQ | orchestration → workers | `core-commands.yaml` |
-| S3 — Domain Events | Kafka | workers → downstream | `core-events.yaml` |
+| s6-rabbitmq-cmds — Worker Commands | RabbitMQ | orchestration → workers | `core-commands.yaml` |
+| s3-kafka-events — Domain Events | Kafka | workers → downstream | `core-events.yaml` |
 
 ---
 
-## S6 — RabbitMQ Commands
+## s6-rabbitmq-cmds — RabbitMQ Commands
 
 **Producer:** `app-orchestration` (via transactional outbox).
 **Consumers:** `app-accounting-worker`, `app-wallet-worker`.
@@ -112,7 +112,7 @@ Hai channel async của platform:
 
 ---
 
-## S3 — Kafka Events
+## s3-kafka-events — Kafka Events
 
 **Producers:** `app-accounting-worker`, `app-wallet-worker`.
 **Consumers:** `app-orchestration`, downstream services.
@@ -201,11 +201,11 @@ app-wallet-worker
 ## businessRef Identity
 
 ```
-X-Idempotency-Key (S1)
-  = businessRef (S6 BANK_DEPOSIT envelope)
+X-Idempotency-Key (s1-http-public)
+  = businessRef (s6-rabbitmq-cmds BANK_DEPOSIT envelope)
   = reference_id (accounting-internal.yaml)
   = coa_trans.business_ref (DB)
-  = businessRef (S6 WALLET_CREDIT envelope)
+  = businessRef (s6-rabbitmq-cmds WALLET_CREDIT envelope)
   = business_ref (wallet-internal.yaml)
   = wallet_tx.business_ref (DB)
 ```

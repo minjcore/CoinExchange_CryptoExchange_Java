@@ -64,12 +64,12 @@
 
 | Term | Surface | Ý nghĩa |
 |------|---------|---------|
-| `businessRef` | S1 body, S6 envelope, DB | End-to-end idempotency key = `X-Idempotency-Key` |
-| `reference_id` | S2 OpenAPI (accounting) | Alias của `businessRef` tại accounting API |
-| `correlationId` | S6 envelope, S3 events (optional) | Trace observability only — không persist vào DB |
-| `messageId` | S6 envelope | AMQP dedup per-publish — không phải business key |
-| `BANK_DEPOSIT` | S6 RabbitMQ command | Trigger Phase A+B tại `app-accounting-worker` |
-| `WALLET_CREDIT` | S6 RabbitMQ command | Trigger wallet credit tại `app-wallet-worker` |
+| `businessRef` | s1-http-public body, s6-rabbitmq-cmds envelope, DB | End-to-end idempotency key = `X-Idempotency-Key` |
+| `reference_id` | s2-http-internal OpenAPI (accounting) | Alias của `businessRef` tại accounting API |
+| `correlationId` | s6-rabbitmq-cmds envelope, s3-kafka-events (optional) | Trace observability only — không persist vào DB |
+| `messageId` | s6-rabbitmq-cmds envelope | AMQP dedup per-publish — không phải business key |
+| `BANK_DEPOSIT` | s6-rabbitmq-cmds command | Trigger Phase A+B tại `app-accounting-worker` |
+| `WALLET_CREDIT` | s6-rabbitmq-cmds command | Trigger wallet credit tại `app-wallet-worker` |
 
 ---
 

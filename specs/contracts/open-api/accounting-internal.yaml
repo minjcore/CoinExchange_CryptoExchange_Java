@@ -4,17 +4,17 @@ info:
   title: Accounting Internal API
   version: "1.0.0"
   description: |
-    S2 internal HTTP contract for app-accounting.
+    s2-http-internal contract for app-accounting.
 
     Caller: app-orchestration ONLY.
     Never called by partner, gateway, or mobile client.
 
     Two entry points:
-      Async deposit flow → app-accounting-worker (consumes BANK_DEPOSIT via S6, NOT this API)
+      Async deposit flow → app-accounting-worker (consumes BANK_DEPOSIT via s6-rabbitmq-cmds, NOT this API)
       Sync use cases    → this API (app-orchestration calls directly)
 
     Identity map:
-      reference_id (this API) = businessRef (S6 envelope) = coa_trans.business_ref (DB)
+      reference_id (this API) = businessRef (s6-rabbitmq-cmds envelope) = coa_trans.business_ref (DB)
       coa_trans_id (response) → used as coaTransId in WALLET_CREDIT command
 
 servers:
@@ -190,8 +190,8 @@ components:
           maxLength: 64
           description: |
             Business idempotency key.
-            Alias of businessRef (S6 envelope).
-            = X-Idempotency-Key from S1.
+            Alias of businessRef (s6-rabbitmq-cmds envelope).
+            = X-Idempotency-Key from s1-http-public.
             Stored as coa_trans.business_ref.
           example: dep-20260618-abc123
         use_case:

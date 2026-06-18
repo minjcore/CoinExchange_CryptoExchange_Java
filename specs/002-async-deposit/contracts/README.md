@@ -15,7 +15,7 @@ Wire contracts live in the main repo. This directory is a navigation index.
 | `JournalPosted` event | `spec/contracts/async-api/core-events.yaml` | `eventType: JournalPosted`; `useCase: DEPOSIT`; `businessRef`; `coaTransId` |
 | `WalletCredited` event | `spec/contracts/async-api/core-events.yaml` | `eventType: WalletCredited`; `businessRef`; `walletId`; `netAmount` |
 | `core.operations.command-failed` event | `spec/contracts/async-api/core-events.yaml` | `businessRef`; `commandType`; `reason` |
-| Deposit notify (S1 inbound) | `spec/contracts/open-api/gtelpay-public.yaml` | `POST /deposits/notify` → 202 + `businessRef` |
+| Deposit notify (s1-http-public inbound) | `spec/contracts/open-api/gtelpay-public.yaml` | `POST /deposits/notify` → 202 + `businessRef` |
 | Accounting internal | `spec/contracts/open-api/accounting-internal.yaml` | `createJournal`, `confirmDeposit` — unchanged wire (ADR-037 AC-037-02) |
 
 ---

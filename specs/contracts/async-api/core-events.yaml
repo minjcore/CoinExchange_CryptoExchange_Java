@@ -1,10 +1,10 @@
 asyncapi: "2.6.0"
 
 info:
-  title: GtelPay Core — S3 Domain Events
+  title: GtelPay Core — s3-kafka-events Domain Events
   version: "1.0.0"
   description: |
-    Kafka event channels (Surface S3).
+    Kafka event channels (Surface s3-kafka-events).
     Producers: app-accounting-worker, app-wallet-worker.
     Consumers: app-orchestration, downstream services.
 
