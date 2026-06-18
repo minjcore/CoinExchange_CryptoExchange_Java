@@ -101,6 +101,26 @@ class WalletCommandServiceIntegrationTest {
         assertEquals(new BigDecimal("0.0000"), after.frozen());
     }
 
+    // A2: IBFT settle must deduct from FROZEN (not available) — else the held funds would be
+    // spent twice. Mirrors withdraw; guards WalletTxType.IBFT_SETTLE.deductFromFrozen=true.
+    @Test
+    void ibftFreezeThenSettle_deductsFrozenNotAvailable() {
+        long memberId = 1006L;
+        walletCommandService.provisionIfAbsent(memberId, WalletType.USER, "VND");
+        walletCommandService.credit(cmd(memberId, "dep-ibft", WalletTxType.DEPOSIT_CREDIT, "150000"));
+
+        walletCommandService.freeze(cmd(memberId, "ibft-1", WalletTxType.IBFT_FREEZE, "101000"));
+        var frozen = walletQueryService.getBalance(memberId, WalletType.USER, "VND");
+        assertEquals(new BigDecimal("49000.0000"), frozen.available());
+        assertEquals(new BigDecimal("101000.0000"), frozen.frozen());
+
+        walletCommandService.debit(cmd(memberId, "ibft-1:settle", WalletTxType.IBFT_SETTLE, "101000"));
+        var after = walletQueryService.getBalance(memberId, WalletType.USER, "VND");
+        // settle hit frozen only: available stays 49000, frozen back to 0.
+        assertEquals(new BigDecimal("49000.0000"), after.available());
+        assertEquals(new BigDecimal("0.0000"), after.frozen());
+    }
+
     @Test
     void concurrentSameTriple_appliesOnceAndReplaysLoser() throws Exception {
         long memberId = 1005L;

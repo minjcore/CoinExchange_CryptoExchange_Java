@@ -1,17 +1,22 @@
 package com.gtelpay.core.accounting.service;
 
 import com.gtelpay.core.accounting.domain.LineSide;
+import com.gtelpay.core.accounting.domain.CoaPeriodEntity;
+import com.gtelpay.core.accounting.domain.PeriodStatus;
 import com.gtelpay.core.accounting.service.impl.JournalBalanceValidator;
 import com.gtelpay.core.accounting.domain.CoaTransDataEntity;
+import com.gtelpay.core.accounting.repository.CoaPeriodRepository;
 import com.gtelpay.core.accounting.repository.CoaTransDataRepository;
 import com.gtelpay.core.accounting.validation.DepositPostingValidator;
 import com.gtelpay.core.foundation.exception.AccountingException;
+import com.gtelpay.core.foundation.exception.ErrorCode;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,6 +32,42 @@ class JournalServiceIntegrationTest {
 
     @Autowired
     private CoaTransDataRepository coaTransDataRepository;
+
+    @Autowired
+    private CoaPeriodRepository coaPeriodRepository;
+
+    // A1 (ADR-010): a balanced journal that still strands a transit account must NOT post.
+    @Test
+    void balancedButStrandedTransit_rejectsPost() {
+        JournalHeader header = journalService.createJournal(
+                new CreateJournalCommand("trf-stranded", "TRANSFER", null, null));
+        // DR = CR (balanced), but 3300 nets -100000 (never cleared) → must be rejected.
+        journalService.addLines(header.id(), List.of(
+                line("2110", "100000", LineSide.DEBIT),
+                line("3300", "100000", LineSide.CREDIT)));
+
+        AccountingException ex = assertThrows(
+                AccountingException.class, () -> journalService.postJournal(header.id()));
+        assertEquals(ErrorCode.ACCOUNTING_UNBALANCED_JOURNAL, ex.errorCode());
+    }
+
+    // A4 (ADR-023): posting into a CLOSED period is rejected. Uses a distinct month (2020-01)
+    // so it can't affect other tests posting in the current month.
+    @Test
+    void closedPeriod_rejectsPost() {
+        coaPeriodRepository.save(period("2020-01", PeriodStatus.CLOSED));
+
+        JournalHeader header = journalService.createJournal(
+                new CreateJournalCommand("pay-closed", "PAYMENT", null, LocalDate.of(2020, 1, 15)));
+        // balanced + no transit → only the period guard can reject this.
+        journalService.addLines(header.id(), List.of(
+                line("2110", "100000", LineSide.DEBIT),
+                line("1111", "100000", LineSide.CREDIT)));
+
+        AccountingException ex = assertThrows(
+                AccountingException.class, () -> journalService.postJournal(header.id()));
+        assertEquals(ErrorCode.ACCOUNTING_PERIOD_CLOSED, ex.errorCode());
+    }
 
     @Test
     void deposit_pendingToPosted_transit3100Zero() {
@@ -101,6 +142,13 @@ class JournalServiceIntegrationTest {
 
     private static JournalLineCommand line(String account, String amount, LineSide side) {
         return new JournalLineCommand(account, bd(amount), side, "VND");
+    }
+
+    private static CoaPeriodEntity period(String code, PeriodStatus status) {
+        CoaPeriodEntity p = new CoaPeriodEntity();
+        p.setPeriodCode(code);
+        p.setStatus(status);
+        return p;
     }
 
     private static BigDecimal bd(String value) {
