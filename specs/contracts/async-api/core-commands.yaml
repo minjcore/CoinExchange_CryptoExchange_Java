@@ -1,0 +1,203 @@
+asyncapi: "2.6.0"
+
+info:
+  title: GtelPay Core — S6 Worker Commands
+  version: "1.0.0"
+  description: |
+    RabbitMQ command channels (Surface S6).
+    Producer: app-orchestration (via transactional outbox).
+    Consumers: app-accounting-worker (BANK_DEPOSIT), app-wallet-worker (WALLET_CREDIT).
+
+    Identity map:
+      commandType  = routing key
+      businessRef  = X-Idempotency-Key end-to-end (= coa_trans.business_ref = wallet_tx.business_ref)
+      messageId    = per-publish AMQP dedup — not a business key
+      correlationId= trace/observability only — not persisted
+
+servers:
+  production:
+    url: "{host}:{port}"
+    protocol: amqp
+    description: RabbitMQ broker
+
+channels:
+  core.commands.bank-deposit:
+    description: |
+      Trigger Phase A + Phase B deposit processing.
+      Consumer: app-accounting-worker.
+      Routing key: BANK_DEPOSIT.
+    subscribe:
+      operationId: consumeBankDeposit
+      summary: app-accounting-worker consumes BANK_DEPOSIT command
+      message:
+        $ref: '#/components/messages/BankDepositCommand'
+
+  core.commands.wallet-credit:
+    description: |
+      Trigger wallet credit after Phase B POSTED.
+      Consumer: app-wallet-worker.
+      Routing key: WALLET_CREDIT.
+      Published by app-accounting-worker after confirmDeposit succeeds.
+    subscribe:
+      operationId: consumeWalletCredit
+      summary: app-wallet-worker consumes WALLET_CREDIT command
+      message:
+        $ref: '#/components/messages/WalletCreditCommand'
+
+components:
+  messages:
+    BankDepositCommand:
+      name: BankDepositCommand
+      title: BANK_DEPOSIT
+      summary: Bank deposit notification routed to accounting worker for Phase A+B
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          messageId:
+            type: string
+            description: AMQP dedup key (mirrors envelope.messageId)
+          correlationId:
+            type: string
+            description: Trace ID (optional)
+      payload:
+        $ref: '#/components/schemas/BankDepositPayload'
+      examples:
+        - name: standard-deposit
+          payload:
+            commandType: BANK_DEPOSIT
+            businessRef: dep-20260618-abc123
+            messageId: msg-01j4kz7abc
+            correlationId: trace-xyz-001
+            payload:
+              memberId: 1001
+              virtualAccount: VA-GTL-00123
+              grossAmount: "100000.0000"
+              fee: "1000.0000"
+              currency: VND
+              bankRef: BNK-REF-20260618-001
+
+    WalletCreditCommand:
+      name: WalletCreditCommand
+      title: WALLET_CREDIT
+      summary: Credit wallet after journal POSTED (Phase B complete)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalletCreditPayload'
+      examples:
+        - name: standard-credit
+          payload:
+            commandType: WALLET_CREDIT
+            businessRef: dep-20260618-abc123
+            messageId: msg-01j4kz8def
+            payload:
+              walletId: 5001
+              netAmount: "99000.0000"
+              currency: VND
+              coaTransId: 9001
+
+  schemas:
+    CommandEnvelope:
+      type: object
+      required:
+        - commandType
+        - businessRef
+        - messageId
+        - payload
+      properties:
+        commandType:
+          type: string
+          description: "Routing key. Values: BANK_DEPOSIT | WALLET_CREDIT"
+        businessRef:
+          type: string
+          maxLength: 64
+          description: |
+            End-to-end idempotency key.
+            = X-Idempotency-Key (S1) = coa_trans.business_ref = wallet_tx.business_ref.
+        messageId:
+          type: string
+          description: Per-publish AMQP dedup key. Not a business key.
+        correlationId:
+          type: string
+          description: Trace/observability only. Not persisted to DB.
+        payload:
+          type: object
+
+    BankDepositPayload:
+      allOf:
+        - $ref: '#/components/schemas/CommandEnvelope'
+      properties:
+        commandType:
+          type: string
+          enum: [BANK_DEPOSIT]
+        payload:
+          type: object
+          required:
+            - memberId
+            - virtualAccount
+            - grossAmount
+            - fee
+            - currency
+            - bankRef
+          properties:
+            memberId:
+              type: integer
+              format: int64
+              description: Resolved from virtual account by orchestration.
+            virtualAccount:
+              type: string
+              description: Raw virtual account from bank notification.
+            grossAmount:
+              type: string
+              pattern: '^[0-9]+\.[0-9]{4}$'
+              example: "100000.0000"
+              description: |
+                Decimal string, scale 4. TB wire = VND × 10⁴ as u128.
+                Phase A: 1111 DR → 3100 CR (grossAmount).
+            fee:
+              type: string
+              pattern: '^[0-9]+\.[0-9]{4}$'
+              example: "1000.0000"
+              description: |
+                Fee computed by orchestration.
+                net = grossAmount − fee.
+                Phase B: 3100 DR → 4110 CR (fee).
+            currency:
+              type: string
+              enum: [VND]
+            bankRef:
+              type: string
+              description: Bank's own transaction reference (audit trail).
+
+    WalletCreditPayload:
+      allOf:
+        - $ref: '#/components/schemas/CommandEnvelope'
+      properties:
+        commandType:
+          type: string
+          enum: [WALLET_CREDIT]
+        payload:
+          type: object
+          required:
+            - walletId
+            - netAmount
+            - currency
+          properties:
+            walletId:
+              type: integer
+              format: int64
+              description: Pocket wallet BIGINT PK.
+            netAmount:
+              type: string
+              pattern: '^[0-9]+\.[0-9]{4}$'
+              example: "99000.0000"
+              description: grossAmount − fee. Amount to credit available balance.
+            currency:
+              type: string
+              enum: [VND]
+            coaTransId:
+              type: integer
+              format: int64
+              description: |
+                Correlation only — coa_trans.id after Phase B POSTED.
+                wallet_tx.coa_trans_id (no FK).

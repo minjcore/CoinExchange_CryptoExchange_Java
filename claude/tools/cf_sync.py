@@ -46,6 +46,9 @@ PAGES = {
     "claude/confluence/domain-trds/wallet-trd.md":                  ("43843585", None),
     "claude/confluence/contracts-integration/integration-surfaces.md":         ("43220994", None),
     "claude/confluence/contracts-integration/core-platform-design.md":         ("42041345", None),
+    "claude/confluence/contracts-integration/accounting-api.md":               ("51544687", None),
+    "claude/confluence/contracts-integration/wallet-api.md":                   ("51610183", None),
+    "claude/confluence/contracts-integration/core-commands-api.md":            ("51643061", None),
     "claude/confluence/build-process/business-process-deposit.md":  ("44859411", None),
     "claude/confluence/build-process/implementation-decisions.md":  ("49152021", None),
     # --- Architecture Decision Records (parent: 51642522) ---

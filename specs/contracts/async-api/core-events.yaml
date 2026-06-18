@@ -1,0 +1,210 @@
+asyncapi: "2.6.0"
+
+info:
+  title: GtelPay Core — S3 Domain Events
+  version: "1.0.0"
+  description: |
+    Kafka event channels (Surface S3).
+    Producers: app-accounting-worker, app-wallet-worker.
+    Consumers: app-orchestration, downstream services.
+
+    Event flow for DEPOSIT use case:
+      1. app-accounting-worker → JournalPosted  (Phase B complete, coa_trans POSTED)
+      2. app-wallet-worker     → WalletCredited (wallet_tx CREDIT inserted)
+      3. Either worker         → CommandFailed  (max retries exceeded)
+
+servers:
+  production:
+    url: "{host}:{port}"
+    protocol: kafka
+    description: Kafka broker
+
+channels:
+  core.events.journal-posted:
+    description: |
+      Emitted when Phase B completes (coa_trans.status = POSTED).
+      Producer: app-accounting-worker.
+    publish:
+      operationId: publishJournalPosted
+      summary: Journal moved to POSTED — accounting complete
+      message:
+        $ref: '#/components/messages/JournalPostedEvent'
+
+  core.events.wallet-credited:
+    description: |
+      Emitted when wallet_tx CREDIT inserted successfully.
+      Producer: app-wallet-worker.
+    publish:
+      operationId: publishWalletCredited
+      summary: Wallet credited — deposit fully settled
+      message:
+        $ref: '#/components/messages/WalletCreditedEvent'
+
+  core.operations.command-failed:
+    description: |
+      Emitted when a worker command fails after max retries.
+      Producer: app-accounting-worker or app-wallet-worker.
+      Consumers: ops alerting, dead-letter handler.
+    publish:
+      operationId: publishCommandFailed
+      summary: Worker command failed — ops intervention required
+      message:
+        $ref: '#/components/messages/CommandFailedEvent'
+
+components:
+  messages:
+    JournalPostedEvent:
+      name: JournalPostedEvent
+      title: JournalPosted
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/JournalPostedPayload'
+      examples:
+        - name: deposit-posted
+          payload:
+            eventType: JournalPosted
+            eventId: evt-01j4kz9abc
+            businessRef: dep-20260618-abc123
+            occurredAt: "2026-06-18T10:01:30Z"
+            coaTransId: 9001
+            useCase: DEPOSIT
+            grossAmount: "100000.0000"
+            fee: "1000.0000"
+            netAmount: "99000.0000"
+            currency: VND
+
+    WalletCreditedEvent:
+      name: WalletCreditedEvent
+      title: WalletCredited
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WalletCreditedPayload'
+      examples:
+        - name: deposit-credited
+          payload:
+            eventType: WalletCredited
+            eventId: evt-01j4kz9def
+            businessRef: dep-20260618-abc123
+            occurredAt: "2026-06-18T10:01:31Z"
+            walletId: 5001
+            walletTxId: 7001
+            netAmount: "99000.0000"
+            currency: VND
+            idempotentReplay: false
+
+    CommandFailedEvent:
+      name: CommandFailedEvent
+      title: CommandFailed
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/CommandFailedPayload'
+
+  schemas:
+    EventEnvelope:
+      type: object
+      required:
+        - eventType
+        - eventId
+        - businessRef
+        - occurredAt
+      properties:
+        eventType:
+          type: string
+          description: Event discriminator.
+        eventId:
+          type: string
+          description: Kafka dedup key. Not a business key.
+        businessRef:
+          type: string
+          maxLength: 64
+          description: End-to-end idempotency key.
+        correlationId:
+          type: string
+          description: Trace/observability only. Optional.
+        occurredAt:
+          type: string
+          format: date-time
+
+    JournalPostedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+      required:
+        - coaTransId
+        - useCase
+        - grossAmount
+        - currency
+      properties:
+        eventType:
+          type: string
+          enum: [JournalPosted]
+        coaTransId:
+          type: integer
+          format: int64
+          description: coa_trans.id (BIGINT PK).
+        useCase:
+          type: string
+          enum: [DEPOSIT, PAYMENT, TRANSFER, WITHDRAW]
+        grossAmount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "100000.0000"
+        fee:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "1000.0000"
+        netAmount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "99000.0000"
+        currency:
+          type: string
+          enum: [VND]
+
+    WalletCreditedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+      required:
+        - walletId
+        - walletTxId
+        - netAmount
+        - currency
+      properties:
+        eventType:
+          type: string
+          enum: [WalletCredited]
+        walletId:
+          type: integer
+          format: int64
+        walletTxId:
+          type: integer
+          format: int64
+        netAmount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "99000.0000"
+        currency:
+          type: string
+          enum: [VND]
+        idempotentReplay:
+          type: boolean
+          description: true if businessRef was already processed (replay safe).
+
+    CommandFailedPayload:
+      allOf:
+        - $ref: '#/components/schemas/EventEnvelope'
+      required:
+        - commandType
+        - reason
+      properties:
+        eventType:
+          type: string
+          enum: [CommandFailed]
+        commandType:
+          type: string
+          description: "BANK_DEPOSIT | WALLET_CREDIT"
+        reason:
+          type: string
+          description: Error message / code for ops triage.
+        failedAt:
+          type: string
+          format: date-time
