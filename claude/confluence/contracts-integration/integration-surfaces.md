@@ -2,7 +2,7 @@
 
 > **CF page ID:** 43220994 | **Parent:** 🔌 Contracts & Integration (51315085)
 > **Source of truth:** this file → push to CF
-> **Wire specs:** `spec/contracts/open-api/` and `spec/contracts/async-api/`
+> **Wire specs:** `specs/contracts/open-api/` and `specs/contracts/async-api/`
 
 ---
 
@@ -11,7 +11,7 @@
 | Surface | Description | Protocol | Producer | Consumer |
 |---------|-------------|---------|---------|---------|
 | s1-http-public | Public product API | HTTPS | `app-orchestration` | Mobile, partner, API Gateway |
-| s2-http-internal | Accounting API | HTTPS (internal) | `app-accounting` | `app-orchestration` only |
+| s2-http-internal | Accounting + Wallet internal APIs | HTTPS (internal) | `app-accounting`, `app-wallet` | `app-orchestration`, `app-wallet-worker` |
 | s3-kafka-events | Domain events | Kafka | Workers | Orchestration, downstream |
 | s4-gateway-config | Gateway routing | Config | DevOps | Edge proxy |
 | s5-shared-envelope | Shared envelope | Library | — | All `app-*` and `core.*` |
@@ -23,10 +23,10 @@
 
 | Use case | s1-http-public | s2-http-internal | s6-rabbitmq-cmds queue | Wallet |
 |----------|----------------|------------------|------------------------|--------|
-| **Deposit** | `POST /deposits/notify` → **202** | Phase A+B (via worker, not direct) | `BANK_DEPOSIT` → `WALLET_CREDIT` | Credit USER after POSTED |
+| **Deposit** | `POST /v1/deposits/notify` → **202** | Phase A+B (via worker, not direct) | `BANK_DEPOSIT` → `WALLET_CREDIT` | Credit USER after POSTED |
 | **Payment** | `POST /v1/payments` → **200** | Create + post (sync) | — | Debit USER → credit MERCHANT |
-| **Transfer** | `createTransfer` → **200** | Post via transit 3300 | — | Debit A → credit B |
-| **Withdraw** | `createWithdrawal` → **200** | Post + bank async | `WITHDRAW_PAYOUT` | Freeze before 200 |
+| **Transfer** | `POST /v1/transfers` → **200** | Post via transit 3300 | — | Debit A → credit B |
+| **Withdraw** | `POST /v1/withdrawals` → **200** | Post + bank async | `WITHDRAW_PAYOUT` | Freeze before 200 |
 | **Balance read** | `GET /v1/wallets/balance` → **200** | — | — | Query only |
 
 ---
@@ -46,7 +46,7 @@ Mọi message trên s6-rabbitmq-cmds dùng chung envelope:
     "grossAmount": "100000.0000",
     "fee": "1000.0000",
     "currency": "VND",
-    "virtualAccountId": "VA-001"
+    "virtualAccount": "VA-001"
   }
 }
 ```

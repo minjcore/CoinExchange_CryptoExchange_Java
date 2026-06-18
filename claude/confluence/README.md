@@ -16,6 +16,7 @@ Edit local .md file  →  convert to HTML  →  updateConfluencePage
 ```
 claude/confluence/
 ├── README.md                           (this file)
+├── data-plane-architecture.md          → CF 43581441 (root page)
 ├── conclusion.md                       → CF 51609737 (parent: 43581441)
 │
 ├── start-here/

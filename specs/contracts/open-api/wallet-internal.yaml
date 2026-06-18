@@ -280,7 +280,7 @@ components:
           example: "99000.0000"
         business_ref:
           type: string
-          maxLength: 128
+          maxLength: 64
           description: |
             Idempotency key.
             = businessRef (s6-rabbitmq-cmds) = X-Idempotency-Key (s1-http-public) = wallet_tx.business_ref (DB).
@@ -312,7 +312,7 @@ components:
           description: Amount to move between available and frozen.
         business_ref:
           type: string
-          maxLength: 128
+          maxLength: 64
           description: Idempotency key.
 
     WalletTxResult:

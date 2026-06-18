@@ -182,6 +182,7 @@ components:
             - walletId
             - netAmount
             - currency
+            - coaTransId
           properties:
             walletId:
               type: integer
