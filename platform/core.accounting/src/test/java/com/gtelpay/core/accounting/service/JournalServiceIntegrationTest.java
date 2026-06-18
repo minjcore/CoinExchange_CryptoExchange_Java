@@ -140,6 +140,33 @@ class JournalServiceIntegrationTest {
         // fee 0 -> 2110 credited net = gross 100000, no 4110 line; balanced + transit cleared.
     }
 
+    // A3 (ADR-001): a POSTED journal line is write-once. @Immutable makes Hibernate refuse the
+    // UPDATE — tampering the amount in-memory and saving must NOT change the stored row.
+    @Test
+    void postedLine_tamperIsIgnored_immutable() {
+        JournalHeader header = journalService.createJournal(
+                new CreateJournalCommand("imm-1", "PAYMENT", null, null));
+        journalService.addLines(header.id(), List.of(
+                line("2110", "100000", LineSide.DEBIT),
+                line("3500", "100000", LineSide.CREDIT),
+                line("3500", "100000", LineSide.DEBIT),
+                line("2120", "100000", LineSide.CREDIT)));
+        journalService.postJournal(header.id());
+
+        CoaTransDataEntity target = coaTransDataRepository.findByCoaTransId(header.id()).get(0);
+        Long lineId = target.getId();
+        BigDecimal original = target.getAmount();
+
+        // Attempt to tamper a POSTED line and persist it.
+        target.setAmount(bd("999999"));
+        coaTransDataRepository.save(target);
+
+        // Re-read fresh from the DB: the UPDATE was never emitted (@Immutable).
+        CoaTransDataEntity reloaded = coaTransDataRepository.findById(lineId).orElseThrow();
+        assertEquals(0, reloaded.getAmount().compareTo(original),
+                "POSTED line amount must be unchanged after a tamper attempt");
+    }
+
     private static JournalLineCommand line(String account, String amount, LineSide side) {
         return new JournalLineCommand(account, bd(amount), side, "VND");
     }
