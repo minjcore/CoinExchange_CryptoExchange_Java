@@ -1,0 +1,462 @@
+openapi: "3.0.3"
+
+info:
+  title: GtelPay Public API
+  version: "1.0.0"
+  description: |
+    s1-http-public contract for GtelPay Core.
+
+    Entry points:
+      External callers: mobile apps, partner systems, bank webhooks.
+      All traffic routes through API Gateway → app-orchestration.
+
+    Authentication:
+      Bearer token (JWT) in Authorization header.
+      Exception: bank webhook uses shared secret (X-Bank-Signature header, HMAC-SHA256).
+
+    Idempotency:
+      All mutation endpoints require X-Idempotency-Key header.
+      Value = businessRef — carried end-to-end through s6-rabbitmq-cmds and DB.
+      Duplicate requests with same key return the original response (no re-processing).
+
+servers:
+  - url: https://api.gtelpay.vn/v1
+    description: Production
+  - url: https://api-staging.gtelpay.vn/v1
+    description: Staging
+
+security:
+  - BearerAuth: []
+
+paths:
+
+  # ── Deposits ──────────────────────────────────────────────────────────────
+
+  /deposits/notify:
+    post:
+      operationId: notifyDeposit
+      summary: Bank deposit notification (async — returns 202 immediately)
+      description: |
+        Inbound webhook from bank or payment gateway when a deposit lands.
+        app-orchestration writes to outbox and returns 202 — no synchronous processing.
+
+        Async flow after 202:
+          outbox relay → s6-rabbitmq-cmds BANK_DEPOSIT → app-accounting-worker
+          → Phase A (TB pending) → Phase B (TB post) → s6-rabbitmq-cmds WALLET_CREDIT
+          → app-wallet-worker → wallet credited → s3-kafka-events WalletCredited
+
+        Idempotent on X-Idempotency-Key: duplicate notification → 202, no re-processing.
+      security:
+        - BankWebhookSignature: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositNotifyRequest'
+            example:
+              virtual_account: VA-GTL-00123
+              gross_amount: "100000.0000"
+              currency: VND
+              bank_ref: BNK-REF-20260618-001
+              notified_at: "2026-06-18T10:00:00Z"
+      responses:
+        '202':
+          description: Notification accepted — deposit will be processed asynchronously
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+              example:
+                business_ref: dep-20260618-abc123
+                status: ACCEPTED
+                message: Deposit queued for processing
+        '409':
+          description: Idempotency conflict — same X-Idempotency-Key with different payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Virtual account not found or currency not supported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Payments ──────────────────────────────────────────────────────────────
+
+  /payments:
+    post:
+      operationId: createPayment
+      summary: Initiate a payment (sync — returns 200 on completion)
+      description: |
+        Synchronous payment: debit payer wallet, credit merchant wallet.
+        Ledger: 2110 DR (USER) → 2120 CR (MERCHANT) via transit 3300.
+        Returns 200 only after wallet debit + ledger POSTED.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '422':
+          description: Insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Transfers ─────────────────────────────────────────────────────────────
+
+  /transfers:
+    post:
+      operationId: createTransfer
+      summary: Internal wallet-to-wallet transfer (sync)
+      description: |
+        Debit sender wallet, credit receiver wallet.
+        Ledger: 2110 DR → 2110 CR via transit 3300.
+        Returns 200 only after both wallets updated + ledger POSTED.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '200':
+          description: Transfer completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+        '422':
+          description: Insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Withdrawals ───────────────────────────────────────────────────────────
+
+  /withdrawals:
+    post:
+      operationId: createWithdrawal
+      summary: Withdraw to bank account (sync accept, async payout)
+      description: |
+        Freezes the amount immediately (available → frozen) and returns 200.
+        Actual bank payout runs async via s6-rabbitmq-cmds WITHDRAW_PAYOUT.
+        If payout fails, frozen amount is released (unfreeze).
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+      responses:
+        '200':
+          description: Withdrawal accepted — payout in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalResponse'
+        '422':
+          description: Insufficient balance or wallet LOCKED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Wallets ───────────────────────────────────────────────────────────────
+
+  /wallets/balance:
+    get:
+      operationId: getWalletBalance
+      summary: Query wallet balance for authenticated member
+      description: |
+        Returns available and frozen balance for the member's default wallet.
+        Read-only — no mutation.
+      parameters:
+        - in: query
+          name: currency
+          schema:
+            type: string
+            enum: [VND]
+          required: false
+          description: Filter by currency. Default VND.
+        - in: query
+          name: wallet_type
+          schema:
+            type: string
+            enum: [USER, MERCHANT, PARTNER]
+          required: false
+          description: Wallet type. Default USER.
+      responses:
+        '200':
+          description: Current balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '404':
+          description: Wallet not found (member not provisioned)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT issued by GtelPay auth service. Claims include memberId, roles.
+    BankWebhookSignature:
+      type: apiKey
+      in: header
+      name: X-Bank-Signature
+      description: HMAC-SHA256 of request body using shared secret. Verified by orchestration.
+
+  parameters:
+    IdempotencyKey:
+      in: header
+      name: X-Idempotency-Key
+      required: true
+      schema:
+        type: string
+        maxLength: 64
+        pattern: '^[a-zA-Z0-9_\-\.]+$'
+      description: |
+        Caller-generated idempotency key.
+        = businessRef carried end-to-end (s6-rabbitmq-cmds envelope, DB).
+        Duplicate requests with same key return original response without re-processing.
+        Format recommendation: {prefix}-{date}-{random} e.g. dep-20260618-abc123
+
+  schemas:
+    DepositNotifyRequest:
+      type: object
+      required:
+        - virtual_account
+        - gross_amount
+        - currency
+        - bank_ref
+        - notified_at
+      properties:
+        virtual_account:
+          type: string
+          description: Virtual account number assigned to the member by the bank.
+        gross_amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          description: Gross deposit amount. Decimal string scale 4.
+          example: "100000.0000"
+        currency:
+          type: string
+          enum: [VND]
+        bank_ref:
+          type: string
+          description: Bank's own transaction reference (for audit trail and reconciliation).
+        notified_at:
+          type: string
+          format: date-time
+          description: Timestamp from bank notification.
+
+    PaymentRequest:
+      type: object
+      required:
+        - payer_wallet_id
+        - payee_wallet_id
+        - amount
+        - currency
+      properties:
+        payer_wallet_id:
+          type: integer
+          format: int64
+          description: Wallet to debit.
+        payee_wallet_id:
+          type: integer
+          format: int64
+          description: Wallet to credit.
+        amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "50000.0000"
+        currency:
+          type: string
+          enum: [VND]
+        description:
+          type: string
+          maxLength: 256
+          description: Optional human-readable note.
+
+    TransferRequest:
+      type: object
+      required:
+        - sender_wallet_id
+        - receiver_wallet_id
+        - amount
+        - currency
+      properties:
+        sender_wallet_id:
+          type: integer
+          format: int64
+        receiver_wallet_id:
+          type: integer
+          format: int64
+        amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "100000.0000"
+        currency:
+          type: string
+          enum: [VND]
+
+    WithdrawalRequest:
+      type: object
+      required:
+        - wallet_id
+        - amount
+        - currency
+        - bank_account_number
+        - bank_code
+      properties:
+        wallet_id:
+          type: integer
+          format: int64
+        amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "200000.0000"
+        currency:
+          type: string
+          enum: [VND]
+        bank_account_number:
+          type: string
+          description: Destination bank account.
+        bank_code:
+          type: string
+          description: Destination bank BIC/SWIFT code or local bank code.
+
+    AcceptedResponse:
+      type: object
+      properties:
+        business_ref:
+          type: string
+          description: Echo of X-Idempotency-Key. Use to track async processing.
+        status:
+          type: string
+          enum: [ACCEPTED]
+        message:
+          type: string
+
+    PaymentResponse:
+      type: object
+      properties:
+        business_ref:
+          type: string
+        status:
+          type: string
+          enum: [COMPLETED]
+        payer_available:
+          type: string
+          description: Payer balance after debit. Decimal string scale 4.
+        completed_at:
+          type: string
+          format: date-time
+
+    TransferResponse:
+      type: object
+      properties:
+        business_ref:
+          type: string
+        status:
+          type: string
+          enum: [COMPLETED]
+        sender_available:
+          type: string
+          description: Sender balance after debit.
+        completed_at:
+          type: string
+          format: date-time
+
+    WithdrawalResponse:
+      type: object
+      properties:
+        business_ref:
+          type: string
+        status:
+          type: string
+          enum: [ACCEPTED]
+          description: Payout is in progress — not yet completed.
+        frozen_amount:
+          type: string
+          description: Amount moved to frozen pending payout.
+        accepted_at:
+          type: string
+          format: date-time
+
+    BalanceResponse:
+      type: object
+      properties:
+        wallet_id:
+          type: integer
+          format: int64
+        member_id:
+          type: integer
+          format: int64
+        available:
+          type: string
+          example: "99000.0000"
+          description: Spendable now.
+        frozen:
+          type: string
+          example: "0.0000"
+          description: Held for in-progress withdrawals.
+        currency:
+          type: string
+          enum: [VND]
+        wallet_type:
+          type: string
+          enum: [USER, MERCHANT, PARTNER]
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          description: |
+            Platform error codes:
+            WALLET_INSUFFICIENT_BALANCE, WALLET_NOT_FOUND, WALLET_LOCKED,
+            WALLET_DUPLICATE_CONFLICT, IDEMPOTENCY_CONFLICT,
+            VIRTUAL_ACCOUNT_NOT_FOUND, CURRENCY_NOT_SUPPORTED
+        message:
+          type: string
+          description: Human-readable error. Do not parse programmatically.
+        business_ref:
+          type: string
+          description: Echo of X-Idempotency-Key when available.

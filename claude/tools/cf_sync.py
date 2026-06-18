@@ -46,6 +46,7 @@ PAGES = {
     "claude/confluence/domain-trds/wallet-trd.md":                  ("43843585", None),
     "claude/confluence/contracts-integration/integration-surfaces.md":         ("43220994", None),
     "claude/confluence/contracts-integration/core-platform-design.md":         ("42041345", None),
+    "claude/confluence/contracts-integration/gtelpay-public-api.md":           ("51643159", None),
     "claude/confluence/contracts-integration/accounting-api.md":               ("51544687", None),
     "claude/confluence/contracts-integration/wallet-api.md":                   ("51610183", None),
     "claude/confluence/contracts-integration/core-commands-api.md":            ("51643061", None),
