@@ -1,0 +1,289 @@
+openapi: "3.0.3"
+
+info:
+  title: Accounting Internal API
+  version: "1.0.0"
+  description: |
+    s2-http-internal contract for app-accounting.
+
+    Caller: app-orchestration ONLY.
+    Never called by partner, gateway, or mobile client.
+
+    Two entry points:
+      Async deposit flow → app-accounting-worker (consumes BANK_DEPOSIT via s6-rabbitmq-cmds, NOT this API)
+      Sync use cases    → this API (app-orchestration calls directly)
+
+    Identity map:
+      reference_id (this API) = businessRef (s6-rabbitmq-cmds envelope) = coa_trans.business_ref (DB)
+      coa_trans_id (response) → used as coaTransId in WALLET_CREDIT command
+
+servers:
+  - url: http://app-accounting
+    description: Internal service — not exposed beyond app-orchestration
+
+paths:
+  /journals:
+    post:
+      operationId: createJournal
+      summary: Phase A — create PENDING journal (idempotent)
+      description: |
+        Creates coa_trans(status=PENDING) and TigerBeetle pending transfer:
+          1111 DR → 3100 CR (grossAmount)
+
+        Idempotent on (reference_id, use_case):
+          duplicate → return existing PENDING journal (same response shape).
+
+        TB pending transfer ID = hash(businessRef + ":phaseA") — deterministic.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJournalRequest'
+            example:
+              reference_id: dep-20260618-abc123
+              use_case: DEPOSIT
+              gross_amount: "100000.0000"
+      responses:
+        '200':
+          description: Journal created (or existing PENDING returned on duplicate)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalResponse'
+        '409':
+          description: |
+            IDEMPOTENCY_CONFLICT — reference_id reused with different use_case or gross_amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error_code: IDEMPOTENCY_CONFLICT
+                message: Same reference_id with different use_case
+                business_ref: dep-20260618-abc123
+
+  /journals/{coaTransId}/post:
+    post:
+      operationId: postJournal
+      summary: Phase B — post pending journal and split fee
+      description: |
+        Three TigerBeetle operations in sequence:
+          1. post_pending(pendingTransferId)             — full gross amount
+          2. createTransfer(3100 DR → 2110 CR, net)      — net = grossAmount − fee
+          3. createTransfer(3100 DR → 4110 CR, fee)      — fee leg
+
+        Validates: account[3100].net = 0 after all three operations.
+        Updates coa_trans.status = POSTED.
+
+        Idempotent: if already POSTED, returns existing journal (no re-posting).
+      parameters:
+        - in: path
+          name: coaTransId
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: coa_trans.id returned from createJournal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostJournalRequest'
+            example:
+              fee: "1000.0000"
+      responses:
+        '200':
+          description: Journal posted (or already POSTED — idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalResponse'
+        '404':
+          description: JOURNAL_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: JOURNAL_ALREADY_FAILED — cannot post a voided journal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /journals/{coaTransId}/void:
+    post:
+      operationId: voidPending
+      summary: Reversal — void the pending TigerBeetle transfer
+      description: |
+        Voids the pending TB transfer (reverse of Phase A).
+        Sets coa_trans.status = FAILED.
+
+        Used when bank deposit is reversed or Phase A must be rolled back.
+        Cannot void a POSTED journal — use a compensating journal instead.
+      parameters:
+        - in: path
+          name: coaTransId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Pending transfer voided, coa_trans.status = FAILED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalResponse'
+        '404':
+          description: JOURNAL_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: JOURNAL_ALREADY_POSTED — cannot void a posted journal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /journals/{coaTransId}:
+    get:
+      operationId: getJournal
+      summary: Query journal by ID
+      description: Read-only. Used by orchestration to check status before deciding next step.
+      parameters:
+        - in: path
+          name: coaTransId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Journal found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalResponse'
+        '404':
+          description: JOURNAL_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CreateJournalRequest:
+      type: object
+      required:
+        - reference_id
+        - use_case
+        - gross_amount
+      properties:
+        reference_id:
+          type: string
+          maxLength: 64
+          description: |
+            Business idempotency key.
+            Alias of businessRef (s6-rabbitmq-cmds envelope).
+            = X-Idempotency-Key from s1-http-public.
+            Stored as coa_trans.business_ref.
+          example: dep-20260618-abc123
+        use_case:
+          type: string
+          enum: [DEPOSIT, PAYMENT, TRANSFER, WITHDRAW]
+          description: Unique constraint partner: (reference_id, use_case).
+        gross_amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          description: Decimal string, scale 4. TB wire = VND × 10⁴ as u128.
+          example: "100000.0000"
+
+    PostJournalRequest:
+      type: object
+      required:
+        - fee
+      properties:
+        fee:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          description: |
+            Fee computed by orchestration.
+            net = grossAmount − fee.
+            Both legs posted in Phase B (net leg + fee leg).
+          example: "1000.0000"
+
+    JournalResponse:
+      type: object
+      required:
+        - coa_trans_id
+        - reference_id
+        - use_case
+        - status
+        - gross_amount
+        - currency
+        - created_at
+        - updated_at
+      properties:
+        coa_trans_id:
+          type: integer
+          format: int64
+          description: coa_trans.id (BIGINT PK). Used as coaTransId in WALLET_CREDIT command.
+        reference_id:
+          type: string
+          description: = businessRef end-to-end.
+        use_case:
+          type: string
+          enum: [DEPOSIT, PAYMENT, TRANSFER, WITHDRAW]
+        status:
+          type: string
+          enum: [PENDING, POSTED, FAILED]
+        gross_amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "100000.0000"
+        fee:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          nullable: true
+          example: "1000.0000"
+        net_amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          nullable: true
+          description: grossAmount − fee. Populated after Phase B.
+          example: "99000.0000"
+        currency:
+          type: string
+          enum: [VND]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          enum:
+            - JOURNAL_NOT_FOUND
+            - JOURNAL_ALREADY_POSTED
+            - JOURNAL_ALREADY_FAILED
+            - IDEMPOTENCY_CONFLICT
+          description: Platform error code.
+        message:
+          type: string
+        business_ref:
+          type: string
+          description: Echo back for client correlation.

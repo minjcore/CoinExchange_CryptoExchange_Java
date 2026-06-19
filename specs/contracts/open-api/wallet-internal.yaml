@@ -1,0 +1,440 @@
+openapi: "3.0.3"
+
+info:
+  title: Wallet Internal API
+  version: "1.0.0"
+  description: |
+    s2-http-internal contract for app-wallet.
+
+    Callers:
+      Sync path  → app-orchestration (payment, transfer, balance read)
+      Async path → app-wallet-worker (consumes WALLET_CREDIT via s6-rabbitmq-cmds, calls this API)
+
+    Identity map:
+      business_ref (this API) = businessRef (s6-rabbitmq-cmds envelope) = wallet_tx.business_ref (DB)
+
+    Idempotency key per operation: (walletId, business_ref, tx_type)
+      duplicate with same amount → return existing tx (idempotent_replay=true)
+      duplicate with different amount → 409 WALLET_DUPLICATE_CONFLICT
+
+servers:
+  - url: http://app-wallet
+    description: Internal service — not exposed beyond app-orchestration / workers
+
+paths:
+  /wallets:
+    post:
+      operationId: provisionWallet
+      summary: Provision wallet + zero balance for member (idempotent)
+      description: |
+        Creates wallet + wallet_balance(available=0, frozen=0).
+        Idempotent on (member_id, wallet_type, currency): duplicate returns existing wallet.
+        Used once per member per wallet type at onboarding.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvisionRequest'
+            example:
+              member_id: 1001
+              wallet_type: USER
+              currency: VND
+      responses:
+        '200':
+          description: Wallet provisioned (or existing returned on duplicate)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '422':
+          description: Validation error — invalid member_id, wallet_type, or currency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /wallets/{walletId}/credit:
+    post:
+      operationId: creditWallet
+      summary: Credit available balance (idempotent)
+      description: |
+        Increases wallet_balance.available.
+        Inserts wallet_tx(direction=CREDIT).
+        Idempotent on (walletId, business_ref, tx_type).
+
+        For deposit: called by app-wallet-worker after journal POSTED (not before).
+        Rule FR-3: credit only after POSTED.
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MutationRequest'
+            example:
+              amount: "99000.0000"
+              business_ref: dep-20260618-abc123
+              tx_type: DEPOSIT_CREDIT
+              coa_trans_id: 9001
+      responses:
+        '200':
+          description: Credit applied (or replayed on duplicate)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletTxResult'
+        '404':
+          description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: WALLET_DUPLICATE_CONFLICT — same business_ref with different amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: WALLET_LOCKED — wallet status prevents mutation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /wallets/{walletId}/debit:
+    post:
+      operationId: debitWallet
+      summary: Debit available balance
+      description: |
+        Decreases wallet_balance.available.
+        Rejects with WALLET_INSUFFICIENT_BALANCE if available < amount.
+        Idempotent on (walletId, business_ref, tx_type).
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MutationRequest'
+      responses:
+        '200':
+          description: Debit applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletTxResult'
+        '404':
+          description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: WALLET_DUPLICATE_CONFLICT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: WALLET_INSUFFICIENT_BALANCE or WALLET_LOCKED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /wallets/{walletId}/freeze:
+    post:
+      operationId: freezeWallet
+      summary: Move available → frozen (idempotent)
+      description: |
+        Atomically decreases available and increases frozen by the same amount.
+        Used before withdraw payout to hold funds.
+        tx_type fixed = WITHDRAW_FREEZE.
+        Rejects if available < amount.
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreezeRequest'
+      responses:
+        '200':
+          description: Amount frozen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletTxResult'
+        '404':
+          description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: WALLET_INSUFFICIENT_BALANCE or WALLET_LOCKED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /wallets/{walletId}/unfreeze:
+    post:
+      operationId: unfreezeWallet
+      summary: Move frozen → available (reversal of freeze)
+      description: |
+        Atomically decreases frozen and increases available.
+        Used when withdraw is cancelled or fails after freeze.
+        tx_type fixed = WITHDRAW_RELEASE.
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FreezeRequest'
+      responses:
+        '200':
+          description: Amount unfrozen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletTxResult'
+        '404':
+          description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Insufficient frozen amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /wallets/{walletId}/balance:
+    get:
+      operationId: getBalance
+      summary: Query current balance (available + frozen)
+      description: Read-only. No lock taken. Returns snapshot at query time.
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Current balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '404':
+          description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ProvisionRequest:
+      type: object
+      required:
+        - member_id
+        - wallet_type
+        - currency
+      properties:
+        member_id:
+          type: integer
+          format: int64
+        wallet_type:
+          type: string
+          enum: [USER, MERCHANT, PARTNER]
+        currency:
+          type: string
+          enum: [VND]
+
+    MutationRequest:
+      type: object
+      required:
+        - amount
+        - business_ref
+        - tx_type
+      properties:
+        amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          description: Always positive. Decimal string scale 4.
+          example: "99000.0000"
+        business_ref:
+          type: string
+          maxLength: 64
+          description: |
+            Idempotency key.
+            = businessRef (s6-rabbitmq-cmds) = X-Idempotency-Key (s1-http-public) = wallet_tx.business_ref (DB).
+          example: dep-20260618-abc123
+        tx_type:
+          type: string
+          enum:
+            - DEPOSIT_CREDIT
+            - TRANSFER_CREDIT
+            - PAYMENT_CREDIT
+            - PAYMENT_DEBIT
+            - TRANSFER_DEBIT
+          description: Mutation purpose. Used in idempotency key: (walletId, business_ref, tx_type).
+          example: DEPOSIT_CREDIT
+        coa_trans_id:
+          type: integer
+          format: int64
+          description: |
+            Correlation only — no FK.
+            wallet_tx.coa_trans_id (stored but never joined).
+            Provided after journal POSTED.
+
+    FreezeRequest:
+      type: object
+      required:
+        - amount
+        - business_ref
+      properties:
+        amount:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          description: Amount to move between available and frozen.
+        business_ref:
+          type: string
+          maxLength: 64
+          description: Idempotency key.
+
+    WalletTxResult:
+      type: object
+      required:
+        - wallet_tx_id
+        - available
+        - frozen
+        - currency
+        - idempotent_replay
+      properties:
+        wallet_tx_id:
+          type: integer
+          format: int64
+          description: wallet_tx.id (BIGINT PK).
+        available:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          description: Balance after mutation.
+          example: "99000.0000"
+        frozen:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "0.0000"
+        currency:
+          type: string
+          enum: [VND]
+        idempotent_replay:
+          type: boolean
+          description: true if business_ref was already processed (no-op replay).
+
+    WalletResponse:
+      type: object
+      required:
+        - wallet_id
+        - member_id
+        - wallet_type
+        - currency
+        - status
+      properties:
+        wallet_id:
+          type: integer
+          format: int64
+        member_id:
+          type: integer
+          format: int64
+        wallet_type:
+          type: string
+          enum: [USER, MERCHANT, PARTNER]
+        currency:
+          type: string
+          enum: [VND]
+        status:
+          type: string
+          enum: [ACTIVE, LOCKED, CLOSED]
+
+    BalanceResponse:
+      type: object
+      required:
+        - wallet_id
+        - available
+        - frozen
+        - currency
+      properties:
+        wallet_id:
+          type: integer
+          format: int64
+        available:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "99000.0000"
+          description: Spendable now.
+        frozen:
+          type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
+          example: "0.0000"
+          description: Held for in-progress operations (e.g. withdraw).
+        currency:
+          type: string
+          enum: [VND]
+        version:
+          type: integer
+          format: int64
+          description: wallet_balance.version (optimistic lock). Informational only.
+
+    ErrorResponse:
+      type: object
+      required:
+        - error_code
+        - message
+      properties:
+        error_code:
+          type: string
+          enum:
+            - WALLET_NOT_FOUND
+            - WALLET_INSUFFICIENT_BALANCE
+            - WALLET_LOCKED
+            - WALLET_DUPLICATE_CONFLICT
+          description: Platform error code.
+        message:
+          type: string
+        business_ref:
+          type: string
+          description: Echo back for client correlation.
