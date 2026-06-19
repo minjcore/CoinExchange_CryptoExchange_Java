@@ -35,7 +35,7 @@ claude/confluence/
 ├── contracts-integration/
 │   ├── integration-surfaces.md         → CF 43220994 (parent: 51315085)
 │   ├── core-platform-design.md         → CF 42041345 (parent: 51315085)
-│   ├── gtelpay-public-api.md           → CF 51643159 (parent: 51315085)
+│   ├── orchestration-public-api.md     → CF 51643159 (parent: 51315085)
 │   ├── accounting-api.md               → CF 51544687 (parent: 51315085)
 │   ├── wallet-api.md                   → CF 51610183 (parent: 51315085)
 │   └── core-commands-api.md            → CF 51643061 (parent: 51315085)

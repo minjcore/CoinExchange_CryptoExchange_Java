@@ -27,7 +27,7 @@ service in the async deposit flow. Every task that touches a service boundary mu
 
 | Who sends | Protocol | Module that receives | Artifact / address | Domain logic called |
 |-----------|----------|---------------------|-------------------|---------------------|
-| Bank / NAPAS gateway | HTTP `POST /deposits/notify` | `app-orchestration` | `gtelpay-public.yaml` | VA lookup + fee compute + outbox write |
+| Bank / NAPAS gateway | HTTP `POST /deposits/notify` | `app-orchestration` | `orchestration-public.yaml` | VA lookup + fee compute + outbox write |
 | Outbox relay | **RabbitMQ** (at-least-once) | `app-accounting-worker` | exchange `core.commands` / queue `core.commands.bank-deposit` / msg `BANK_DEPOSIT` | `core.accounting` Phase A + Phase B |
 | `app-accounting-worker` (after POSTED) | **RabbitMQ** | `app-wallet-worker` | exchange `core.commands` / queue `core.commands.wallet-credit` / msg `WALLET_CREDIT` | `core.wallet` DEPOSIT_CREDIT |
 | `app-accounting-worker` (optional) | Kafka publish | Downstream consumers | topic `core.accounting.journal-posted` / event `JournalPosted` | Reporting, audit, reconciliation |
@@ -95,7 +95,7 @@ stories depend on.
       `spec/contracts/async-api/core-events.yaml` — published by any worker on DLQ; fields:
       `businessRef`, `commandType`, `reason`, `failedAt`
 - [ ] T009 **[HTTP inbound — orchestration]** Verify deposit notify endpoint in
-      `spec/contracts/open-api/gtelpay-public.yaml` — `POST /deposits/notify` → 202 + `businessRef`;
+      `spec/contracts/open-api/orchestration-public.yaml` — `POST /deposits/notify` → 202 + `businessRef`;
       this is the **only HTTP call** from outside in the deposit flow; orchestration turns this into
       the RabbitMQ queue entry (T004) via outbox
 - [ ] T010 Finalize outbox table DDL in `spec/implementation.md` — add `outbox` table to

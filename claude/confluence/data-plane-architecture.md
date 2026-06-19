@@ -47,7 +47,7 @@ Data Plane hot path (1 process):
 
 ```
 External client / Bank webhook
-    │ HTTP (s1-http-public — gtelpay-public.yaml)
+    │ HTTP (s1-http-public — orchestration-public.yaml)
     ▼
 ┌─────────────────────────────────────────────────────┐
 │              app-orchestration                       │

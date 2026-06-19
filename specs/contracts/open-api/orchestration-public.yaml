@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  title: GtelPay Public API
+  title: Orchestration Public API
   version: "1.0.0"
   description: |
     s1-http-public contract for GtelPay Core.

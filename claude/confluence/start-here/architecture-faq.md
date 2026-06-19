@@ -30,7 +30,7 @@
 | Async deposit — wallet credit | **RabbitMQ** | `app-wallet-worker` | exchange `core.commands` / queue `core.commands.wallet-credit` / msg `WALLET_CREDIT` |
 | Sync use case — freeze wallet | **HTTP** | `app-wallet` | `wallet-internal.yaml` |
 | Sync use case — create journal | **HTTP** | `app-accounting` | `accounting-internal.yaml` / `createJournal` |
-| Bank / NAPAS inbound | **HTTP** | `app-orchestration` | `gtelpay-public.yaml` / `POST /deposits/notify` → 202 |
+| Bank / NAPAS inbound | **HTTP** | `app-orchestration` | `orchestration-public.yaml` / `POST /deposits/notify` → 202 |
 
 > **Rule:** In deposit flow, `app-orchestration` NEVER calls `app-accounting` or `app-wallet` via HTTP. HTTP gateways are for synchronous use cases only.
 

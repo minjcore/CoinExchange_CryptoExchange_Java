@@ -1,7 +1,7 @@
-# GtelPay Public API Contract (s1-http-public)
+# Orchestration Public API Contract (s1-http-public)
 
 > **CF page ID:** 51643159 | **Parent:** 🔌 Contracts & Integration (51315085)
-> **Source of truth:** `specs/contracts/open-api/gtelpay-public.yaml`
+> **Source of truth:** `specs/contracts/open-api/orchestration-public.yaml`
 > **Caller:** Mobile apps, partner systems, bank webhooks → API Gateway → `app-orchestration`
 
 ---
@@ -225,4 +225,4 @@ X-Idempotency-Key (s1-http-public header)
 
 ---
 
-Full contract: `specs/contracts/open-api/gtelpay-public.yaml`
+Full contract: `specs/contracts/open-api/orchestration-public.yaml`
