@@ -56,7 +56,9 @@ Application (orchestration)
 | `frozen` | DECIMAL(19,4) | Held, ≥ 0 |
 | `version` | BIGINT | Optimistic lock |
 
-### wallet_tx (append-only)
+### wallet_tx — Internal Ledger
+
+`wallet_tx` là internal ledger của wallet domain: append-only, immutable, ghi nhận toàn bộ lịch sử balance change của mỗi wallet. Khác với `core.accounting` (double-entry, COA accounts, balance equation), `wallet_tx` chỉ ghi nhận effect lên balance của một wallet cụ thể — không có DR/CR pair.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -69,6 +71,8 @@ Application (orchestration)
 | `coa_trans_id` | BIGINT | Correlation only, no FK |
 
 **Idempotency uniqueness:** `(wallet_id, business_ref, tx_type)`
+
+**Ledger rule:** mỗi balance change = đúng một `wallet_tx` INSERT trong cùng DB transaction với `wallet_balance` update. Không bao giờ update hoặc delete `wallet_tx`. (Principle III, W2)
 
 > **ID type: BIGINT (locked).** UUID bị loại — 16 bytes vs 8 bytes/FK index, random v4 gây B-tree page split, write chậm hơn ~50%. BIGINT sequential = optimal.
 
