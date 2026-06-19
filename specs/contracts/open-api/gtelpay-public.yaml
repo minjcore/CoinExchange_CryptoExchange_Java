@@ -461,10 +461,12 @@ components:
           format: int64
         available:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           example: "99000.0000"
           description: Spendable now.
         frozen:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           example: "0.0000"
           description: Held for in-progress withdrawals.
         currency:
@@ -486,7 +488,6 @@ components:
             - WALLET_INSUFFICIENT_BALANCE
             - WALLET_NOT_FOUND
             - WALLET_LOCKED
-            - WALLET_DUPLICATE_CONFLICT
             - IDEMPOTENCY_CONFLICT
             - VIRTUAL_ACCOUNT_NOT_FOUND
             - CURRENCY_NOT_SUPPORTED

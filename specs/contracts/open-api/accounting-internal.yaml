@@ -236,13 +236,16 @@ components:
           enum: [PENDING, POSTED, FAILED]
         gross_amount:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           example: "100000.0000"
         fee:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           nullable: true
           example: "1000.0000"
         net_amount:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           nullable: true
           description: grossAmount − fee. Populated after Phase B.
           example: "99000.0000"

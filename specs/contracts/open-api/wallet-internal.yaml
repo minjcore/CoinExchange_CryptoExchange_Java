@@ -287,10 +287,13 @@ components:
           example: dep-20260618-abc123
         tx_type:
           type: string
-          description: |
-            Mutation purpose. Used in idempotency key: (walletId, business_ref, tx_type).
-            Credit values:  DEPOSIT_CREDIT, TRANSFER_CREDIT, PAYMENT_CREDIT.
-            Debit values:   PAYMENT_DEBIT, TRANSFER_DEBIT.
+          enum:
+            - DEPOSIT_CREDIT
+            - TRANSFER_CREDIT
+            - PAYMENT_CREDIT
+            - PAYMENT_DEBIT
+            - TRANSFER_DEBIT
+          description: Mutation purpose. Used in idempotency key: (walletId, business_ref, tx_type).
           example: DEPOSIT_CREDIT
         coa_trans_id:
           type: integer
@@ -365,10 +368,12 @@ components:
           format: int64
         available:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           example: "99000.0000"
           description: Spendable now.
         frozen:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           example: "0.0000"
           description: Held for in-progress operations (e.g. withdraw).
         currency:

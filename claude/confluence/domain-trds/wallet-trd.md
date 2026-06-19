@@ -62,7 +62,7 @@ Application (orchestration)
 |--------|------|-------|
 | `id` | BIGINT PK | |
 | `wallet_id` | FK | NOT NULL |
-| `tx_type` | ENUM | |
+| `tx_type` | ENUM | DEPOSIT_CREDIT, TRANSFER_CREDIT, PAYMENT_CREDIT, PAYMENT_DEBIT, TRANSFER_DEBIT, WITHDRAW_FREEZE, WITHDRAW_RELEASE |
 | `direction` | ENUM | CREDIT, DEBIT, FREEZE, UNFREEZE |
 | `amount` | DECIMAL(19,4) | Always positive |
 | `business_ref` | VARCHAR(64) | Idempotency key |
