@@ -73,6 +73,18 @@ paths:
                 business_ref: dep-20260618-abc123
                 status: ACCEPTED
                 message: Deposit queued for processing
+        '401':
+          description: Missing or invalid X-Bank-Signature — bank identity not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Bank signature valid but bank is not authorised for this endpoint
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Idempotency conflict — same X-Idempotency-Key with different payload
           content:

@@ -169,6 +169,7 @@ components:
           type: object
           required:
             - memberId
+            - walletId
             - virtualAccount
             - grossAmount
             - fee
@@ -179,6 +180,12 @@ components:
               type: integer
               format: int64
               description: Resolved from virtual account by orchestration.
+            walletId:
+              type: integer
+              format: int64
+              description: |
+                Member's pocket wallet BIGINT PK.
+                Resolved by orchestration alongside memberId — avoids accounting worker crossing domain boundary to wallet schema.
             virtualAccount:
               type: string
               description: Raw virtual account from bank notification.
@@ -258,7 +265,6 @@ components:
             - walletId
             - netAmount
             - currency
-            - coaTransId
           properties:
             walletId:
               type: integer

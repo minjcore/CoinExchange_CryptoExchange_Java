@@ -12,7 +12,7 @@ Unchanged schema — new rows for deposit flow.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | UUID PK | Journal identifier |
+| `id` | BIGINT PK | Journal identifier. Auto-increment. |
 | `reference_id` | VARCHAR(64) | = `businessRef` — idempotency key |
 | `use_case` | VARCHAR(32) | `DEPOSIT` for this flow |
 | `status` | VARCHAR(16) | `PENDING` → `POSTED` (no edit after POSTED) |
@@ -45,7 +45,7 @@ TB accounts are seeded once at startup from `coa_account`. Account ID = determin
 | `credit_account_id` | 3100 |
 | `amount` | `gross × 10⁴` (u128) |
 | `flags.pending` | `true` |
-| `user_data_128` | `coa_trans.id` (correlation) |
+| `user_data_128` | `coa_trans.id` BIGINT cast to u64 (correlation) |
 
 **Phase B — POST + liability transfers**:
 
@@ -63,13 +63,13 @@ One row inserted after POSTED, never updated.
 
 | Column | Type | Value |
 |--------|------|-------|
-| `wallet_id` | UUID | Member's wallet (pocket resolved by orchestration) |
+| `wallet_id` | BIGINT FK | Member's wallet (pocket resolved by orchestration, passed via BANK_DEPOSIT command) |
 | `business_ref` | VARCHAR(64) | = `businessRef` |
 | `tx_type` | VARCHAR(32) | `DEPOSIT_CREDIT` |
 | `direction` | VARCHAR(8) | `CREDIT` |
-| `amount` | NUMERIC(18,4) | Net amount (gross − fee) |
-| `available_after` | NUMERIC(18,4) | Snapshot of `wallet_balance.available` after mutation |
-| `frozen_after` | NUMERIC(18,4) | Snapshot of `wallet_balance.frozen` after mutation |
+| `amount` | NUMERIC(19,4) | Net amount (gross − fee) |
+| `available_after` | NUMERIC(19,4) | Snapshot of `wallet_balance.available` after mutation |
+| `frozen_after` | NUMERIC(19,4) | Snapshot of `wallet_balance.frozen` after mutation |
 
 **Unique constraint**: `(wallet_id, business_ref, tx_type)` — idempotent replay returns existing row.
 
@@ -142,7 +142,7 @@ Inspired by Blnk `balance.monitor` webhook — implemented as Spring `Applicatio
 ### 3.2 `getBalanceAt(walletId, asOf)` (historical balance from Blnk)
 
 ```
-WalletQueryService.getBalanceAt(walletId: UUID, asOf: Instant): WalletBalance
+WalletQueryService.getBalanceAt(walletId: long, asOf: Instant): WalletBalance
 ```
 
 Implementation: query `wallet_tx WHERE wallet_id = ? AND created_at <= ? ORDER BY created_at DESC LIMIT 1` → return `available_after` + `frozen_after` snapshots.
@@ -165,11 +165,13 @@ Entities that enter a service from another internal service.
 BankDepositCommand {
   commandType : "BANK_DEPOSIT"          // discriminator
   businessRef : string                  // idempotency key, end-to-end
-  memberId    : string                  // resolved by orchestration
-  walletId    : string                  // resolved pocket wallet_id
+  memberId    : BIGINT                  // resolved from VA by orchestration
+  walletId    : BIGINT                  // resolved pocket wallet PK by orchestration
+  virtualAccount : string               // raw VA from bank notification
   grossAmount : string (decimal, s4)    // e.g. "100000.0000"
   fee         : string (decimal, s4)    // computed by orchestration; "0.0000" if none
   currency    : string                  // "VND"
+  bankRef     : string                  // bank's own txn reference
 }
 ```
 
@@ -185,9 +187,9 @@ Consumed by: `accounting worker`
 WalletCreditCommand {
   commandType : "WALLET_CREDIT"
   businessRef : string                  // same businessRef as BankDepositCommand
-  walletId    : string
+  walletId    : BIGINT                  // pocket wallet PK (passed through from BANK_DEPOSIT)
   netAmount   : string (decimal, s4)    // grossAmount − fee
-  coaTransId  : string (UUID, optional) // correlation to coa_trans
+  coaTransId  : BIGINT (optional)       // correlation to coa_trans.id — stored in wallet_tx, no FK
   currency    : string                  // "VND"
 }
 ```
@@ -209,7 +211,7 @@ JournalPostedEvent {
   eventType   : "JournalPosted"
   useCase     : "DEPOSIT"
   businessRef : string
-  coaTransId  : string (UUID)
+  coaTransId  : BIGINT
   status      : "POSTED"
   netAmount   : string (decimal, s4)
   currency    : string
@@ -228,7 +230,7 @@ Consumed by: reporting, audit, reconciliation (async, latency-tolerant)
 WalletCreditedEvent {
   eventType        : "WalletCredited"
   businessRef      : string
-  walletId         : string
+  walletId         : BIGINT
   netAmount        : string (decimal, s4)
   availableAfter   : string (decimal, s4)  // wallet_balance.available after credit
   currency         : string
@@ -288,7 +290,7 @@ Consumed by: ops alerting, saga manager
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | UUID PK | |
+| `id` | BIGINT PK | Auto-increment |
 | `command_type` | VARCHAR(32) | `BANK_DEPOSIT`, `WALLET_CREDIT` |
 | `business_ref` | VARCHAR(64) | Idempotency key |
 | `payload` | JSONB | Full command envelope per `core-commands.yaml` |

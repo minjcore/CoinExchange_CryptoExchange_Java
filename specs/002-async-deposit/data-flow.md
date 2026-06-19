@@ -29,7 +29,7 @@
 │       │                                                                             │
 │       │  RabbitMQ: exchange=core.commands                                           │
 │       │  queue=core.commands.bank-deposit                                           │
-│       │  { commandType: BANK_DEPOSIT, businessRef, memberId,                        │
+│       │  { commandType: BANK_DEPOSIT, businessRef, memberId, walletId,              │
 │       │    virtualAccount, grossAmount, fee, currency, bankRef }                   │
 │       ▼                                                                             │
 │  ┌──────────────────────────────────────────────────┐                              │

@@ -205,9 +205,9 @@ public interface CoaTransDataRepository {
 | `reference_id` (`business_ref`) | VARCHAR(64) | = `X-Idempotency-Key` |
 | `use_case` | VARCHAR(32) | `DEPOSIT`, `PAYMENT`, ... |
 | `status` | ENUM | `PENDING` → `POSTED` \| `FAILED` |
-| `gross_amount` | NUMERIC(18,4) | Total amount including fee. Set on Phase A. |
-| `fee` | NUMERIC(18,4) | Fee leg. Null until Phase B. |
-| `net_amount` | NUMERIC(18,4) | `gross_amount − fee`. Null until Phase B. |
+| `gross_amount` | NUMERIC(19,4) | Total amount including fee. Set on Phase A. |
+| `fee` | NUMERIC(19,4) | Fee leg. Null until Phase B. |
+| `net_amount` | NUMERIC(19,4) | `gross_amount − fee`. Null until Phase B. |
 | `currency` | VARCHAR(3) | `VND` v1. |
 | `created_at` | TIMESTAMPTZ | immutable |
 | `updated_at` | TIMESTAMPTZ | Phase B only |
@@ -240,9 +240,9 @@ coa_trans (
   reference_id VARCHAR(64),    -- = businessRef = X-Idempotency-Key
   use_case VARCHAR(32),        -- DEPOSIT | PAYMENT | ...
   status VARCHAR(16),          -- PENDING → POSTED | FAILED
-  gross_amount NUMERIC(18,4),  -- Set on Phase A.
-  fee NUMERIC(18,4),           -- Null until Phase B.
-  net_amount NUMERIC(18,4),    -- gross_amount − fee. Null until Phase B.
+  gross_amount NUMERIC(19,4),  -- Set on Phase A.
+  fee NUMERIC(19,4),           -- Null until Phase B.
+  net_amount NUMERIC(19,4),    -- gross_amount − fee. Null until Phase B.
   currency VARCHAR(3),         -- VND v1.
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ,
@@ -254,8 +254,8 @@ coa_trans_data (
   id BIGINT PK,
   coa_trans_id BIGINT FK,      -- → coa_trans.id
   account_id BIGINT,           -- COA code (1111, 3100, 2110, 4110...)
-  debit_amount NUMERIC(18,4),
-  credit_amount NUMERIC(18,4),
+  debit_amount NUMERIC(19,4),
+  credit_amount NUMERIC(19,4),
   currency VARCHAR
 )
 

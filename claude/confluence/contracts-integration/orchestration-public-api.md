@@ -78,6 +78,8 @@ X-Bank-Signature: <hmac>
 }
 ```
 
+Errors: **401** X-Bank-Signature thiếu/sai · **403** bank không có quyền · **409** idempotency conflict · **422** VA not found
+
 Response **202** — không chờ xử lý, không block:
 
 ```json
@@ -221,6 +223,8 @@ Authorization: Bearer <jwt>
 | `VIRTUAL_ACCOUNT_NOT_FOUND` | 422 | VA không tồn tại trong hệ thống |
 | `IDEMPOTENCY_CONFLICT` | 409 | X-Idempotency-Key dùng lại với payload khác |
 | `CURRENCY_NOT_SUPPORTED` | 422 | Chỉ hỗ trợ VND v1 |
+| _(no error_code)_ | 401 | X-Bank-Signature thiếu hoặc sai — `/deposits/notify` only |
+| _(no error_code)_ | 403 | Bank chưa được cấp quyền gọi endpoint — `/deposits/notify` only |
 
 ---
 

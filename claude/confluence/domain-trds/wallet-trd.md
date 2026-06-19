@@ -52,8 +52,8 @@ Application (orchestration)
 | Column | Type | Notes |
 |--------|------|-------|
 | `wallet_id` | FK → wallet.id PK | |
-| `available` | DECIMAL(19,4) | Spendable, ≥ 0 |
-| `frozen` | DECIMAL(19,4) | Held, ≥ 0 |
+| `available` | NUMERIC(19,4) | Spendable, ≥ 0 |
+| `frozen` | NUMERIC(19,4) | Held, ≥ 0 |
 | `version` | BIGINT | Optimistic lock |
 
 ### wallet_tx — Internal Ledger
@@ -66,7 +66,7 @@ Application (orchestration)
 | `wallet_id` | FK | NOT NULL |
 | `tx_type` | ENUM | DEPOSIT_CREDIT, TRANSFER_CREDIT, PAYMENT_CREDIT, PAYMENT_DEBIT, TRANSFER_DEBIT, WITHDRAW_FREEZE, WITHDRAW_RELEASE, WITHDRAW_SETTLE (P6) |
 | `direction` | ENUM | CREDIT, DEBIT, FREEZE, UNFREEZE |
-| `amount` | DECIMAL(19,4) | Always positive |
+| `amount` | NUMERIC(19,4) | Always positive |
 | `currency` | CHAR(3) | Denormalized from wallet for queryability |
 | `business_ref` | VARCHAR(64) | Idempotency key |
 | `coa_trans_id` | BIGINT | Correlation only, no FK |
