@@ -121,10 +121,11 @@ u128 integers. VND × 10⁴. Wire: decimal string `"100000.0000"`. Never `double
 | V | Orchestration Sole Sequencer | outbox at-least-once; no 2PC | ADR-006, ADR-013 |
 | VI | Money & Currency Discipline | VND v1; BigDecimal scale 4 HALF_UP; fee once at orchestration | ADR-019, ADR-028 |
 | VII | Contracts & Conformance | OpenAPI/AsyncAPI = wire source of truth; SQL invariants in CI | ADR-018, ADR-031 |
+| VIII | Fail-Fast at Boundaries | validate at earliest entry point before any mutation; reject with explicit codes; never propagate invalid input inward | ADR-007, ADR-010, ADR-011, ADR-019, ADR-029 |
 
 ---
 
-## 9. Anti-Patterns
+## 9. Anti-Patterns (including Fail-Fast violations)
 
 | Anti-pattern | Why wrong | Correct alternative |
 |--------------|-----------|---------------------|
@@ -136,3 +137,6 @@ u128 integers. VND × 10⁴. Wire: decimal string `"100000.0000"`. Never `double
 | `double`/`float` for money | Floating-point rounding — Principle VI | BigDecimal scale 4 HALF_UP |
 | Call app-wallet-worker HTTP from orchestration | Workers are queue consumers — Principle V | Publish WALLET_CREDIT to RabbitMQ |
 | Cross-domain import: `import core.accounting.*` in `core.wallet` | Domain-to-domain import — Principle I | Only core.foundation is shared |
+| Passing non-VND currency or scale>4 amount into a domain call | Should be rejected at orchestration boundary — Principle VIII | Validate + reject 400 before any domain call |
+| HTTP 200 returned before FREEZE committed | Confirming acceptance before precondition holds — Principle VIII | FREEZE must commit before 200 (ADR-007) |
+| Silently default zero/null on invalid amount | Absorbing bad input — Principle VIII | Reject 400 immediately at boundary |

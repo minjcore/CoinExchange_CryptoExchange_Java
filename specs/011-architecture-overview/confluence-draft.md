@@ -182,10 +182,10 @@ All surfaces listed here are **internal**. Bank/NAPAS external adapters are hand
 
 ---
 
-## 7. Constitution v1.0.0 — 7 Governing Principles
+## 7. Constitution v1.1.0 — 8 Governing Principles
 
-Every design change MUST be validated against all 7 principles. An ADR amendment is required if any principle is altered.  
-Source: `.specify/memory/constitution.md`, ratified 2026-06-15.
+Every design change MUST be validated against all 8 principles. An ADR amendment is required if any principle is altered.  
+Source: `.specify/memory/constitution.md`, ratified 2026-06-15, amended 2026-06-19.
 
 | # | Principle | Rule summary | ADR |
 |---|-----------|-------------|-----|
@@ -196,5 +196,6 @@ Source: `.specify/memory/constitution.md`, ratified 2026-06-15.
 | V | Orchestration Sole Sequencer | Saga orchestrator sequences all multi-step flows; outbox at-least-once delivery; no 2PC or distributed transaction | ADR-006, ADR-013 |
 | VI | Money and Currency Discipline | VND single-currency v1; amounts are `BigDecimal` scale 4 `HALF_UP` at domain boundary; fees computed once at orchestration | ADR-019, ADR-028 |
 | VII | Contracts and Conformance Source of Truth | OpenAPI/AsyncAPI YAML is the wire source of truth; SQL ledger invariants run in CI and fail the build on drift | ADR-018, ADR-031 |
+| VIII | Fail-Fast at Boundaries | Validate at the earliest entry point before any mutation; reject with explicit error codes; never propagate invalid input to inner layers | ADR-007, ADR-010, ADR-011, ADR-019, ADR-029 |
 
 > **Amendment rule**: when this document is updated following an ADR amendment, the version/date at the top MUST be incremented. The corresponding ADR file in `adr/` must also be updated — these two documents move together.

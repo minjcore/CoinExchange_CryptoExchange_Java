@@ -37,7 +37,7 @@ the ledger?") are distinct bounded contexts and MUST stay isolated.
 - No cross-import, **no cross-schema JOIN, no cross-schema FK** — `wallet_tx.coa_trans_id` is
   correlation only. (ADR-003)
 - Domains MUST NOT call each other; all cross-domain sequencing goes through orchestration. (ADR-012, ADR-026)
-- Only `core.shared` is shared — no second "common" module holding entities. (ADR-002)
+- Only `core.foundation` is shared — no second "common" module holding entities. (ADR-002)
 - Aggregate liability lives **only** in accounting (COA 2110/2120/2130); wallet holds per-member
   slices. (ADR-020, ADR-039)
 
@@ -130,6 +130,22 @@ Wire contracts and acceptance criteria bind the implementation.
 
 **Rationale:** a contract-first, invariant-gated pipeline keeps the two domains honest over time.
 
+### VIII. Fail-Fast at Boundaries
+
+Validate at the earliest possible entry point; reject explicitly before any mutation.
+
+- Orchestration boundary validates currency (VND only), amount scale (≤4, >0), JWT `sub` match,
+  and idempotency key presence **before** any domain call. (ADR-011, ADR-019)
+- Domain entry points enforce invariants immediately: wallet rejects insufficient balance and
+  LOCKED state; accounting rejects unbalanced DR/CR and closed periods before any write. (ADR-010, ADR-029)
+- Async outflows must establish their precondition (FREEZE) before confirming acceptance (HTTP 200)
+  — do not accept what cannot be guaranteed. (ADR-007)
+- Errors surface as explicit codes (400/403/409/422); silent absorption, default-to-zero, or
+  partial state are forbidden. (ADR-005, ADR-008)
+
+**Rationale:** propagating invalid input into domain layers multiplies recovery surface. An error
+caught at the gate costs one 4xx response; one that reaches storage costs a compensating saga.
+
 ## Domain & Security Constraints
 
 - **Storage:** one PostgreSQL instance, schemas `wallet` and `accounting`; split to two DBs later =
@@ -171,4 +187,4 @@ Wire contracts and acceptance criteria bind the implementation.
   ADRs; complexity that appears to break a principle MUST be justified or rejected. The SQL
   invariant suite (ADR-031) is the automated backstop.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-15
+**Version**: 1.1.0 | **Ratified**: 2026-06-15 | **Last Amended**: 2026-06-19
