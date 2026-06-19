@@ -28,7 +28,8 @@ core/
 ├── app-orchestration/
 ├── app-wallet/
 ├── app-accounting/
-└── app-wallet-worker/
+├── app-wallet-worker/
+└── app-accounting-worker/
 ```
 
 | Module | Responsibility | Not allowed |
@@ -39,6 +40,8 @@ core/
 | `app-orchestration` | Inbound HTTP, auth, saga sequencing | Direct JPA to domain tables |
 | `app-wallet` | HTTP adapter for wallet domain | accounting schema access |
 | `app-accounting` | HTTP adapter for accounting domain | wallet schema access |
+| `app-accounting-worker` | RabbitMQ consumer — BANK_DEPOSIT → Phase A+B | wallet schema access |
+| `app-wallet-worker` | RabbitMQ consumer — WALLET_CREDIT → wallet credit | accounting schema access |
 
 ---
 

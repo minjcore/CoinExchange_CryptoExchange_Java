@@ -122,7 +122,9 @@ Response **200** — wallet debit + ledger POSTED trước khi trả về:
   "business_ref": "pay-20260618-xyz789",
   "status": "COMPLETED",
   "payer_available": "49000.0000",
-  "completed_at": "2026-06-18T10:01:00Z"
+  "completed_at": "2026-06-18T10:01:00Z",
+  "wallet_tx_id": 7001,
+  "coa_trans_id": 9001
 }
 ```
 

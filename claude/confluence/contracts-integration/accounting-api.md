@@ -109,9 +109,10 @@ POST /journals/9001/void
 | `error_code` | HTTP | Tình huống |
 |-------------|------|-----------|
 | `JOURNAL_NOT_FOUND` | 404 | coaTransId không tồn tại |
-| `JOURNAL_ALREADY_POSTED` | 409 | void gọi sau POSTED |
-| `JOURNAL_ALREADY_FAILED` | 409 | postJournal gọi sau FAILED |
+| `JOURNAL_ALREADY_POSTED` | 409 | `voidPending` gọi sau POSTED |
+| `JOURNAL_ALREADY_FAILED` | 409 | `postJournal` gọi sau FAILED; với `voidPending` thì trả 200 no-op |
 | `IDEMPOTENCY_CONFLICT` | 409 | reference_id dùng lại với data khác |
+| `INVALID_FEE` | 422 | fee âm hoặc vượt grossAmount |
 
 ---
 

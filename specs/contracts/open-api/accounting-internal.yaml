@@ -149,10 +149,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '409':
+        '200':
           description: |
-            JOURNAL_ALREADY_POSTED — cannot void a posted journal.
-            JOURNAL_ALREADY_FAILED — void-of-already-FAILED is a no-op; returns 200 with current state.
+            Voided (status = FAILED).
+            Also returned when coa_trans is already FAILED — idempotent no-op.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalResponse'
+        '409':
+          description: JOURNAL_ALREADY_POSTED — cannot void a posted journal.
           content:
             application/json:
               schema:
@@ -289,6 +295,7 @@ components:
             - JOURNAL_ALREADY_POSTED
             - JOURNAL_ALREADY_FAILED
             - IDEMPOTENCY_CONFLICT
+            - INVALID_FEE
           description: Platform error code.
         message:
           type: string

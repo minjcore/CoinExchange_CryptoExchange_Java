@@ -115,7 +115,7 @@ Hai channel async của platform:
 ### WITHDRAW_PAYOUT
 
 **Channel:** `core.commands.withdraw-payout`
-**Consumer:** `app-payment-worker`
+**Consumer:** `app-payment-worker` (P6 — withdraw feature, module chưa khai báo)
 **Triggers:** Bank payout sau wallet freeze
 
 ```json

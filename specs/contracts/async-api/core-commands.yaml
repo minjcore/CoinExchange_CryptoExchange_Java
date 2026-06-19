@@ -47,7 +47,7 @@ channels:
   core.commands.withdraw-payout:
     description: |
       Trigger bank payout after wallet freeze.
-      Consumer: app-payment-worker.
+      Consumer: app-payment-worker (P6 — withdraw feature).
       Routing key: WITHDRAW_PAYOUT.
       Published by app-orchestration after freezeWallet succeeds.
     subscribe:
