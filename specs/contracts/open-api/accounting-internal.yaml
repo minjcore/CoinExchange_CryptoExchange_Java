@@ -138,7 +138,9 @@ paths:
             format: int64
       responses:
         '200':
-          description: Pending transfer voided, coa_trans.status = FAILED
+          description: |
+            Voided (coa_trans.status = FAILED).
+            Also returned when coa_trans is already FAILED — idempotent no-op.
           content:
             application/json:
               schema:
@@ -149,14 +151,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '200':
-          description: |
-            Voided (status = FAILED).
-            Also returned when coa_trans is already FAILED — idempotent no-op.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JournalResponse'
         '409':
           description: JOURNAL_ALREADY_POSTED — cannot void a posted journal.
           content:

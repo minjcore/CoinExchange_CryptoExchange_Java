@@ -325,7 +325,8 @@ components:
             - TRANSFER_DEBIT
           description: |
             Mutation purpose. Used in idempotency key: (walletId, business_ref, tx_type).
-            WITHDRAW_SETTLE (P6 — withdraw settle after bank success) not yet exposed via this endpoint.
+            WITHDRAW_FREEZE and WITHDRAW_RELEASE are intentionally absent — they use the dedicated freeze/unfreeze endpoints (FreezeRequest).
+            WITHDRAW_SETTLE (P6) not yet exposed.
           example: DEPOSIT_CREDIT
         coa_trans_id:
           type: integer

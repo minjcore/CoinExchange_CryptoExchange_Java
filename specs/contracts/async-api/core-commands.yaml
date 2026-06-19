@@ -138,6 +138,9 @@ components:
     BankDepositPayload:
       allOf:
         - $ref: '#/components/schemas/CommandEnvelope'
+      required:
+        - commandType
+        - payload
       properties:
         commandType:
           type: string
@@ -184,6 +187,9 @@ components:
     WithdrawPayoutPayload:
       allOf:
         - $ref: '#/components/schemas/CommandEnvelope'
+      required:
+        - commandType
+        - payload
       properties:
         commandType:
           type: string
@@ -219,6 +225,9 @@ components:
     WalletCreditPayload:
       allOf:
         - $ref: '#/components/schemas/CommandEnvelope'
+      required:
+        - commandType
+        - payload
       properties:
         commandType:
           type: string

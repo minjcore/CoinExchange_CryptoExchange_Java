@@ -11,7 +11,7 @@
 | Surface | Description | Protocol | Producer | Consumer |
 |---------|-------------|---------|---------|---------|
 | s1-http-public | Public product API | HTTPS | `app-orchestration` | Mobile, partner, API Gateway |
-| s2-http-internal | Accounting + Wallet internal APIs | HTTPS (internal) | `app-accounting`, `app-wallet` | `app-orchestration`, `app-wallet-worker` |
+| s2-http-internal | Accounting + Wallet internal APIs | HTTPS (internal) | `app-accounting`, `app-wallet` | `app-orchestration` (both); `app-wallet-worker` (wallet only) |
 | s3-kafka-events | Domain events | Kafka | Workers | Orchestration, downstream |
 | s4-gateway-config | Gateway routing | Config | DevOps | Edge proxy |
 | s5-shared-envelope | Shared envelope | Library | — | All `app-*` and `core.*` |

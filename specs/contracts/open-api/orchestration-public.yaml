@@ -111,6 +111,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: WALLET_NOT_FOUND — payer or payee wallet not provisioned
           content:
@@ -155,6 +161,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransferResponse'
+        '401':
+          description: Unauthorized — missing or invalid JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: WALLET_NOT_FOUND — sender or receiver wallet not provisioned
           content:
@@ -442,6 +454,8 @@ components:
         - status
         - sender_available
         - completed_at
+        - wallet_tx_id
+        - coa_trans_id
       properties:
         business_ref:
           type: string
@@ -455,6 +469,14 @@ components:
         completed_at:
           type: string
           format: date-time
+        wallet_tx_id:
+          type: integer
+          format: int64
+          description: wallet_tx.id of the sender debit entry.
+        coa_trans_id:
+          type: integer
+          format: int64
+          description: coa_trans.id of the posted journal.
 
     WithdrawalResponse:
       type: object

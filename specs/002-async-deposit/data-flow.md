@@ -42,7 +42,7 @@
 │  │      debit=1111, credit=3100, amt=gross×10⁴      │                              │
 │  │      id=hash(businessRef+":phaseA")              │                              │
 │  │                                                  │                              │
-│  │  Phase B ── confirmDeposit(coaTransId, fee):     │                              │
+│  │  Phase B ── confirmDeposit(coaTransId, fee):     │  ← domain method; HTTP operationId = postJournal                              │
 │  │    TigerBeetle:                                  │                              │
 │  │      1. post_pending_transfer(phaseA id)         │                              │
 │  │         closes 1111←3100 pending                │                              │
