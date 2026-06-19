@@ -64,6 +64,22 @@ No. Principle V (ADR-012). Publishes via outbox; accounting worker owns all writ
 
 ---
 
+## 4b. Retry-Safe Pattern — Return Existing Immediately
+
+> **Rule:** At every step of the deposit chain, retrying with the **same data** returns the existing result immediately — no new side effect.
+
+| Step | Retry check | Already done → |
+|------|-------------|----------------|
+| S1 `POST /deposits/notify` | `outbox UNIQUE(business_ref)` | 202 + same `businessRef`, no new outbox row |
+| `app-accounting-worker` receives `BANK_DEPOSIT` | `coa_trans UNIQUE(reference_id, use_case)` | return existing `coa_trans_id`, skip Phase A |
+| `confirmDeposit(coaTransId, fee)` | `coa_trans.status = POSTED` | return existing, no re-post (AC-006-06) |
+| `app-wallet-worker` receives `WALLET_CREDIT` | `wallet_tx UNIQUE(wallet_id, business_ref, tx_type)` | return existing `wallet_tx`, `idempotentReplay=true` |
+
+This property makes **aging job retries safe** (ADR-021): re-fire any step with original data, domain responds immediately without double-effect.  
+It also makes **RabbitMQ redelivery safe** (ADR-013): at-least-once delivery cannot cause double-credit.
+
+---
+
 ## 5. Q&A: TigerBeetle & Ledger
 
 **Q: What does TigerBeetle do that PostgreSQL cannot?**
