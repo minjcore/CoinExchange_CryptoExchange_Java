@@ -1,5 +1,8 @@
 # ADR Pre-Reading Checklist — Async Deposit (002)
 
+> **CF page ID:** 51872153 | **Parent:** 📌 Start Here (51315064)
+> **Source of truth:** this file → push to CF
+
 **Purpose:** Đọc các ADRs này trước khi bắt đầu code. Mỗi ADR map đến một bước cụ thể trong implementation.
 Tick khi đã đọc và hiểu acceptance criteria.
 
