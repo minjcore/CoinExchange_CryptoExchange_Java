@@ -70,3 +70,9 @@ External ──s1-http-public──► Gateway ──s1-http-public──► Orc
 | s4-gateway-config | Gateway routes | Config | Edge → BFF |
 | s5-shared-envelope | Shared envelope | Library | `ApiResponse`, errors |
 | s6-rabbitmq-cmds | Worker commands | RabbitMQ | **Publish** full-body envelope |
+
+> **Messaging direction rule:**
+> - **RabbitMQ (s6) = inbound commands** — orchestration → workers (`BANK_DEPOSIT`, `WALLET_CREDIT`)
+> - **Kafka (s3) = outbound events** — workers → downstream after processing (`JournalPosted`, `WalletCredited`)
+>
+> Core services nhận lệnh qua RabbitMQ, emit sự kiện qua Kafka. Kafka không mang command vào core.
