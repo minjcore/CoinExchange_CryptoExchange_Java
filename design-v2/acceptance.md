@@ -233,6 +233,41 @@ And app-accounting-worker consumes it from queue "accounting.bank-deposit"
 And no HTTP call is made from app-orchestration to app-accounting or app-accounting-worker
 ```
 
+### Scenario TC-DEP-05: Unknown virtual account — ops hold, no journal, no wallet credit
+
+```gherkin
+Given virtualAccount="VA-UNKNOWN-999" is not present in orchestration's VA mapping table
+When app-orchestration receives a bank deposit webhook for VA-UNKNOWN-999 with businessRef="dep-tc05"
+Then HTTP 202 is returned to the bank gateway
+And no BANK_DEPOSIT command is published to RabbitMQ
+And no coa_trans row exists for businessRef="dep-tc05"
+And no wallet_tx credit is created for businessRef="dep-tc05"
+And an ops hold record is logged with virtualAccount="VA-UNKNOWN-999" and businessRef="dep-tc05"
+```
+
+### Scenario TC-DEP-06: Known VA — credit lands on the correct member's wallet only
+
+```gherkin
+Given member 1001 owns walletId=55 mapped to virtualAccount="VA-1001"
+And member 1002 owns walletId=88 mapped to virtualAccount="VA-1002"
+And a bank deposit notification for virtualAccount="VA-1001" grossAmount=100000 fee=1000
+When the full async chain completes for businessRef="dep-tc06"
+Then walletId=55 (member 1001) is credited with netAmount=99000
+And walletId=88 (member 1002) is not credited
+And no other wallet receives any credit for businessRef="dep-tc06"
+```
+
+### Scenario TC-DEP-07: VA mapping change does not alter historical POSTED journals
+
+```gherkin
+Given a POSTED journal for businessRef="dep-tc07" was created when VA-1001 mapped to member 1001 (walletId=55)
+And wallet_tx DEPOSIT_CREDIT for businessRef="dep-tc07" is recorded against walletId=55
+When ops updates the VA mapping so VA-1001 now points to member 1003 (walletId=77)
+Then the coa_trans row for businessRef="dep-tc07" is unchanged (status=POSTED, lines immutable)
+And wallet_tx for businessRef="dep-tc07" still belongs to walletId=55
+And the mapping change only affects future deposit notifications for VA-1001
+```
+
 ---
 
 ## Feature: Wallet balance semantics (available / frozen / pending)

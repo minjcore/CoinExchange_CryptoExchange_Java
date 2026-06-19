@@ -125,7 +125,7 @@ Member   Bank        Gateway/BFF       Worker(S6)     core.accounting   core.wal
 |-----------|----------|
 | Duplicate webhook, same `bankRef` | Return existing `coa_trans_id`, no insert (`business_ref` UNIQUE) |
 | Confirm when already `POSTED` | No-op |
-| Cannot map VA → user | Keep `PENDING`, 3100 holds funds, manual handling |
+| Cannot map VA → user | No `BANK_DEPOSIT` published; orchestration logs ops hold; 202 returned; no journal, no 3100 posting; re-submit after VA mapping added |
 | Wallet credit fails after POSTED | Retry consumer; **do not** edit `coa_trans_data` — reconciliation job |
 | Bank reports wrong amount | Do not confirm; reverse phase A with a reversing journal |
 
@@ -444,6 +444,27 @@ Steps: S0 ack **202** → S1 `BANK_DEPOSIT` outbox → RabbitMQ → accounting w
 | Confirm POSTED fails | funds in 3100 | aging job: 3100 older than T | retry `confirmDeposit` (idempotent) | eventually POSTED |
 | Wallet credit fails after POSTED | ledger done, wallet not | credit error / drift job (W5) | retry credit (idempotent `businessRef`); **never** reverse ledger | eventually credited |
 | Bank reverses deposit later | already POSTED | bank reversal webhook | **new reversing journal + wallet debit** (compensation), not edit | net zero |
+
+### 13.1.2 Unknown VA — ops hold (US2)
+
+When the virtual account in the webhook is **not in orchestration's mapping table**, no accounting entry is created and no queue message is published:
+
+| Step | Actor | Action | Result |
+|------|-------|--------|--------|
+| S0 | Orchestration | Webhook received; VA lookup returns no match | — |
+| S0a | Orchestration | Ops hold record logged (`businessRef`, `virtualAccount`, `receivedAt`); 202 returned | No outbox row, no `coa_trans` |
+| — | Accounting worker | Not involved | No Phase A, no 3100 posting |
+| Manual | Ops | Maps `virtualAccount` → `memberId` + `walletId` in orchestration DB | VA ready |
+| Re-trigger | Ops | Re-submits deposit notification with same `businessRef` | Normal S0–S5 (US1) resumes |
+
+**Invariants:**
+- `coa_trans` MUST NOT have a row for `businessRef` when VA is unresolved.
+- Account 3100 MUST NOT hold any amount for this `businessRef` until Phase A runs.
+- Funds sit in bank nostro (1111) **unbooked** until ops triggers re-processing; the reconciliation job (ADR-021) flags this as an unbooked inflow.
+
+**Idempotency:** Re-submission with the same `businessRef` after VA is mapped follows the normal Phase A idempotency guard (`UNIQUE(reference_id, use_case)` on `coa_trans`).
+
+**VA mapping change after POSTED (immutability):** If a VA mapping is updated after a deposit has already been POSTED with the old mapping, the existing `coa_trans` lines and wallet credit are immutable (ADR-001, ADR-026). The mapping change affects only future deposits.
 
 ### 13.2 Payment (sync, 3 commits)
 

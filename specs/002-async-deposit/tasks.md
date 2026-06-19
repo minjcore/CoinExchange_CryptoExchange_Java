@@ -163,11 +163,11 @@ but worker routes to ops hold instead of Phase A when VA lookup fails.
 **Independent test**: Send notify with unknown VA → no wallet credit, no coa_trans row, ops hold
 logged (quickstart Q3).
 
-- [ ] T016 [US2] Finalize VA resolution + ops hold behavior in `spec/processes.md §13` — unknown VA
+- [x] T016 [US2] Finalize VA resolution + ops hold behavior in `spec/processes.md §13` — unknown VA
       path: `app-accounting-worker` detects unmapped VA after receiving `BANK_DEPOSIT` from queue;
       no journal, no credit; hold logged for ops; duplicate same VA-unknown idempotent; note that
       VA lookup happens **inside the worker** (not in orchestration for this path)
-- [ ] T017 [P] [US2] Add Gherkin to `design-v2/acceptance.md`:
+- [x] T017 [P] [US2] Add Gherkin to `design-v2/acceptance.md`:
       - TC-DEP-05: unknown VA ops hold (no journal, no credit after worker processes queue message)
       - TC-DEP-06: correct member credit (mapped VA credits exactly the right member)
       - TC-DEP-07: mapping-change immutability (VA mapping update does not retroactively alter POSTED journals)
