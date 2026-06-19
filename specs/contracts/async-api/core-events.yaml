@@ -203,7 +203,8 @@ components:
           enum: [CommandFailed]
         commandType:
           type: string
-          description: "BANK_DEPOSIT | WALLET_CREDIT | WITHDRAW_PAYOUT"
+          enum: [BANK_DEPOSIT, WALLET_CREDIT, WITHDRAW_PAYOUT]
+          description: Command type that failed.
         reason:
           type: string
           description: Error message / code for ops triage.
