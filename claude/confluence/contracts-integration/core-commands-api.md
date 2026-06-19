@@ -37,7 +37,7 @@ Hai channel async của platform:
 
 | Field | Mandatory | Vai trò |
 |-------|-----------|---------|
-| `commandType` | Yes | Routing key: `BANK_DEPOSIT` \| `WALLET_CREDIT` |
+| `commandType` | Yes | Routing key: `BANK_DEPOSIT` \| `WALLET_CREDIT` \| `WITHDRAW_PAYOUT` |
 | `businessRef` | Yes | End-to-end idempotency key = `X-Idempotency-Key` |
 | `messageId` | Yes | Per-publish AMQP dedup — không phải business key |
 | `correlationId` | No | Trace/observability only — không persist |
@@ -78,7 +78,7 @@ Hai channel async của platform:
 
 **Processing:**
 1. `createJournal(businessRef, DEPOSIT, grossAmount)` → Phase A
-2. Bank confirms → `confirmDeposit(coaTransId, fee)` → Phase B
+2. Bank confirms → `postJournal(coaTransId, fee)` → Phase B
 3. Phase B POSTED → publish `WALLET_CREDIT` command
 
 ---
@@ -109,6 +109,37 @@ Hai channel async của platform:
 | `netAmount` | decimal string | grossAmount − fee |
 | `currency` | string | `VND` only (v1) |
 | `coaTransId` | int64 | Correlation only — `wallet_tx.coa_trans_id` (no FK) |
+
+---
+
+### WITHDRAW_PAYOUT
+
+**Channel:** `core.commands.withdraw-payout`
+**Consumer:** `app-payment-worker`
+**Triggers:** Bank payout sau wallet freeze
+
+```json
+{
+  "commandType": "WITHDRAW_PAYOUT",
+  "businessRef": "wdl-20260618-def456",
+  "messageId": "msg-01j4kz9pqr",
+  "payload": {
+    "walletId": 5001,
+    "amount": "200000.0000",
+    "currency": "VND",
+    "bankAccountNumber": "1234567890",
+    "bankCode": "BIDV"
+  }
+}
+```
+
+| Payload field | Type | Notes |
+|--------------|------|-------|
+| `walletId` | int64 | Wallet với frozen amount cần payout |
+| `amount` | decimal string | Frozen amount to release to bank |
+| `currency` | string | `VND` only (v1) |
+| `bankAccountNumber` | string | Destination bank account |
+| `bankCode` | string | BIC/SWIFT or local bank code |
 
 ---
 
@@ -187,7 +218,7 @@ app-orchestration outbox relay
 
 app-accounting-worker
   createJournal(businessRef, DEPOSIT, grossAmount)   ← Phase A
-  confirmDeposit(coaTransId, fee)                     ← Phase B
+  postJournal(coaTransId, fee)                        ← Phase B
   → Kafka: JournalPosted(coaTransId, POSTED)
   → RabbitMQ: WALLET_CREDIT
 

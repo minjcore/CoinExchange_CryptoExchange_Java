@@ -21,7 +21,7 @@ API này dành cho sync use cases (payment, transfer) hoặc query trạng thái
 | Method | Path | Operation | Use case |
 |--------|------|-----------|---------|
 | `POST` | `/journals` | `createJournal` | Phase A — tạo PENDING journal + TB pending transfer |
-| `POST` | `/journals/{coaTransId}/confirm` | `confirmDeposit` | Phase B — post pending + split fee |
+| `POST` | `/journals/{coaTransId}/post` | `postJournal` | Phase B — post pending + split fee |
 | `POST` | `/journals/{coaTransId}/void` | `voidPending` | Reversal — void pending TB transfer |
 | `GET` | `/journals/{coaTransId}` | `getJournal` | Query trạng thái journal |
 
@@ -61,12 +61,12 @@ TB transfer ID = `hash(businessRef + ":phaseA")` — deterministic idempotency.
 
 ---
 
-## confirmDeposit — Phase B
+## postJournal — Phase B
 
 **Input:** `coaTransId` (từ Phase A) + `fee` (tính tại orchestration).
 
 ```json
-POST /journals/9001/confirm
+POST /journals/9001/post
 {
   "fee": "1000.0000"
 }
@@ -110,7 +110,7 @@ POST /journals/9001/void
 |-------------|------|-----------|
 | `JOURNAL_NOT_FOUND` | 404 | coaTransId không tồn tại |
 | `JOURNAL_ALREADY_POSTED` | 409 | void gọi sau POSTED |
-| `JOURNAL_ALREADY_FAILED` | 409 | confirm gọi sau FAILED |
+| `JOURNAL_ALREADY_FAILED` | 409 | postJournal gọi sau FAILED |
 | `IDEMPOTENCY_CONFLICT` | 409 | reference_id dùng lại với data khác |
 
 ---
