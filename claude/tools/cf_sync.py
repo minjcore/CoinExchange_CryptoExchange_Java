@@ -26,6 +26,17 @@ import markdown
 from markdown.extensions.tables import TableExtension
 from markdown.extensions.fenced_code import FencedCodeExtension
 
+# Load .env from repo root if present
+_repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_env_path = os.path.join(_repo_root, ".env")
+if os.path.exists(_env_path):
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+
 CF_DOMAIN = os.environ.get("CF_DOMAIN", "nivc.atlassian.net")
 CF_USER   = os.environ.get("CF_USER", "")
 CF_TOKEN  = os.environ.get("CF_TOKEN", "")
