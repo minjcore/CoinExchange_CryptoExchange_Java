@@ -17,6 +17,8 @@ Which service handles what step in the deposit flow, and how is it called.
 | `app-wallet` | Sync HTTP gateway for `core.wallet` | HTTP | **NOT in deposit path** — sync use cases only (e.g. freeze, balance read) |
 
 > **Rule (ADR-038, ADR-041):** In the async deposit path, `app-orchestration` NEVER calls `app-accounting` or `app-wallet` via HTTP. All deposit mutations flow through RabbitMQ workers. HTTP gateways serve synchronous use cases only.
+>
+> **`confirmDeposit` is not an HTTP endpoint.** `accounting-internal.yaml` exposes `createJournal`, `addJournalLines`, `postJournal`, `reverseJournal` for sync callers. `confirmDeposit` is an **in-process Java service method** on `JournalService` called directly by `app-accounting-worker` within the same JVM — it is not reachable via HTTP and does not appear in the contract (ADR-037 AC-037-02).
 
 ---
 

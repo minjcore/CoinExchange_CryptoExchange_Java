@@ -432,6 +432,12 @@ Per step we define: failure point · resulting state · how detected · recovery
 
 ### 13.1 Deposit (async, 2-phase)
 
+> **Protocol decision — why async queue, not sync HTTP (ADR-041):**
+> 1. **202 latency decoupled from ledger write** — orchestration acks in < 200 ms regardless of TigerBeetle Phase A/B duration.
+> 2. **Worker failure isolation** — accounting worker crash never degrades the HTTP P99; the outbox retries independently.
+> 3. **At-least-once + idempotent replay** — RabbitMQ redelivers on crash; every Phase A/B step is idempotent on `businessRef`, so redelivery is safe with no manual intervention.
+> 4. **Backpressure via queue depth** — burst of bank webhooks queues up gracefully; no synchronous fan-out under load.
+
 Steps: S0 ack **202** → S1 `BANK_DEPOSIT` outbox → RabbitMQ → accounting worker:
 - **Phase A** — TigerBeetle pending Transfer (`id=hash(businessRef+":phaseA")`, `debit=1111`, `credit=3100`, `flags.pending=true`) + `coa_trans` PENDING
 - **Phase B** via `confirmDeposit` — TB `post_pending_transfer` + 2 transfers (`hash(businessRef+":2110")` net credit, `hash(businessRef+":4110")` fee) + `coa_trans` POSTED; transit `account[3100].balance = 0` enforced

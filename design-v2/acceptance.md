@@ -308,6 +308,51 @@ And wallet_balance.available is unchanged
 And ops must explicitly choose: call confirmDeposit (→ POSTED) or void (→ FAILED)
 ```
 
+### Scenario TC-DEP-11: Duplicate deposit notification — exactly one journal, one wallet credit
+
+```gherkin
+Given a BANK_DEPOSIT command with businessRef="dep-tc11" has been fully processed (POSTED + wallet credited)
+When the bank gateway re-sends the same deposit notification with businessRef="dep-tc11"
+Then app-orchestration returns 202 (idempotent re-ack)
+And no second outbox row is written for businessRef="dep-tc11"
+And coa_trans has exactly one row for businessRef="dep-tc11" (status=POSTED)
+And wallet_tx has exactly one DEPOSIT_CREDIT row for businessRef="dep-tc11"
+And wallet_balance.available is not double-incremented
+```
+
+### Scenario TC-DEP-12: Worker crash between Phase A and Phase B — idempotent on redelivery
+
+```gherkin
+Given a BANK_DEPOSIT message with businessRef="dep-tc12" caused app-accounting-worker to crash after Phase A (coa_trans=PENDING, TigerBeetle pending Transfer created)
+When RabbitMQ redelivers the BANK_DEPOSIT message for businessRef="dep-tc12"
+Then createJournal returns the existing PENDING coa_trans row (idempotent — no duplicate insert)
+And confirmDeposit proceeds with Phase B using the existing coaTransId
+And Phase B runs exactly once (TigerBeetle Transfer IDs are deterministic — duplicate TB calls are no-ops)
+And coa_trans.status becomes POSTED
+And WALLET_CREDIT is published and wallet is credited exactly once
+```
+
+### Deposit — SQL invariant CI coverage note (ADR-031 INV-03)
+
+TC-DEP-01..TC-DEP-09 collectively exercise INV-03: `account[3100].balance = 0` after every POSTED or FAILED deposit. Specifically:
+- TC-DEP-01 (full happy path) — verifies 3100=0 after Phase B POSTED
+- TC-DEP-08 (cancel/reversal) — verifies 3100=0 after `void_pending_transfer`
+- TC-DEP-09 (mismatch) — verifies 3100=0 after Phase B abort + void
+
+The SQL invariant CI job (ADR-031 INV-03) enforces this at the database layer on every CI run independently of Gherkin execution. See `## Feature: Ledger invariant CI (ADR-031)` below for the CI scenarios.
+
+### Scenario TC-DEP-13: TigerBeetle boundary — only app-accounting-worker touches TB
+
+```gherkin
+Given the async deposit flow from bank webhook to wallet credit
+When the full chain executes (app-orchestration → outbox → app-accounting-worker → app-wallet-worker)
+Then only app-accounting-worker opens a TigerBeetle client connection (AC-037-01)
+And app-orchestration makes no direct TigerBeetle API calls
+And app-wallet-worker makes no direct TigerBeetle API calls
+And app-wallet makes no direct TigerBeetle API calls
+And the accounting-internal.yaml HTTP contract is unchanged by the TigerBeetle integration (AC-037-02)
+```
+
 ---
 
 ## Feature: Wallet balance semantics (available / frozen / pending)

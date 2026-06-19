@@ -206,26 +206,26 @@ cancelled deposits — no queue message means no wallet mutation.
 **Purpose**: idempotency proof, invariant coverage, worker resilience, contract hygiene, and
 confirming no HTTP gateway is called where a queue entry is required.
 
-- [ ] T020 [P] Add idempotency Gherkin to `design-v2/acceptance.md`:
+- [x] T020 [P] Add idempotency Gherkin to `design-v2/acceptance.md`:
       - TC-DEP-11: duplicate notify same businessRef → one journal one credit (quickstart Q2)
       - TC-DEP-12: worker crash + redelivery → `app-accounting-worker` is idempotent on
         `(commandType, businessRef)` — no duplicate Phase A or Phase B (quickstart Q5)
-- [ ] T021 [P] Add SQL invariant CI note in `design-v2/acceptance.md` Part IV: INV-03 covers
+- [x] T021 [P] Add SQL invariant CI note in `design-v2/acceptance.md` Part IV: INV-03 covers
       `TB account[3100].balance = 0` after POSTED deposit — verify gap or confirm coverage (ADR-031)
-- [ ] T022 [P] Validate `core-commands.yaml` and `core-events.yaml` YAML parse and all deposit
+- [x] T022 [P] Validate `core-commands.yaml` and `core-events.yaml` YAML parse and all deposit
       schemas resolve (`$ref` integrity); confirm queue message schemas match the entry-point map
       table at the top of this file
-- [ ] T023 [P] Validate `accounting-internal.yaml` — confirm `createJournal` and `confirmDeposit`
+- [x] T023 [P] Validate `accounting-internal.yaml` — confirm `createJournal` and `confirmDeposit`
       endpoints exist (ADR-037 AC-037-02) and are marked as **internal-only, not called by
       orchestration in the deposit flow**; add a note in `data-model.md §0` clarifying this
-- [ ] T024 Add a "Protocol Decision" note in `spec/processes.md §13` explaining WHY deposit uses
+- [x] T024 Add a "Protocol Decision" note in `spec/processes.md §13` explaining WHY deposit uses
       async queue (not sync HTTP) for both accounting and wallet: decouples 202 latency from ledger
       write time; isolates worker failures from sync P99; enables at-least-once + idempotent replay
-- [ ] T025 Verify TigerBeetle out-of-scope boundary in `design-v2/acceptance.md` or
+- [x] T025 Verify TigerBeetle out-of-scope boundary in `design-v2/acceptance.md` or
       `spec/processes.md`: confirm `app-orchestration`, `app-wallet`, `app-wallet-worker` have NO
       direct TB client dependency (AC-037-01); only `app-accounting-worker` → `core.accounting`
       → TB
-- [ ] T026 [P] Confirm `CLAUDE.md` SPECKIT marker points to `specs/002-async-deposit/plan.md`
+- [x] T026 [P] Confirm `CLAUDE.md` SPECKIT marker points to `specs/002-async-deposit/plan.md`
 
 ---
 
