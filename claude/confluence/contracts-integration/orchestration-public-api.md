@@ -145,7 +145,18 @@ Authorization: Bearer <jwt>
 }
 ```
 
-Response **200** — cả hai wallets updated + ledger POSTED.
+Response **200** — cả hai wallets updated + ledger POSTED:
+
+```json
+{
+  "business_ref": "txf-20260618-abc456",
+  "status": "COMPLETED",
+  "sender_available": "49000.0000",
+  "completed_at": "2026-06-18T10:01:00Z",
+  "wallet_tx_id": 7002,
+  "coa_trans_id": 9002
+}
+```
 
 ---
 

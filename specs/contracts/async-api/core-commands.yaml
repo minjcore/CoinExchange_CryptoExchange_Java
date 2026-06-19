@@ -108,6 +108,26 @@ components:
               currency: VND
               coaTransId: 9001
 
+    WithdrawPayoutCommand:
+      name: WithdrawPayoutCommand
+      title: WITHDRAW_PAYOUT
+      summary: Trigger bank payout for a frozen withdrawal amount
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/WithdrawPayoutPayload'
+      examples:
+        - name: standard-payout
+          payload:
+            commandType: WITHDRAW_PAYOUT
+            businessRef: wdl-20260618-def456
+            messageId: msg-01j4kz9pqr
+            payload:
+              walletId: 5001
+              amount: "200000.0000"
+              currency: VND
+              bankAccountNumber: "1234567890"
+              bankCode: BIDV
+
   schemas:
     CommandEnvelope:
       type: object
@@ -258,23 +278,3 @@ components:
               description: |
                 Correlation only — coa_trans.id after Phase B POSTED.
                 wallet_tx.coa_trans_id (no FK).
-
-    WithdrawPayoutCommand:
-      name: WithdrawPayoutCommand
-      title: WITHDRAW_PAYOUT
-      summary: Trigger bank payout for a frozen withdrawal amount
-      contentType: application/json
-      payload:
-        $ref: '#/components/schemas/WithdrawPayoutPayload'
-      examples:
-        - name: standard-payout
-          payload:
-            commandType: WITHDRAW_PAYOUT
-            businessRef: wdl-20260618-def456
-            messageId: msg-01j4kz9pqr
-            payload:
-              walletId: 5001
-              amount: "200000.0000"
-              currency: VND
-              bankAccountNumber: "1234567890"
-              bankCode: BIDV

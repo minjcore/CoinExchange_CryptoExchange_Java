@@ -75,6 +75,8 @@ Key: `UNIQUE(wallet_id, business_ref, tx_type)`
 | Enum | Direction | Use case |
 |------|-----------|---------|
 | `DEPOSIT_CREDIT` | CREDIT | After ledger POSTED |
+| `TRANSFER_CREDIT` | CREDIT | Receiver wallet credit |
+| `TRANSFER_DEBIT` | DEBIT | Sender wallet debit |
 | `PAYMENT_DEBIT` | DEBIT | Payment step 1 |
 | `PAYMENT_CREDIT` | CREDIT | Payment step 3 |
 | `WITHDRAW_FREEZE` | FREEZE | Withdrawal accept |
