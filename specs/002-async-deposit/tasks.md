@@ -126,15 +126,17 @@ ledger POSTED. Orchestration returns 202 before any ledger write.
 **Independent test**: Send notify → get 202 → confirm wallet balance increases by net only after POSTED
 (quickstart Q1).
 
-- [ ] T012 [US1] Finalize deposit process in `spec/processes.md §13` — two-phase protocol:
+- [x] T012 [US1] Finalize deposit process in `spec/processes.md §13` — two-phase protocol:
       Phase A PENDING (1111 DR / 3100 CR via TigerBeetle pending Transfer), Phase B via
       `confirmDeposit` only (3100=0, 2110+4110 via TB post_pending + transfers), wallet credit
       after POSTED via **RabbitMQ WALLET_CREDIT** to `app-wallet-worker`; 202 async ack returned by
       orchestration before any accounting write
-- [ ] T013 [US1] Verify orchestration deposit saga in `design-v2/orchestration.md §11` — VA→memberId
+      <!-- done: §3.3 corrected to RabbitMQ path; §13.1 expanded with Phase A/B TigerBeetle detail -->
+- [x] T013 [US1] Verify orchestration deposit saga in `design-v2/orchestration.md §11` — VA→memberId
       resolution, outbox publish, 202 return; confirm **no HTTP call from orchestration to
       `app-accounting` or `app-wallet`** in this flow (outbox → queue only); confirm
       `accounting-internal.yaml` wire is NOT used by orchestration for deposit
+      <!-- done: §11.2 steps table rewritten, §11.6 Forbidden section updated -->
 - [x] T014 [P] [US1] Add Gherkin to `design-v2/acceptance.md` (deposit feature):
       - TC-DEP-01: happy path Phase A PENDING → Phase B POSTED → wallet credit net amount
       - TC-DEP-02: fee handling (wallet receives gross minus fee)
