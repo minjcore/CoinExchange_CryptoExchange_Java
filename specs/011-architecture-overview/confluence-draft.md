@@ -1,5 +1,8 @@
 # Platform Architecture Overview — Two-Domain, TigerBeetle, Blnk PoC
 
+> **CF page ID:** 51576836 | **Parent:** 🏛️ Architecture & Principles (51642382)
+> **Source of truth:** `specs/011-architecture-overview/confluence-draft.md` → push to CF
+
 **Version:** 1.0.0 | **Reflects:** Constitution v1.0.0 (ratified 2026-06-15) | **Last reviewed:** 2026-06-18  
 **Source of truth:** `specs/011-architecture-overview/` and `.specify/memory/constitution.md`
 
