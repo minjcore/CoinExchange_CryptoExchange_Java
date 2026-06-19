@@ -189,6 +189,50 @@ Then idempotent return without new lines
 And 4110 still 1000
 ```
 
+### Scenario TC-DEP-01: Full async chain — Phase A PENDING → Phase B POSTED → wallet credit
+
+```gherkin
+Given a BANK_DEPOSIT command with businessRef="dep-tc01" grossAmount=100000 fee=1000 walletId=42
+When the accounting worker processes the message
+Then a PENDING journal is created (TigerBeetle pending Transfer 1111←3100)
+And the journal transitions to POSTED (TigerBeetle post_pending + transfers 3100→2110 net, 3100→4110 fee)
+And a WALLET_CREDIT command is published to exchange "core.commands" key "core.commands.wallet-credit"
+And the wallet worker credits walletId=42 with netAmount=99000
+And available balance of walletId=42 increases by 99000
+```
+
+### Scenario TC-DEP-02: Fee deducted — wallet receives gross minus fee
+
+```gherkin
+Given a BANK_DEPOSIT command grossAmount=100000 fee=1000 walletId=42
+When the full async chain completes
+Then the WALLET_CREDIT payload carries netAmount=99000
+And walletId=42 available balance increases by 99000 not 100000
+And CoA account 4110 (fee income) holds 1000
+And CoA account 2110 (customer liability) holds 99000
+```
+
+### Scenario TC-DEP-03: HTTP 202 returned before any journal write
+
+```gherkin
+Given app-orchestration receives a bank webhook for businessRef="dep-tc03"
+When the orchestration layer handles the request
+Then it responds HTTP 202 immediately
+And the BANK_DEPOSIT command is written to the outbox in the same local transaction as the 202 response
+And no JournalPosted event exists yet at the time 202 is returned
+And the journal is written asynchronously by the accounting worker after 202
+```
+
+### Scenario TC-DEP-04: BANK_DEPOSIT delivered via RabbitMQ queue, not HTTP
+
+```gherkin
+Given app-orchestration has written a BANK_DEPOSIT command to the outbox
+When the outbox relay dispatches the command
+Then the message is published to RabbitMQ exchange "core.commands" with routing key "core.commands.bank-deposit"
+And app-accounting-worker consumes it from queue "accounting.bank-deposit"
+And no HTTP call is made from app-orchestration to app-accounting or app-accounting-worker
+```
+
 ---
 
 ## Feature: Wallet balance semantics (available / frozen / pending)

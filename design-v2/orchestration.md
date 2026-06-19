@@ -251,12 +251,14 @@ Orchestration owns **step order, fees, auth, saga recovery, and wire mapping**. 
 
 | Step | Component | Commit | Rollback |
 |------|-----------|--------|----------|
-| S0 | Orchestration | Ack **202** + `businessRef` | N/A — safe to retry |
-| S1 | Worker | Journal `PENDING` (3100) | TX rollback; requeue |
-| S2 | Orchestration/worker | Map VA → `memberId` | Hold PENDING |
-| S3 | Accounting | Phase B → `POSTED` | Stay PENDING or reverse A |
-| S4 | Outbox | `JournalPosted` / `WalletCreditCommand` | Relay retry |
-| S5 | Wallet | `DEPOSIT_CREDIT` net | Idempotent retry |
+| S0 | `app-orchestration` | Ack **202** + write outbox row (atomic) | N/A — safe to retry |
+| S1 | `app-accounting-worker` | Journal PENDING: TB pending Transfer (1111←3100) + `coa_trans` | TX rollback; requeue |
+| S2 | `app-accounting-worker` | Map VA → `memberId` + `walletId` | Hold PENDING, no journal |
+| S3 | `app-accounting-worker` | Phase B `confirmDeposit`: TB post_pending + 2110/4110 transfers + `coa_trans` POSTED; assert 3100=0 | Stay PENDING or reverse A |
+| S4 | `app-accounting-worker` | Publish **`WALLET_CREDIT`** to `core.commands.wallet-credit` (S6 RabbitMQ); optional `JournalPosted` to Kafka | Relay retry |
+| S5 | `app-wallet-worker` | `DEPOSIT_CREDIT` net — `creditByWalletId(walletId, businessRef, netAmount)` | Idempotent retry |
+
+> **`app-orchestration` NEVER calls `app-accounting` or `app-wallet` via HTTP in the deposit flow.** S0 writes only to the outbox; S1–S5 are worker-owned commits.
 
 ### 11.3 Fee computation (orchestration)
 
@@ -291,6 +293,7 @@ Single computed `fee` used for both S2 lines and S5 amount.
 - Credit wallet before S3 `POSTED`
 - Second S1 enqueue with new `messageId` but same `businessRef` causing duplicate PENDING (accounting idempotency must block)
 - Edit fee after S3 without new journal
+- **HTTP call from `app-orchestration` to `app-accounting` or `app-wallet` for deposit** — orchestration owns only S0 (outbox write); S1–S5 are worker commits via RabbitMQ, never sync HTTP (ADR-038, ADR-041)
 
 ---
 

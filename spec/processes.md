@@ -115,7 +115,9 @@ Member   Bank        Gateway/BFF       Worker(S6)     core.accounting   core.wal
 ### 3.3 Wallet effect ([`trd/wallet.md`](./trd/wallet.md) §5.1)
 
 - Phase A (PENDING): wallet **unchanged** — funds still in transit 3100.
-- Phase B (POSTED): orchestration calls `credit(member, USER, 99000, businessRef, coaTransId)` → `wallet_tx` with `tx_type = DEPOSIT_CREDIT` (direction `CREDIT`). The wallet **does not** compute fees; it credits exactly `amount = 99000` from the command.
+- Phase B (POSTED): accounting worker (`app-accounting-worker`) publishes `WALLET_CREDIT` to RabbitMQ exchange `core.commands` (routing key `core.commands.wallet-credit`). `app-wallet-worker` consumes and calls `creditByWalletId(walletId, businessRef, 99000, currency, coaTransId)` → `wallet_tx` with `tx_type = DEPOSIT_CREDIT` (direction `CREDIT`). The wallet **does not** compute fees; it credits exactly `netAmount = gross − fee` received in the command.
+
+> **Rule (ADR-041, ADR-038):** Orchestration does **not** call `app-wallet` via HTTP for deposit. The wallet credit is triggered by a RabbitMQ command, not a synchronous HTTP call.
 
 ### 3.4 Rules & error handling ([`foundation.md`](./foundation.md) §8.5, [`trd/wallet.md`](./trd/wallet.md) §8)
 
@@ -430,7 +432,10 @@ Per step we define: failure point · resulting state · how detected · recovery
 
 ### 13.1 Deposit (async, 2-phase)
 
-Steps: ack 202 → enqueue `BANK_DEPOSIT` → journal **PENDING** (1111 DR / 3100 CR) → confirm **POSTED** (3100→0, 2110, 4110) → wallet credit net.
+Steps: S0 ack **202** → S1 `BANK_DEPOSIT` outbox → RabbitMQ → accounting worker:
+- **Phase A** — TigerBeetle pending Transfer (`id=hash(businessRef+":phaseA")`, `debit=1111`, `credit=3100`, `flags.pending=true`) + `coa_trans` PENDING
+- **Phase B** via `confirmDeposit` — TB `post_pending_transfer` + 2 transfers (`hash(businessRef+":2110")` net credit, `hash(businessRef+":4110")` fee) + `coa_trans` POSTED; transit `account[3100].balance = 0` enforced
+- accounting worker publishes **`WALLET_CREDIT`** → `core.commands.wallet-credit` (RabbitMQ) → wallet worker → `DEPOSIT_CREDIT`
 
 | Failure point | State | Detection | Recovery | Terminal |
 |---------------|-------|-----------|----------|----------|

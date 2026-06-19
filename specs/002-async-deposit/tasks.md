@@ -135,15 +135,16 @@ ledger POSTED. Orchestration returns 202 before any ledger write.
       resolution, outbox publish, 202 return; confirm **no HTTP call from orchestration to
       `app-accounting` or `app-wallet`** in this flow (outbox → queue only); confirm
       `accounting-internal.yaml` wire is NOT used by orchestration for deposit
-- [ ] T014 [P] [US1] Add Gherkin to `design-v2/acceptance.md` (deposit feature):
+- [x] T014 [P] [US1] Add Gherkin to `design-v2/acceptance.md` (deposit feature):
       - TC-DEP-01: happy path Phase A PENDING → Phase B POSTED → wallet credit net amount
       - TC-DEP-02: fee handling (wallet receives gross minus fee)
       - TC-DEP-03: 202 returned before journal written (verify outbox write happens in same tx as 202)
       - TC-DEP-04: entry-point chain — `BANK_DEPOSIT` arrives via RabbitMQ queue, not HTTP gateway
-- [ ] T015 [P] [US1] Verify TigerBeetle mapping documented in `specs/002-async-deposit/data-model.md §1.2–1.3`
+- [x] T015 [P] [US1] Verify TigerBeetle mapping documented in `specs/002-async-deposit/data-model.md §1.2–1.3`
       is consistent with `sandbox/tigerbeetle/README.md` — pending Transfer for Phase A,
       post_pending + liability transfers for Phase B, transit 3100=0 invariant; note that these
       are **in-process Java calls within `app-accounting-worker`**, not HTTP calls
+      <!-- verified: consistent — hash(businessRef) as TB uint128 IDs, Phase A pending flag, Phase B post_pending + 2 transfers, transit 3100 net=0 confirmed -->
 
 **Checkpoint**: US1 independently demonstrable (notify → 202 → POSTED → wallet credited).
 
