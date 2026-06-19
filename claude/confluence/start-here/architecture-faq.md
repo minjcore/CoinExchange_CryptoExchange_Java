@@ -62,6 +62,25 @@ No. Principle III (ADR-026). Wallet must never post the ledger.
 **Q: Can orchestration write directly to coa_trans?**
 No. Principle V (ADR-012). Publishes via outbox; accounting worker owns all writes to `coa_*`.
 
+**Q: What is the gateway seam?**
+Orchestration use cases depend only on two interfaces — `WalletGateway` and `LedgerGateway` — never on domain service classes directly. The seam is the boundary between orchestration and the two cores.
+
+```
+app-orchestration
+  └── PaymentUseCase
+        ├── WalletGateway (interface)  → impl: HTTP → app-wallet  (wallet-internal.yaml)
+        └── LedgerGateway (interface)  → impl: HTTP → app-accounting (accounting-internal.yaml)
+```
+
+The current `InProcessWalletGateway` / `InProcessLedgerGateway` (same JVM, calls domain service directly) is **transitional** — used while the HTTP surfaces are being built. It is not the target architecture. Swapping in-process → HTTP-client implementation requires **no change** to use cases or domain code. (ADR-038)
+
+| Rule | Detail |
+|------|--------|
+| Use case imports | Only `WalletGateway` / `LedgerGateway` interfaces — never `core.wallet.*` or `core.accounting.*` service classes |
+| In-process gateways | Transitional migration step — not an architectural option |
+| Swap rule | Gateway impl swap (in-process → HTTP) = zero use-case change, zero domain change |
+| Non-Java future | HTTP boundary means orchestrator can be rewritten in any language with no domain change |
+
 ---
 
 ## 4b. Retry-Safe Pattern — Return Existing Immediately With IDs
@@ -110,6 +129,20 @@ Deposit transit. Must be 0 after any completed deposit (INV-03, ADR-031).
 
 **Q: What if app-accounting-worker crashes between Phase A and Phase B?**
 RabbitMQ redelivers. `createJournal` idempotent on `(reference_id, use_case)` — existing PENDING returned. `confirmDeposit` proceeds to Phase B. (ADR-005, ADR-041)
+
+**Q: Why not Temporal / Cadence for saga orchestration?**
+
+| | RabbitMQ workers + DB saga state (v1) | Temporal / Cadence (future option) |
+|---|---|---|
+| **Deployment** | RabbitMQ + PostgreSQL (already in stack) | Requires Temporal cluster — new infra dependency |
+| **State store** | DB saga table = source of truth; messages = commands | Workflow history = source of truth; DB not needed for step tracking |
+| **Resume after crash** | RabbitMQ redelivers + worker reads DB state → idempotent skip | Temporal replays workflow history automatically |
+| **Idempotency** | Must be explicit at every step (ADR-005) | Built into replay model — less manual work |
+| **Human-in-the-loop** | Awkward — needs custom polling/timer logic | Native signal/activity model |
+| **Tmax / T2 complexity** | Manageable with aging jobs (ADR-021, ADR-033) | Cleaner with durable timers |
+| **Ops overhead** | Low — reuse existing RabbitMQ ops | Higher — Temporal cluster + workers monitoring |
+
+**v1 verdict:** RabbitMQ workers cover all v1 flows (deposit, payment, withdraw, IBFT). Temporal becomes worth the infra cost if the number of multi-step flows with human-in-the-loop or complex retry trees grows significantly. (ADR-035)
 
 ---
 
