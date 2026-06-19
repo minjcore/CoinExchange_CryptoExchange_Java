@@ -168,14 +168,75 @@ Blnk does this with a snapshot job; GtelPay `wallet_tx` already stores after-bal
 
 ---
 
-## 4. Inbound & Outbound Entities (internal boundaries only)
+## 4. Inbound & Outbound Entities
 
-These are the entities that cross service boundaries **within** the GtelPay system.
-External inbound schemas (from outside the system) are out of scope here.
+### app-orchestration — inbound & outbound
 
-### Inbound entities
+#### Inbound — `DepositNotification` from bank/NAPAS via HTTP (mTLS, ADR-022)
 
-Entities that enter a service from another internal service.
+```
+POST /deposits/notify  (spec/contracts/http/gtelpay-public.yaml)
+
+DepositNotification {
+  virtualAccount : string                // VA number allocated to member
+  grossAmount    : string (decimal, s4)  // e.g. "100000.0000"
+  bankRef        : string                // bank's own transaction reference
+  businessRef    : string                // = X-Idempotency-Key; end-to-end idempotency key
+  currency       : string                // "VND"
+  notifiedAt     : string (ISO-8601)     // bank notification timestamp
+}
+```
+
+Consumed by: `app-orchestration` — validate, VA→memberId lookup, fee compute, write outbox, return 202.
+
+---
+
+#### Outbound — `DepositAck` (HTTP 202) to bank/NAPAS
+
+```
+HTTP 202 Accepted
+
+DepositAck {
+  businessRef : string    // echo of X-Idempotency-Key
+  status      : "ACCEPTED"
+}
+```
+
+Guarantee: returned **before any ledger write**. Internal network RTT is ~20–50 ms per hop; decoupling via outbox means 202 is issued in < 10 ms regardless of Phase A/B duration.
+
+---
+
+#### Outbound — `BankDepositCommand` to `accounting worker` via RabbitMQ (outbox relay)
+
+See `BankDepositCommand` entry in the next section. Published by orchestration's outbox relay after 202.
+
+---
+
+#### Outbound (unknown VA) — `OpsHoldRecord` to orchestration DB
+
+```
+OpsHoldRecord {
+  businessRef    : string
+  virtualAccount : string                // unresolved VA
+  grossAmount    : string (decimal, s4)
+  currency       : string
+  receivedAt     : string (ISO-8601)
+  reason         : "UNKNOWN_VA"
+}
+```
+
+Stored in: orchestration PostgreSQL `ops_hold` table.
+Effect: **no `BANK_DEPOSIT` published, no journal, no 3100 posting** — funds sit in bank nostro (1111) unbooked until ops resolves the VA mapping.
+
+---
+
+### Internal workers — inbound & outbound
+
+These are the entities that cross service boundaries **within** the GtelPay system between workers.
+
+### Inbound entities (workers)
+
+Entities that enter a worker from another internal service.
 
 #### `BankDepositCommand` — enters `accounting worker` from `app-orchestration` via RabbitMQ
 

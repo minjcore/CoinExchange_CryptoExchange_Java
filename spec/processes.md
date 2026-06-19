@@ -433,7 +433,7 @@ Per step we define: failure point · resulting state · how detected · recovery
 ### 13.1 Deposit (async, 2-phase)
 
 > **Protocol decision — why async queue, not sync HTTP (ADR-041):**
-> 1. **202 latency decoupled from ledger write** — orchestration acks in < 200 ms regardless of TigerBeetle Phase A/B duration.
+> 1. **202 latency decoupled from ledger write** — internal network RTT is ~20–50 ms per hop; Phase A + B + wallet chain would add 80–150 ms to sync P99. Async queue issues 202 in < 10 ms.
 > 2. **Worker failure isolation** — accounting worker crash never degrades the HTTP P99; the outbox retries independently.
 > 3. **At-least-once + idempotent replay** — RabbitMQ redelivers on crash; every Phase A/B step is idempotent on `businessRef`, so redelivery is safe with no manual intervention.
 > 4. **Backpressure via queue depth** — burst of bank webhooks queues up gracefully; no synchronous fan-out under load.
