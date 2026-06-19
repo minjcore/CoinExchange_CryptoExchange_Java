@@ -58,6 +58,7 @@ Hai channel async của platform:
   "messageId": "msg-01j4kz7abc",
   "payload": {
     "memberId": 1001,
+    "walletId": 5001,
     "virtualAccount": "VA-GTL-00123",
     "grossAmount": "100000.0000",
     "fee": "1000.0000",
@@ -70,6 +71,7 @@ Hai channel async của platform:
 | Payload field | Type | Notes |
 |--------------|------|-------|
 | `memberId` | int64 | Resolved from virtualAccount by orchestration |
+| `walletId` | int64 | Pocket wallet BIGINT PK — resolved by orchestration alongside memberId; avoids accounting worker crossing domain boundary to wallet schema |
 | `virtualAccount` | string | Raw VA từ bank notification |
 | `grossAmount` | decimal string | Scale 4. Phase A: 1111 DR → 3100 CR |
 | `fee` | decimal string | Scale 4. Phase B: 3100 DR → 4110 CR |
@@ -108,7 +110,7 @@ Hai channel async của platform:
 | `walletId` | int64 | Pocket wallet BIGINT PK |
 | `netAmount` | decimal string | grossAmount − fee |
 | `currency` | string | `VND` only (v1) |
-| `coaTransId` | int64 | Correlation only — `wallet_tx.coa_trans_id` (no FK) |
+| `coaTransId` | int64 (optional) | Correlation only — `wallet_tx.coa_trans_id` (no FK). Not required. |
 
 ---
 
