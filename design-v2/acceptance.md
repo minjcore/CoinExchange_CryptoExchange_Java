@@ -268,6 +268,46 @@ And wallet_tx for businessRef="dep-tc07" still belongs to walletId=55
 And the mapping change only affects future deposit notifications for VA-1001
 ```
 
+### Scenario TC-DEP-08: Phase-A cancellation — 3100 nets to zero, wallet unchanged
+
+```gherkin
+Given a BANK_DEPOSIT command with businessRef="dep-tc08" grossAmount=100000 has been processed
+And a PENDING journal exists (coa_trans status=PENDING, TigerBeetle pending Transfer 1111←3100)
+And no WALLET_CREDIT has been published
+When ops or a bank cancellation event triggers Phase-A reversal for businessRef="dep-tc08"
+Then TigerBeetle void_pending_transfer(hash("dep-tc08:phaseA")) is called
+And coa_trans.status becomes FAILED for businessRef="dep-tc08"
+And account[3100].balance = 0
+And account[1111] is restored to its pre-deposit value
+And wallet_balance.available is unchanged (no DEPOSIT_CREDIT wallet_tx for dep-tc08)
+And no WALLET_CREDIT command is published
+```
+
+### Scenario TC-DEP-09: Amount mismatch — Phase B fails validation, Phase A reversed, wallet untouched
+
+```gherkin
+Given a PENDING journal for businessRef="dep-tc09" with grossAmount=100000 (Phase A done)
+When confirmDeposit is called with fee=5000 but grossAmount does not equal net+fee (validation fails)
+Then no TigerBeetle Phase B transfers are created
+And void_pending_transfer(hash("dep-tc09:phaseA")) is called
+And coa_trans.status becomes FAILED
+And account[3100].balance = 0
+And no WALLET_CREDIT command is published
+And wallet_balance.available is unchanged
+```
+
+### Scenario TC-DEP-10: PENDING aging — ops alert triggered, no auto-reversal
+
+```gherkin
+Given a PENDING journal for businessRef="dep-tc10" with coa_trans.status=PENDING
+When the PENDING journal exceeds the SLA threshold without a confirmDeposit call
+Then an aging alert is raised to the ops channel
+And coa_trans.status remains PENDING (no auto-reversal)
+And account[3100] continues to hold the gross amount
+And wallet_balance.available is unchanged
+And ops must explicitly choose: call confirmDeposit (→ POSTED) or void (→ FAILED)
+```
+
 ---
 
 ## Feature: Wallet balance semantics (available / frozen / pending)

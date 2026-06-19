@@ -466,6 +466,39 @@ When the virtual account in the webhook is **not in orchestration's mapping tabl
 
 **VA mapping change after POSTED (immutability):** If a VA mapping is updated after a deposit has already been POSTED with the old mapping, the existing `coa_trans` lines and wallet credit are immutable (ADR-001, ADR-026). The mapping change affects only future deposits.
 
+### 13.1.3 Phase-A reversal and PENDING aging (US3)
+
+**Triggers for Phase-A reversal:**
+- Bank cancellation — bank reports the transfer is cancelled before confirmation
+- Amount mismatch — `confirmDeposit` called with gross/fee that fails Phase B balance validation
+- Ops manual void — ops voids an aging PENDING journal after SLA
+
+**Reversal sequence:**
+
+| Step | Actor | Action | Result |
+|------|-------|--------|--------|
+| 1 | Ops / cancel event | Signals reversal for `businessRef` | — |
+| 2 | `app-accounting-worker` | TigerBeetle: `void_pending_transfer(id=hash(businessRef+":phaseA"))` | 1111/3100 cleared — both nets = 0 |
+| 3 | `app-accounting-worker` | `coa_trans.status = FAILED` | Journal closed |
+| 4 | — | No `WALLET_CREDIT` published | Wallet untouched throughout |
+
+**Invariants after reversal:**
+- `account[3100].balance = 0` (INV-03 still satisfied)
+- `wallet_balance.available` unchanged — no `DEPOSIT_CREDIT` `wallet_tx` row for this `businessRef`
+- `coa_trans.status = FAILED` is terminal and immutable (ADR-001)
+
+**Amount-mismatch path:** `confirmDeposit(coaTransId, fee)` validates that `net + fee = grossFromPhaseA`. If this check fails, no TigerBeetle Phase B transfers are created; the worker proceeds to `void_pending_transfer` and marks the journal FAILED. The wallet never receives a `WALLET_CREDIT`.
+
+**PENDING aging (ADR-021):**
+
+| Condition | Detection | Ops action |
+|-----------|-----------|------------|
+| `coa_trans.status = PENDING` past SLA | Aging job polls `coa_trans` | Alert to ops channel |
+| Bank confirms late | Ops calls `confirmDeposit` | → Phase B + wallet credit (normal path) |
+| Bank cancels / no response | Ops calls void | → `void_pending_transfer` → FAILED |
+
+> **Rule:** Aging does NOT auto-reverse. Only ops chooses the terminal outcome (POSTED or FAILED). `timeout ≠ failure` — same principle as withdraw (§13.4).
+
 ### 13.2 Payment (sync, 3 commits)
 
 Steps: debit USER → post journal (3500→0) → credit MERCHANT. **Primary strategy = forward recovery** because after step 2 the ledger is already balanced.

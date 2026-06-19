@@ -188,11 +188,11 @@ cancelled deposits — no queue message means no wallet mutation.
 **Independent test**: Create PENDING deposit, cancel it, confirm 3100=0 and wallet balance unchanged
 (quickstart Q4).
 
-- [ ] T018 [US3] Finalize Phase-A reversal process in `spec/processes.md §13` — cancel/mismatch
+- [x] T018 [US3] Finalize Phase-A reversal process in `spec/processes.md §13` — cancel/mismatch
       clears 1111/3100 only via `void_pending_transfer` inside `app-accounting-worker`; wallet
       never touched because **no `WALLET_CREDIT` command is published** when Phase B fails; coa_trans
       → FAILED; POSTED journals are immutable (ADR-001)
-- [ ] T019 [P] [US3] Add Gherkin to `design-v2/acceptance.md`:
+- [x] T019 [P] [US3] Add Gherkin to `design-v2/acceptance.md`:
       - TC-DEP-08: cancel happy (Phase A reversed, 3100=0, wallet unchanged, no WALLET_CREDIT queued)
       - TC-DEP-09: mismatch-amount (Phase B fails validation, Phase A reversed, no wallet queue message)
       - TC-DEP-10: aging PENDING (PENDING journal not resolved triggers aging alert per ADR-021)
