@@ -411,6 +411,8 @@ components:
         - status
         - payer_available
         - completed_at
+        - wallet_tx_id
+        - coa_trans_id
       properties:
         business_ref:
           type: string
@@ -424,6 +426,14 @@ components:
         completed_at:
           type: string
           format: date-time
+        wallet_tx_id:
+          type: integer
+          format: int64
+          description: wallet_tx.id of the debit entry.
+        coa_trans_id:
+          type: integer
+          format: int64
+          description: coa_trans.id of the posted journal.
 
     TransferResponse:
       type: object

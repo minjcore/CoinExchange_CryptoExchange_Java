@@ -78,7 +78,7 @@ Hai channel async của platform:
 
 **Processing:**
 1. `createJournal(businessRef, DEPOSIT, grossAmount)` → Phase A
-2. Bank confirms → `postJournal(coaTransId, fee)` → Phase B
+2. Bank confirms → `confirmDeposit(coaTransId, fee)` → Phase B (domain method; HTTP operationId = `postJournal`)
 3. Phase B POSTED → publish `WALLET_CREDIT` command
 
 ---
@@ -217,8 +217,8 @@ app-orchestration outbox relay
   → RabbitMQ: BANK_DEPOSIT
 
 app-accounting-worker
-  createJournal(businessRef, DEPOSIT, grossAmount)   ← Phase A
-  postJournal(coaTransId, fee)                        ← Phase B
+  createJournal(businessRef, DEPOSIT, grossAmount)   ← Phase A (domain method)
+  confirmDeposit(coaTransId, fee)                     ← Phase B (domain method; HTTP operationId = postJournal)
   → Kafka: JournalPosted(coaTransId, POSTED)
   → RabbitMQ: WALLET_CREDIT
 
