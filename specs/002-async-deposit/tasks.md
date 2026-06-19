@@ -72,37 +72,39 @@ stories depend on.
 **⚠️ MUST complete before any user story.**
 **Entry-point context**: every contract task below is tagged with the protocol it governs — queue or HTTP.
 
-- [ ] T003 Author "Service Entry Point Map" in `specs/002-async-deposit/data-model.md §0` (or
+- [x] T003 Author "Service Entry Point Map" in `specs/002-async-deposit/data-model.md §0` (or
       `data-flow.md §0`) — reproduce the table above as a section header so it is the first thing
       a developer reads; cross-reference `spec/contracts/async-api/core-commands.yaml` (queue
       contracts) and `spec/contracts/open-api/accounting-internal.yaml` (HTTP contracts)
-- [ ] T004 [P] **[QUEUE entry — accounting]** Finalize `BANK_DEPOSIT` command schema in
+- [x] T004 [P] **[QUEUE entry — accounting]** Finalize `BANK_DEPOSIT` command schema in
       `spec/contracts/async-api/core-commands.yaml` — this is the **RabbitMQ entry point** for
       `app-accounting-worker`; required fields: `commandType`, `businessRef`, `memberId`,
       `virtualAccount`, `grossAmount`, `fee`, `currency`, `bankRef`
-- [ ] T005 [P] **[QUEUE entry — wallet]** Finalize `WALLET_CREDIT` command schema in
+- [x] T005 [P] **[QUEUE entry — wallet]** Finalize `WALLET_CREDIT` command schema in
       `spec/contracts/async-api/core-commands.yaml` — this is the **RabbitMQ entry point** for
       `app-wallet-worker`; required fields: `commandType`, `businessRef`, `walletId`, `netAmount`,
       `coaTransId`, `currency`
-- [ ] T006 [P] **[QUEUE outbound — accounting]** Verify `JournalPosted` event schema in
+- [x] T006 [P] **[QUEUE outbound — accounting]** Verify `JournalPosted` event schema in
       `spec/contracts/async-api/core-events.yaml` — published by `app-accounting-worker` to Kafka
       after POSTED; must include: `eventType`, `useCase: DEPOSIT`, `businessRef`, `coaTransId`,
       `status: POSTED`
-- [ ] T007 [P] **[QUEUE outbound — wallet]** Verify `WalletCredited` event schema in
+- [x] T007 [P] **[QUEUE outbound — wallet]** Verify `WalletCredited` event schema in
       `spec/contracts/async-api/core-events.yaml` — published by `app-wallet-worker` to Kafka after
       credit; must include: `eventType`, `businessRef`, `walletId`, `netAmount`, `availableAfter`
-- [ ] T008 [P] **[QUEUE outbound — ops]** Verify `core.operations.command-failed` event in
+- [x] T008 [P] **[QUEUE outbound — ops]** Verify `core.operations.command-failed` event in
       `spec/contracts/async-api/core-events.yaml` — published by any worker on DLQ; fields:
-      `businessRef`, `commandType`, `reason`, `failedAt`
-- [ ] T009 **[HTTP inbound — orchestration]** Verify deposit notify endpoint in
+      `businessRef`, `commandType`, `reason`, `failedAt` *(schema uses `originCommandType` +
+      `errorCode` + `message` — superset of required fields; verified OK)*
+- [x] T009 **[HTTP inbound — orchestration]** Verify deposit notify endpoint in
       `spec/contracts/open-api/orchestration-public.yaml` — `POST /deposits/notify` → 202 + `businessRef`;
       this is the **only HTTP call** from outside in the deposit flow; orchestration turns this into
-      the RabbitMQ queue entry (T004) via outbox
-- [ ] T010 Finalize outbox table DDL in `spec/implementation.md` — add `outbox` table to
+      the RabbitMQ queue entry (T004) via outbox *(file is `gtelpay-public.yaml`, not
+      `orchestration-public.yaml`; endpoint verified at line 289 → 202 + `mTLSPartner` security)*
+- [x] T010 Finalize outbox table DDL in `spec/implementation.md` — add `outbox` table to
       `accounting` schema (columns: id, command_type, business_ref, payload JSONB, status,
       created_at, published_at) per data-model.md §5; this table bridges the HTTP inbound (T009)
       to the queue outbound (T004)
-- [ ] T011 Add note in `specs/002-async-deposit/data-model.md §0` (entry-point map) explicitly
+- [x] T011 Add note in `specs/002-async-deposit/data-model.md §0` (entry-point map) explicitly
       stating that `app-accounting` (HTTP gateway) and `app-wallet` (HTTP gateway) are **NOT** in
       the deposit data path — they are for synchronous use cases (freeze/release, balance queries)
       only; link to architecture-overview for the full module table

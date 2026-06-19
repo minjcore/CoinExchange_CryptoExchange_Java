@@ -136,6 +136,50 @@ public class WalletCommandServiceImpl implements WalletCommandService {
                 existing.getId(), walletId, balance.getAvailable(), balance.getFrozen(), true);
     }
 
+    @Override
+    @Transactional
+    public WalletTxResult creditByWalletId(long walletId, String businessRef,
+                                            BigDecimal netAmount, String currency,
+                                            Long coaTransId, String useCase) {
+        BigDecimal amount = MoneyUtil.normalize(netAmount);
+        String ref = normalizeBusinessRef(businessRef);
+        WalletEntity wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new WalletException(ErrorCode.WALLET_NOT_FOUND, "wallet not found: " + walletId));
+        assertMutable(wallet);
+
+        var existing = walletTxRepository.findByWalletIdAndBusinessRefAndTxType(
+                walletId, ref, WalletTxType.DEPOSIT_CREDIT);
+        if (existing.isPresent()) {
+            return replayExisting(existing.get(), amount, walletId);
+        }
+
+        WalletBalanceEntity balance = walletBalanceRepository.findByWalletIdForUpdate(walletId)
+                .orElseThrow(() -> new WalletException(ErrorCode.WALLET_NOT_FOUND, "wallet balance missing"));
+
+        var lockedExisting = walletTxRepository.findByWalletIdAndBusinessRefAndTxType(
+                walletId, ref, WalletTxType.DEPOSIT_CREDIT);
+        if (lockedExisting.isPresent()) {
+            return replayExisting(lockedExisting.get(), amount, walletId);
+        }
+
+        WalletBalanceMutator.apply(balance, WalletTxType.DEPOSIT_CREDIT, amount);
+        walletBalanceRepository.save(balance);
+
+        WalletTxEntity tx = new WalletTxEntity();
+        tx.setWalletId(walletId);
+        tx.setTxType(WalletTxType.DEPOSIT_CREDIT);
+        tx.setDirection(WalletTxType.DEPOSIT_CREDIT.direction());
+        tx.setAmount(amount);
+        tx.setAvailableAfter(balance.getAvailable());
+        tx.setFrozenAfter(balance.getFrozen());
+        tx.setBusinessRef(ref);
+        tx.setCoaTransId(coaTransId);
+        tx.setUseCase(useCase);
+        WalletTxEntity saved = walletTxRepository.save(tx);
+
+        return new WalletTxResult(saved.getId(), walletId, balance.getAvailable(), balance.getFrozen(), false);
+    }
+
     private WalletEntity resolveWallet(long memberId, WalletType walletType, String currency) {
         String normalizedCurrency = normalizeCurrency(currency);
         return walletRepository.findByMemberIdAndWalletTypeAndCurrency(memberId, walletType, normalizedCurrency)

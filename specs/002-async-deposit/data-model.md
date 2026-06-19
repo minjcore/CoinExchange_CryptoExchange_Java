@@ -4,6 +4,22 @@
 
 ---
 
+## 0. Service Entry Point Map
+
+Which service handles what step in the deposit flow, and how is it called.
+
+| Service | Role | Entry protocol | Notes |
+|---------|------|----------------|-------|
+| `app-orchestration` | Receive bank webhook, validate, write outbox, return 202 | **HTTP** `POST /deposits/notify` | mTLS (ADR-022); outbox write is atomic with 202 response |
+| `app-accounting-worker` | Consume `BANK_DEPOSIT` → Phase A + Phase B via `core.accounting` → publish `WALLET_CREDIT` | **RabbitMQ** `core.commands.bank-deposit` | No HTTP; domain in-process |
+| `app-wallet-worker` | Consume `WALLET_CREDIT` → credit wallet via `core.wallet` → emit `WalletCredited` to Kafka | **RabbitMQ** `core.commands.wallet-credit` | No HTTP; domain in-process |
+| `app-accounting` | Sync HTTP gateway for `core.accounting` | HTTP | **NOT in deposit path** — sync use cases only (e.g. createJournal from payment) |
+| `app-wallet` | Sync HTTP gateway for `core.wallet` | HTTP | **NOT in deposit path** — sync use cases only (e.g. freeze, balance read) |
+
+> **Rule (ADR-038, ADR-041):** In the async deposit path, `app-orchestration` NEVER calls `app-accounting` or `app-wallet` via HTTP. All deposit mutations flow through RabbitMQ workers. HTTP gateways serve synchronous use cases only.
+
+---
+
 ## 1. Entities
 
 ### 1.1 `coa_trans` — Journal Header (PostgreSQL, `accounting` schema)

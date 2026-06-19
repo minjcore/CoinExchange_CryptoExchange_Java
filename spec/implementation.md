@@ -329,6 +329,27 @@ Insert **every** account used by the v1 flows in [`foundation.md`](./foundation.
 
 > v1 build phases P0–P6 exercise 1111, 2110, 2120, 3100, 3200, 3300, 3500, 4110, 4120, 4130. The remaining accounts are required once QR/POS, payroll, disbursement, and EOD settlement (flows: [`core.business-processes.md`](./core.business-processes.md) §8–§11; failure design §13) are implemented — seed them all up front so the ledger never rejects a valid posting.
 
+### 4.2 Outbox table (Flyway `V3__outbox.sql`)
+
+Written by `app-orchestration` in the **same transaction** as the 202 response. Relayed to RabbitMQ by the outbox relay job. Lives in `accounting` schema — orchestration holds one datasource that writes to both `wallet` and `accounting` schemas.
+
+```sql
+CREATE TABLE accounting.outbox (
+    id              BIGSERIAL PRIMARY KEY,
+    command_type    VARCHAR(32) NOT NULL,         -- BANK_DEPOSIT | WALLET_CREDIT
+    business_ref    VARCHAR(128) NOT NULL,
+    payload         JSONB NOT NULL,               -- full CommandEnvelope per core-commands.yaml
+    status          VARCHAR(16) NOT NULL DEFAULT 'PENDING',  -- PENDING → PUBLISHED → FAILED
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    published_at    TIMESTAMPTZ NULL,
+    CONSTRAINT uq_outbox_cmd_ref UNIQUE (command_type, business_ref)
+);
+CREATE INDEX idx_outbox_pending ON accounting.outbox (created_at)
+    WHERE status = 'PENDING';
+```
+
+**Idempotency:** `UNIQUE (command_type, business_ref)` — duplicate S1 call with same `businessRef` hits the constraint, transaction rolls back to savepoint, existing outbox row returned (202 replayed safely). Relay marks rows `PUBLISHED` after RabbitMQ `basicAck`.
+
 ---
 
 ## 5. `core.foundation` — implement first (P0)

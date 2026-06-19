@@ -204,8 +204,11 @@ components:
 
     JournalPosted:
       type: object
-      required: [coaTransId, businessRef, useCase, postedAt]
+      required: [eventType, coaTransId, businessRef, useCase, status, postedAt]
       properties:
+        eventType:
+          type: string
+          example: JournalPosted
         coaTransId:
           type: integer
           format: int64
@@ -214,22 +217,44 @@ components:
         useCase:
           type: string
           example: DEPOSIT
+        status:
+          type: string
+          example: POSTED
+        netAmount:
+          type: string
+          description: Net amount (grossAmount − fee), decimal string scale 4
+        currency:
+          type: string
+          example: VND
         postedAt:
           type: string
           format: date-time
 
     WalletCredited:
       type: object
-      required: [walletTxId, memberId, amount, businessRef]
+      required: [eventType, walletTxId, walletId, memberId, netAmount, businessRef]
       properties:
+        eventType:
+          type: string
+          example: WalletCredited
         walletTxId:
+          type: integer
+          format: int64
+        walletId:
           type: integer
           format: int64
         memberId:
           type: integer
           format: int64
-        amount:
+        netAmount:
           type: string
+          description: Net amount credited, decimal string scale 4
+        availableAfter:
+          type: string
+          description: wallet_balance.available snapshot after credit, decimal string scale 4
+        currency:
+          type: string
+          example: VND
         businessRef:
           type: string
 

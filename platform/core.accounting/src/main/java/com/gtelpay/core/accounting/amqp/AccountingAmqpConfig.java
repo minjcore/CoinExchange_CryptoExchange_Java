@@ -22,6 +22,7 @@ public class AccountingAmqpConfig {
     public static final String EXCHANGE = "core.commands";
     public static final String BANK_DEPOSIT_QUEUE = "accounting.bank-deposit";
     public static final String BANK_DEPOSIT_ROUTING_KEY = "core.commands.bank-deposit";
+    public static final String WALLET_CREDIT_ROUTING_KEY = "core.commands.wallet-credit";
 
     @Bean
     public TopicExchange coreCommandsExchange() {

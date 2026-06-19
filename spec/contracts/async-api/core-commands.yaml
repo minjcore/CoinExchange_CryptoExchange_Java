@@ -103,9 +103,12 @@ components:
             source: orchestration
             schemaVersion: "1.0"
             payload:
-              amount: "500000.0000"
-              vaNumber: "9704188888888"
-              bankCode: "VCB"
+              grossAmount: "500000.0000"
+              fee: "0.0000"
+              currency: "VND"
+              virtualAccount: "9704188888888"
+              bankRef: "VCB20260605001"
+              walletId: 100234
               receivedAt: "2026-06-05T10:15:28Z"
 
     WalletCreditCommand:
@@ -191,14 +194,27 @@ components:
     BankDepositPayload:
       type: object
       description: Same semantics as OpenAPI DepositNotifyRequest / Kafka BankDepositReceived.
-      required: [amount, vaNumber, bankCode, receivedAt]
+      required: [grossAmount, fee, currency, virtualAccount, bankRef, walletId, receivedAt]
       properties:
-        amount:
+        grossAmount:
           type: string
-        vaNumber:
+          description: Gross amount from bank, decimal string scale 4 (ADR-028). e.g. "500000.0000"
+        fee:
           type: string
-        bankCode:
+          description: Fee computed by orchestration, decimal string scale 4. "0.0000" if no fee.
+        currency:
           type: string
+          example: VND
+        virtualAccount:
+          type: string
+          description: Raw VA from bank notification; used for VA→memberId lookup
+        bankRef:
+          type: string
+          description: Bank's own transaction reference
+        walletId:
+          type: integer
+          format: int64
+          description: Pocket wallet PK resolved by orchestration (VA → memberId → wallet)
         receivedAt:
           type: string
           format: date-time
@@ -206,18 +222,22 @@ components:
     WalletCreditPayload:
       type: object
       description: Wallet credit command body (canonical home — commands live on RabbitMQ; Kafka only emits the WalletCredited event).
-      required: [walletType, currency, amount]
+      required: [walletId, netAmount, currency, coaTransId]
       properties:
-        walletType:
+        walletId:
+          type: integer
+          format: int64
+          description: Pocket wallet PK (passed through from BankDepositCommand)
+        netAmount:
           type: string
-          enum: [USER, MERCHANT, PARTNER]
+          description: grossAmount − fee, decimal string scale 4
         currency:
           type: string
-        amount:
-          type: string
+          example: VND
         coaTransId:
           type: integer
           format: int64
+          description: Correlation to coa_trans.id; stored in wallet_tx.coa_trans_id (no FK constraint)
         txType:
           type: string
           description: WalletTxType enum name (IMPLEMENTATION.md §2.1)
