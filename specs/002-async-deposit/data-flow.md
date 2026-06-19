@@ -55,7 +55,7 @@
 │  │  Publish WALLET_CREDIT command ─────────────────────────────────┐               │
 │  └──────────────────────────────────────────────────┘             │               │
 │                                                                    │               │
-│       │ (optional) Kafka: core.accounting.journal-posted           │               │
+│       │ (optional) Kafka: core.events.journal-posted               │               │
 │       │ { eventType: JournalPosted, useCase: DEPOSIT, ... }        │               │
 │       ▼                                                            │               │
 │  downstream consumers (reporting, audit — async)                   │               │

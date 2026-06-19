@@ -29,7 +29,7 @@ GtelPay Core is split into exactly **two domains** that never share a schema, ne
 
 ```
 core/
-  core.foundation/          — shared value objects (Money, Currency, BusinessRef, IdempotencyKey)
+  core.shared/          — shared value objects (Money, Currency, BusinessRef, IdempotencyKey)
   core.wallet/              — wallet domain (WalletService, WalletTxRepository)
   core.accounting/          — accounting domain (LedgerService, TigerBeetleGateway, JournalRepository)
 app/

@@ -37,7 +37,7 @@ the ledger?") are distinct bounded contexts and MUST stay isolated.
 - No cross-import, **no cross-schema JOIN, no cross-schema FK** — `wallet_tx.coa_trans_id` is
   correlation only. (ADR-003)
 - Domains MUST NOT call each other; all cross-domain sequencing goes through orchestration. (ADR-012, ADR-026)
-- Only `core.foundation` is shared — no second "common" module holding entities. (ADR-002)
+- Only `core.shared` is shared — no second "common" module holding entities. (ADR-002)
 - Aggregate liability lives **only** in accounting (COA 2110/2120/2130); wallet holds per-member
   slices. (ADR-020, ADR-039)
 

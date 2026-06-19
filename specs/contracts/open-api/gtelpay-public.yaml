@@ -111,14 +111,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaymentResponse'
-        '422':
-          description: Insufficient balance
+        '404':
+          description: WALLET_NOT_FOUND — payer or payee wallet not provisioned
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Insufficient balance
           content:
             application/json:
               schema:
@@ -149,6 +155,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransferResponse'
+        '404':
+          description: WALLET_NOT_FOUND — sender or receiver wallet not provisioned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Insufficient balance
           content:
@@ -181,6 +199,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WithdrawalResponse'
+        '404':
+          description: WALLET_NOT_FOUND — wallet not provisioned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Insufficient balance or wallet LOCKED
           content:
@@ -381,6 +411,7 @@ components:
           enum: [COMPLETED]
         payer_available:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           description: Payer balance after debit. Decimal string scale 4.
         completed_at:
           type: string
@@ -396,6 +427,7 @@ components:
           enum: [COMPLETED]
         sender_available:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           description: Sender balance after debit.
         completed_at:
           type: string
@@ -412,6 +444,7 @@ components:
           description: Payout is in progress — not yet completed.
         frozen_amount:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           description: Amount moved to frozen pending payout.
         accepted_at:
           type: string
@@ -449,11 +482,15 @@ components:
       properties:
         error_code:
           type: string
-          description: |
-            Platform error codes:
-            WALLET_INSUFFICIENT_BALANCE, WALLET_NOT_FOUND, WALLET_LOCKED,
-            WALLET_DUPLICATE_CONFLICT, IDEMPOTENCY_CONFLICT,
-            VIRTUAL_ACCOUNT_NOT_FOUND, CURRENCY_NOT_SUPPORTED
+          enum:
+            - WALLET_INSUFFICIENT_BALANCE
+            - WALLET_NOT_FOUND
+            - WALLET_LOCKED
+            - WALLET_DUPLICATE_CONFLICT
+            - IDEMPOTENCY_CONFLICT
+            - VIRTUAL_ACCOUNT_NOT_FOUND
+            - CURRENCY_NOT_SUPPORTED
+          description: Platform error code.
         message:
           type: string
           description: Human-readable error. Do not parse programmatically.

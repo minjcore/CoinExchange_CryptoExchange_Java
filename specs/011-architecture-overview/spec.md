@@ -69,7 +69,7 @@ A technical architect or senior engineer can check any proposed design change ag
 ### Functional Requirements
 
 - **FR-001**: Document MUST describe the two-domain separation — `core.wallet` vs `core.accounting` — including what question each domain answers, which tables it owns, and which schema it uses.
-- **FR-002**: Document MUST show the full module layout (`core.foundation`, `core.wallet`, `core.accounting`, `app-orchestration`, `app-wallet`, `app-accounting`, `app-wallet-worker`) with allowed and forbidden dependency edges.
+- **FR-002**: Document MUST show the full module layout (`core.shared`, `core.wallet`, `core.accounting`, `app-orchestration`, `app-wallet`, `app-accounting`, `app-wallet-worker`) with allowed and forbidden dependency edges.
 - **FR-003**: Document MUST explain TigerBeetle as the accounting hot-posting backing store — core concepts (Account, Transfer, pending/post/void), why it is preferred over pure PostgreSQL for postings, and the ADR-037 hybrid layout.
 - **FR-004**: Document MUST explain the Blnk PoC — what Blnk is, which two patterns are adapted (`WalletBalanceMonitor`, `getBalanceAt`), scope limits (no Blnk binary, not production path, not a replacement for `core.wallet`).
 - **FR-005**: Document MUST define the internal integration interface boundaries — inbound commands (`BANK_DEPOSIT`, `WALLET_CREDIT`), outbound events (`JournalPostedEvent`, `WalletCreditedEvent`, `CommandFailedEvent`), and HTTP surfaces (`WalletGateway`, `LedgerGateway`). Bank/NAPAS external interfaces are out of scope.

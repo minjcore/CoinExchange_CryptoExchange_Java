@@ -289,8 +289,8 @@ components:
           type: string
           description: |
             Mutation purpose. Used in idempotency key: (walletId, business_ref, tx_type).
-            Credit values:  DEPOSIT_CREDIT, TRANSFER_IN.
-            Debit values:   PAYMENT_DEBIT, TRANSFER_OUT.
+            Credit values:  DEPOSIT_CREDIT, TRANSFER_CREDIT, PAYMENT_CREDIT.
+            Debit values:   PAYMENT_DEBIT, TRANSFER_DEBIT.
           example: DEPOSIT_CREDIT
         coa_trans_id:
           type: integer
@@ -324,10 +324,12 @@ components:
           description: wallet_tx.id (BIGINT PK).
         available:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           description: Balance after mutation.
           example: "99000.0000"
         frozen:
           type: string
+          pattern: '^[0-9]+\.[0-9]{4}$'
           example: "0.0000"
         currency:
           type: string

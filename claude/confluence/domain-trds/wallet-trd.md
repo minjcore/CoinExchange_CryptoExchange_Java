@@ -65,7 +65,7 @@ Application (orchestration)
 | `tx_type` | ENUM | |
 | `direction` | ENUM | CREDIT, DEBIT, FREEZE, UNFREEZE |
 | `amount` | DECIMAL(19,4) | Always positive |
-| `business_ref` | VARCHAR(128) | Idempotency key |
+| `business_ref` | VARCHAR(64) | Idempotency key |
 | `coa_trans_id` | BIGINT | Correlation only, no FK |
 
 **Idempotency uniqueness:** `(wallet_id, business_ref, tx_type)`

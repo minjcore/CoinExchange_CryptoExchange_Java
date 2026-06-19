@@ -63,10 +63,10 @@ paths:
                 message: Same reference_id with different use_case
                 business_ref: dep-20260618-abc123
 
-  /journals/{coaTransId}/confirm:
+  /journals/{coaTransId}/post:
     post:
-      operationId: confirmDeposit
-      summary: Phase B — post pending transfer and split fee
+      operationId: postJournal
+      summary: Phase B — post pending journal and split fee
       description: |
         Three TigerBeetle operations in sequence:
           1. post_pending(pendingTransferId)             — full gross amount
@@ -90,7 +90,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfirmDepositRequest'
+              $ref: '#/components/schemas/PostJournalRequest'
             example:
               fee: "1000.0000"
       responses:
@@ -204,7 +204,7 @@ components:
           description: Decimal string, scale 4. TB wire = VND × 10⁴ as u128.
           example: "100000.0000"
 
-    ConfirmDepositRequest:
+    PostJournalRequest:
       type: object
       required:
         - fee

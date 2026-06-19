@@ -39,7 +39,7 @@ backward-compatibility properties; it does not duplicate the YAML.
 | Move same pocket | 409 | `WALLET_INVALID_TRANSFER` |
 | Pocket LOCKED/CLOSED | 403/409 | `WALLET_LOCKED` |
 
-> `WALLET_POCKET_*` codes are new — follow-up to register them in `core.foundation` ErrorCode and
+> `WALLET_POCKET_*` codes are new — follow-up to register them in `core.shared` ErrorCode and
 > `spec/contracts/async-api/core-events.yaml` (tracked in tasks, not blocking the contract).
 
 ## Conformance link

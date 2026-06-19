@@ -132,6 +132,8 @@ components:
         - coaTransId
         - useCase
         - grossAmount
+        - fee
+        - netAmount
         - currency
       properties:
         eventType:
