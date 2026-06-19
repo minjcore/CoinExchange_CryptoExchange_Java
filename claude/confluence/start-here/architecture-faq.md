@@ -161,7 +161,7 @@ u128 integers. VND × 10⁴. Wire: decimal string `"100000.0000"`. Never `double
 
 ## 8. Q&A: Constitution & ADRs
 
-**7 Constitution Principles (brief):**
+**8 Constitution Principles (brief):**
 
 | # | Principle | Core rule | ADR |
 |---|-----------|-----------|-----|
