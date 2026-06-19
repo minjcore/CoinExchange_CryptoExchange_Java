@@ -117,7 +117,7 @@ Member   Bank        Gateway/BFF       Worker(S6)     core.accounting   core.wal
 - Phase A (PENDING): wallet **unchanged** — funds still in transit 3100.
 - Phase B (POSTED): accounting worker (`app-accounting-worker`) publishes `WALLET_CREDIT` to RabbitMQ exchange `core.commands` (routing key `core.commands.wallet-credit`). `app-wallet-worker` consumes and calls `creditByWalletId(walletId, businessRef, 99000, currency, coaTransId)` → `wallet_tx` with `tx_type = DEPOSIT_CREDIT` (direction `CREDIT`). The wallet **does not** compute fees; it credits exactly `netAmount = gross − fee` received in the command.
 
-> **Rule (ADR-041, ADR-038):** Orchestration does **not** call `app-wallet` via HTTP for deposit. The wallet credit is triggered by a RabbitMQ command, not a synchronous HTTP call.
+> **Rule (ADR-041, ADR-038) — async bank deposit only:** Orchestration does **not** call `app-wallet` via HTTP for this flow. The wallet credit is triggered by a RabbitMQ command from `app-accounting-worker`, not a synchronous HTTP call. Other use cases (e.g., instant sync top-up) may use the S2 HTTP surface directly.
 
 ### 3.4 Rules & error handling ([`foundation.md`](./foundation.md) §8.5, [`trd/wallet.md`](./trd/wallet.md) §8)
 

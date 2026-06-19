@@ -258,7 +258,7 @@ Orchestration owns **step order, fees, auth, saga recovery, and wire mapping**. 
 | S4 | `app-accounting-worker` | Publish **`WALLET_CREDIT`** to `core.commands.wallet-credit` (S6 RabbitMQ); optional `JournalPosted` to Kafka | Relay retry |
 | S5 | `app-wallet-worker` | `DEPOSIT_CREDIT` net — `creditByWalletId(walletId, businessRef, netAmount)` | Idempotent retry |
 
-> **`app-orchestration` NEVER calls `app-accounting` or `app-wallet` via HTTP in the deposit flow.** S0 writes only to the outbox; S1–S5 are worker-owned commits.
+> **`app-orchestration` does NOT call `app-accounting` or `app-wallet` via HTTP in the async bank deposit flow.** S0 writes only to the outbox; S1–S5 are worker-owned commits. Synchronous use cases (e.g., instant top-up) may use the S2 HTTP surface — that is a separate flow.
 
 ### 11.3 Fee computation (orchestration)
 
@@ -293,7 +293,7 @@ Single computed `fee` used for both S2 lines and S5 amount.
 - Credit wallet before S3 `POSTED`
 - Second S1 enqueue with new `messageId` but same `businessRef` causing duplicate PENDING (accounting idempotency must block)
 - Edit fee after S3 without new journal
-- **HTTP call from `app-orchestration` to `app-accounting` or `app-wallet` for deposit** — orchestration owns only S0 (outbox write); S1–S5 are worker commits via RabbitMQ, never sync HTTP (ADR-038, ADR-041)
+- **HTTP call from `app-orchestration` to `app-accounting` or `app-wallet` for async bank deposit** — orchestration owns only S0 (outbox write); S1–S5 are worker commits via RabbitMQ, not sync HTTP (ADR-038, ADR-041). Note: synchronous top-up flows in other use cases may use the S2 HTTP surface; this restriction applies to the async bank deposit flow only.
 
 ---
 
