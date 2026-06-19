@@ -8,7 +8,7 @@
 ## Scope
 
 Two parts:
-1. **core.shared** — shared base layer (pure Java, no domain logic)
+1. **core.foundation** — shared base layer (pure Java, no domain logic)
 2. **core.accounting** — COA, fund flow use cases, DR/CR postings
 
 ---
@@ -26,7 +26,7 @@ core.wallet  core.accounting
       │
       └──────────┐
                  ▼
-          core.shared
+          core.foundation
                  │
                  ▼
                Java
@@ -34,7 +34,7 @@ core.wallet  core.accounting
 
 ---
 
-## core.shared Scope
+## core.foundation Scope
 
 **In:** `PageRequest`, `PageResult`, `ApiResponse`, `ErrorCode`, `BaseException`, pure util (id, time, hash)
 

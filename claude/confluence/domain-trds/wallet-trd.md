@@ -25,7 +25,7 @@ Application (orchestration)
  wallet, wallet_balance, wallet_tx
       │
       ▼
- core.shared (shared primitives only)
+ core.foundation (shared primitives only)
 ```
 
 **Rules:**
@@ -114,7 +114,7 @@ public record WalletTxResult(
 ) {}
 ```
 
-**Dependencies:** `core.shared` only (`BigDecimal`, `WalletTxType`, `WalletType`). Zero framework imports.
+**Dependencies:** `core.foundation` only (`BigDecimal`, `WalletTxType`, `WalletType`). Zero framework imports.
 
 ---
 

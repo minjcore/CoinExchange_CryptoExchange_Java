@@ -11,7 +11,7 @@
 
 | Module | Type | Owns | Does NOT own |
 |--------|------|------|--------------|
-| `core.shared` | Shared library | `Money`, `Currency`, `BusinessRef`, `IdempotencyKey` | Any domain logic, any entity |
+| `core.foundation` | Shared library | `Money`, `Currency`, `BusinessRef`, `IdempotencyKey` | Any domain logic, any entity |
 | `core.wallet` | Domain | `wallet_balance`, `wallet_tx`, `WalletService` | Journal entries, TigerBeetle client, fee computation |
 | `core.accounting` | Domain | `coa_trans`, `coa_trans_data`, `LedgerService`, `TigerBeetleGateway` | Wallet balance, `wallet_tx`, member identity |
 | `app-orchestration` | Saga orchestrator | Use-case flows, outbox writes, fee computation, VA→memberId | Never writes `coa_*` or `wallet_*` directly |
@@ -43,7 +43,7 @@
 | New wallet tx type | `core.wallet`, `app-wallet-worker` (async) or `app-wallet` (sync) | async = queue cmd; sync = HTTP endpoint |
 | New journal use case | `core.accounting`, `app-accounting-worker` or `app-accounting` | same pattern |
 | New saga flow (UC-X) | `app-orchestration`, workers | outbox → queue |
-| Add shared value object | `core.shared` only | Java library import |
+| Add shared value object | `core.foundation` only | Java library import |
 | New fee rule | `app-orchestration` only | never in workers/domain |
 
 ---
@@ -135,4 +135,4 @@ u128 integers. VND × 10⁴. Wire: decimal string `"100000.0000"`. Never `double
 | UPDATE POSTED `coa_trans_data` | POSTED immutable — Principle II | New reversing journal |
 | `double`/`float` for money | Floating-point rounding — Principle VI | BigDecimal scale 4 HALF_UP |
 | Call app-wallet-worker HTTP from orchestration | Workers are queue consumers — Principle V | Publish WALLET_CREDIT to RabbitMQ |
-| Cross-domain import: `import core.accounting.*` in `core.wallet` | Domain-to-domain import — Principle I | Only core.shared is shared |
+| Cross-domain import: `import core.accounting.*` in `core.wallet` | Domain-to-domain import — Principle I | Only core.foundation is shared |

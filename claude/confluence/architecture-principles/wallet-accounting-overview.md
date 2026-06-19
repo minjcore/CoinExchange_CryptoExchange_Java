@@ -30,7 +30,7 @@ External ──s1-http-public──► Gateway ──s1-http-public──► Orc
 |------|-----------|---------|
 | Public edge | API Gateway, bank webhook | Route vào orchestration qua s1-http-public |
 | Application | `app-orchestration` | Điều phối flow, fee computation, outbox, auth |
-| Domain cores | `core.wallet`, `core.accounting`, `core.shared` | Business capability, không cross-import |
+| Domain cores | `core.wallet`, `core.accounting`, `core.foundation` | Business capability, không cross-import |
 | Async infra | s6-rabbitmq-cmds, s3-kafka-events, workers | Command handling, event fan-out |
 | Storage | PostgreSQL schemas `wallet` + `accounting` | Tách schema, cùng DB v1 |
 

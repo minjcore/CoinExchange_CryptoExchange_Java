@@ -47,7 +47,7 @@
 
 ## Foundation Library Scope
 
-`core.shared` — shared pure-Java primitives only:
+`core.foundation` — shared pure-Java primitives only:
 - `ApiResponse`, `ErrorCode`, `PageRequest`, `PageResult`, `MoneyUtil`
 - **Must NOT contain** domain entities, domain commands, or cross-domain abstractions
 
@@ -98,4 +98,4 @@ Mỗi domain module (`core.wallet`, `core.accounting`) tuân theo hexagonal arch
 | `core.accounting` service call from wallet | Principle I | Route through orchestration |
 | SQL JOIN `wallet_tx` ↔ `coa_trans` | Cross-schema | Two queries, correlate by `businessRef` in app layer |
 | FK from `wallet_tx` to `coa_trans` | Cross-schema FK | `coa_trans_id` column = BigInt, no FK constraint |
-| Shared domain DTOs in `core.shared` | Domain leak | Each domain owns its own entities |
+| Shared domain DTOs in `core.foundation` | Domain leak | Each domain owns its own entities |
