@@ -42,6 +42,22 @@ core/
 
 ---
 
+## Orchestration Layer: Vert.x vs Spring WebFlux
+
+`app-orchestration` là inbound layer — nhận bank webhook, resolve VA, tính fee, publish RabbitMQ. Hai lựa chọn reactive:
+
+| | Vert.x | Spring WebFlux |
+|---|---|---|
+| **Model** | Event loop, actor-style | Project Reactor (Flux/Mono) |
+| **Throughput** | Cao hơn ở extreme load (native event bus) | Tốt, nhưng thêm overhead reactor pipeline |
+| **Spring integration** | Manual wiring | Native — cùng stack với app-wallet / app-accounting |
+| **Learning curve** | Khác paradigm so với Spring Boot | Đồng nhất với toàn bộ codebase |
+| **Winpay precedent** | `lop81` dùng Vert.x, proven tại 40k txn/day | — |
+
+**Locked:** Vert.x — vì `lop81` đã proven tại production (40k txn/day, 2M total transactions), và layer này đã có sẵn trong GtelPay stack.
+
+---
+
 ## Wallet Transaction Idempotency
 
 Key: `UNIQUE(wallet_id, business_ref, tx_type)`
