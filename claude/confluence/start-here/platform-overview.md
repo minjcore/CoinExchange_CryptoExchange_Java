@@ -184,13 +184,15 @@ This is the most complex flow — all others (payment, transfer, withdraw) are s
 
 Key property: step 2 (202 back to bank) happens **before** steps 3–7. The bank gets its ack fast; ledger and wallet update async.
 
-**Retry-safe at every step — return existing immediately:**
+**Retry-safe at every step — return existing immediately with IDs:**
 
 | Step | Retried with same data | Response |
 |------|----------------------|---------|
-| Step 1 re-sent (bank retry) | Same `X-Idempotency-Key` → outbox already exists | **202** immediately, no new outbox row |
-| Step 4 re-delivered (RabbitMQ redeliver) | Same `(reference_id, use_case)` → `coa_trans` exists | Skip Phase A, `confirmDeposit` is no-op if POSTED |
-| Step 6 re-delivered | Same `(wallet_id, business_ref, tx_type)` → `wallet_tx` exists | `idempotentReplay=true`, balance unchanged |
+| Step 1 re-sent (bank retry) | Same `X-Idempotency-Key` → outbox already exists | **202** + same `businessRef` immediately, no new outbox row |
+| Step 4 re-delivered (RabbitMQ redeliver) | Same `(reference_id, use_case)` → `coa_trans` exists | Return existing **`coaTransId`**, skip Phase A/B |
+| Step 6 re-delivered | Same `(wallet_id, business_ref, tx_type)` → `wallet_tx` exists | Return existing **`walletTxId`**, `idempotentReplay=true`, balance unchanged |
+
+> **Rule:** Replay response MUST include the existing transaction IDs (`coaTransId`, `walletTxId`) — not just a status flag. Caller uses these IDs to confirm the transaction completed and to correlate with downstream systems.
 
 Any step can be retried with original data — the chain self-heals without double-effect. (ADR-005, ADR-013, ADR-021)
 
