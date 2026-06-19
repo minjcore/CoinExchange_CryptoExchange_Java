@@ -191,6 +191,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: WALLET_DUPLICATE_CONFLICT (same business_ref, different amount)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: WALLET_INSUFFICIENT_BALANCE or WALLET_LOCKED
           content:
@@ -228,6 +234,12 @@ paths:
                 $ref: '#/components/schemas/WalletTxResult'
         '404':
           description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: WALLET_DUPLICATE_CONFLICT (same business_ref, different amount)
           content:
             application/json:
               schema:
@@ -394,6 +406,8 @@ components:
       type: object
       required:
         - wallet_id
+        - member_id
+        - wallet_type
         - available
         - frozen
         - currency
@@ -401,6 +415,12 @@ components:
         wallet_id:
           type: integer
           format: int64
+        member_id:
+          type: integer
+          format: int64
+        wallet_type:
+          type: string
+          enum: [USER, MERCHANT, PARTNER]
         available:
           type: string
           pattern: '^[0-9]+\.[0-9]{4}$'

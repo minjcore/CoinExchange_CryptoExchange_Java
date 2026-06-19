@@ -108,6 +108,7 @@ public record WalletTxResult(
     long walletTxId,
     BigDecimal available,
     BigDecimal frozen,
+    String currency,
     boolean idempotentReplay  // true nếu businessRef đã tồn tại
 ) {}
 ```

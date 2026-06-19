@@ -73,7 +73,7 @@ public record CreateJournalCommand(
 ```
 
 **Rules:**
-- `confirmDeposit` nhận `fee` riêng — net = grossAmount - fee tính tại đây, không tại orchestration
+- `confirmDeposit` nhận `fee` riêng (được tính bởi orchestration, truyền vào qua BANK_DEPOSIT command) — phép tính `net = grossAmount − fee` thực hiện bên trong `confirmDeposit`
 - `createJournal` idempotent: `UNIQUE(businessRef, useCase)` → duplicate trả về existing PENDING
 - Dependencies: `core.shared` only. Zero framework imports.
 
@@ -171,7 +171,7 @@ public interface CoaTransDataRepository {
     // Read-model lines for a journal (reporting / reconciliation)
     List<CoaTransData> findByCoaTransId(long coaTransId);
 
-    // Append-only — Phase B writes DR/CR lines
+    // Append-only — populated after TB Transfer committed (read-model projection, not hot write path)
     CoaTransData save(CoaTransData line);
 }
 ```

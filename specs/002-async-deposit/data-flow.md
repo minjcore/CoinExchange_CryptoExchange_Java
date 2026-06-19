@@ -14,7 +14,7 @@
 │       │                                                                             │
 │       │  POST /deposits/notify                                                      │
 │       │  X-Idempotency-Key: {businessRef}                                           │
-│       │  { virtualAccount, grossAmount, currency, bankRef, notifiedAt }             │
+│       │  { virtual_account, gross_amount, currency, bank_ref, notified_at }          │
 │       ▼                                                                             │
 │  ┌──────────────────────────────────────────────────┐                              │
 │  │              app-orchestration                   │                              │
@@ -30,7 +30,7 @@
 │       │  RabbitMQ: exchange=core.commands                                           │
 │       │  queue=core.commands.bank-deposit                                           │
 │       │  { commandType: BANK_DEPOSIT, businessRef, memberId,                        │
-│       │    grossAmount, fee, currency }                                             │
+│       │    virtualAccount, grossAmount, fee, currency, bankRef }                   │
 │       ▼                                                                             │
 │  ┌──────────────────────────────────────────────────┐                              │
 │  │           accounting worker                      │                              │

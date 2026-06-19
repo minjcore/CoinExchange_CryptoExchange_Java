@@ -84,5 +84,5 @@ Mọi message trên s6-rabbitmq-cmds dùng chung envelope:
 | F1 | Partner / Gateway must not call s2-http-internal directly or write to `coa_*` / `wallet_*` |
 | F2 | `core.wallet` must not import `core.accounting` |
 | F3 | `core.accounting` must not mutate `wallet_balance` |
-| F4 | Kafka payload field names must match OpenAPI field names for the same command |
+| F4 | Async surface (RabbitMQ commands + Kafka events) uses camelCase throughout. HTTP surface (OpenAPI) uses snake_case throughout. Do not mix conventions within the same surface. |
 | F5 | Do not UPDATE finalized `wallet_tx` or `coa_trans_data` — compensate with new entry |
