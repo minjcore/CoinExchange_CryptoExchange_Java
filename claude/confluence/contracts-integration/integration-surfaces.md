@@ -46,7 +46,8 @@ Mọi message trên s6-rabbitmq-cmds dùng chung envelope:
     "grossAmount": "100000.0000",
     "fee": "1000.0000",
     "currency": "VND",
-    "virtualAccount": "VA-001"
+    "virtualAccount": "VA-001",
+    "bankRef": "BNK-REF-20260618-001"
   }
 }
 ```

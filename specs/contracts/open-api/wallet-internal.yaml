@@ -47,6 +47,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WalletResponse'
+        '422':
+          description: Validation error — invalid member_id, wallet_type, or currency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /wallets/{walletId}/credit:
     post:
@@ -179,6 +185,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WalletTxResult'
+        '404':
+          description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: WALLET_INSUFFICIENT_BALANCE or WALLET_LOCKED
           content:
@@ -214,6 +226,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WalletTxResult'
+        '404':
+          description: WALLET_NOT_FOUND
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: Insufficient frozen amount
           content:
@@ -320,6 +338,12 @@ components:
 
     WalletTxResult:
       type: object
+      required:
+        - wallet_tx_id
+        - available
+        - frozen
+        - currency
+        - idempotent_replay
       properties:
         wallet_tx_id:
           type: integer
@@ -343,6 +367,12 @@ components:
 
     WalletResponse:
       type: object
+      required:
+        - wallet_id
+        - member_id
+        - wallet_type
+        - currency
+        - status
       properties:
         wallet_id:
           type: integer
@@ -362,6 +392,11 @@ components:
 
     BalanceResponse:
       type: object
+      required:
+        - wallet_id
+        - available
+        - frozen
+        - currency
       properties:
         wallet_id:
           type: integer

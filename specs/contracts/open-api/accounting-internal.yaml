@@ -220,6 +220,15 @@ components:
 
     JournalResponse:
       type: object
+      required:
+        - coa_trans_id
+        - reference_id
+        - use_case
+        - status
+        - gross_amount
+        - currency
+        - created_at
+        - updated_at
       properties:
         coa_trans_id:
           type: integer

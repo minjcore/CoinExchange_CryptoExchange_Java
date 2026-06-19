@@ -40,7 +40,7 @@ channels:
       message:
         $ref: '#/components/messages/WalletCreditedEvent'
 
-  core.operations.command-failed:
+  core.events.command-failed:
     description: |
       Emitted when a worker command fails after max retries.
       Producer: app-accounting-worker or app-wallet-worker.
@@ -203,7 +203,7 @@ components:
           enum: [CommandFailed]
         commandType:
           type: string
-          description: "BANK_DEPOSIT | WALLET_CREDIT"
+          description: "BANK_DEPOSIT | WALLET_CREDIT | WITHDRAW_PAYOUT"
         reason:
           type: string
           description: Error message / code for ops triage.

@@ -189,7 +189,7 @@ Hai channel async của platform:
 
 ### CommandFailed
 
-**Channel:** `core.operations.command-failed`
+**Channel:** `core.events.command-failed`
 **Emitted when:** Worker command fails sau max retries
 
 ```json

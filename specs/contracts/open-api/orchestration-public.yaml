@@ -391,6 +391,9 @@ components:
 
     AcceptedResponse:
       type: object
+      required:
+        - business_ref
+        - status
       properties:
         business_ref:
           type: string
@@ -403,6 +406,11 @@ components:
 
     PaymentResponse:
       type: object
+      required:
+        - business_ref
+        - status
+        - payer_available
+        - completed_at
       properties:
         business_ref:
           type: string
@@ -419,6 +427,11 @@ components:
 
     TransferResponse:
       type: object
+      required:
+        - business_ref
+        - status
+        - sender_available
+        - completed_at
       properties:
         business_ref:
           type: string
@@ -435,6 +448,11 @@ components:
 
     WithdrawalResponse:
       type: object
+      required:
+        - business_ref
+        - status
+        - frozen_amount
+        - accepted_at
       properties:
         business_ref:
           type: string
@@ -452,6 +470,13 @@ components:
 
     BalanceResponse:
       type: object
+      required:
+        - wallet_id
+        - member_id
+        - available
+        - frozen
+        - currency
+        - wallet_type
       properties:
         wallet_id:
           type: integer

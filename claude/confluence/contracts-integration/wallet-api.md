@@ -112,7 +112,7 @@ POST /wallets
   "wallet_type": "USER",
   "currency": "VND"
 }
-→ { "wallet_id": 5001, "status": "ACTIVE" }
+→ { "wallet_id": 5001, "member_id": 1001, "wallet_type": "USER", "currency": "VND", "status": "ACTIVE" }
 ```
 
 ---

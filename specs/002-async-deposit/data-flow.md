@@ -13,7 +13,8 @@
 │  [Deposit notification]                                                             │
 │       │                                                                             │
 │       │  POST /deposits/notify                                                      │
-│       │  { virtualAccount, grossAmount, businessRef }                               │
+│       │  X-Idempotency-Key: {businessRef}                                           │
+│       │  { virtualAccount, grossAmount, currency, bankRef, notifiedAt }             │
 │       ▼                                                                             │
 │  ┌──────────────────────────────────────────────────┐                              │
 │  │              app-orchestration                   │                              │
