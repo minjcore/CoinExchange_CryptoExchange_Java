@@ -32,4 +32,10 @@ public interface LedgerGateway {
     PostJournalResult confirmWithdraw(long coaTransId, BigDecimal principal, BigDecimal fee);
 
     void voidWithdraw(long coaTransId);
+
+    JournalHeader createPendingIbft(String businessRef, BigDecimal gross, String currency);
+
+    PostJournalResult confirmIbft(long coaTransId, BigDecimal principal, BigDecimal platformFee, BigDecimal napasCost);
+
+    void voidIbft(long coaTransId);
 }

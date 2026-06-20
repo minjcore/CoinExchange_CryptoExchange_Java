@@ -68,4 +68,22 @@ public class InProcessLedgerGateway implements LedgerGateway {
     public void voidWithdraw(long coaTransId) {
         journalService.voidWithdraw(coaTransId);
     }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public JournalHeader createPendingIbft(String businessRef, BigDecimal gross, String currency) {
+        return journalService.createPendingIbft(businessRef, gross, currency);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public PostJournalResult confirmIbft(long coaTransId, BigDecimal principal, BigDecimal platformFee, BigDecimal napasCost) {
+        return journalService.confirmIbft(coaTransId, principal, platformFee, napasCost);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void voidIbft(long coaTransId) {
+        journalService.voidIbft(coaTransId);
+    }
 }

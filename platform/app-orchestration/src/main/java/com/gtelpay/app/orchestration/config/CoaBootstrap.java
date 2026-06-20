@@ -32,6 +32,8 @@ public class CoaBootstrap implements ApplicationRunner {
         seed("4110", "Fee revenue — deposit", AccountType.REVENUE);
         seed("4120", "Fee revenue — withdraw", AccountType.REVENUE);
         seed("4130", "Fee revenue — transfer", AccountType.REVENUE);
+        seed("1112", "Napas Clearing", AccountType.ASSET);
+        seed("5100", "Bank / Napas fee expense", AccountType.EXPENSE);
     }
 
     private void seed(String code, String name, AccountType type) {

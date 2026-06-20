@@ -7,6 +7,10 @@ import com.gtelpay.app.orchestration.usecase.WalletBalanceUseCase;
 import com.gtelpay.app.orchestration.usecase.WithdrawUseCase;
 import com.gtelpay.app.orchestration.usecase.WithdrawSettleUseCase;
 import com.gtelpay.app.orchestration.usecase.WithdrawReleaseUseCase;
+import com.gtelpay.app.orchestration.usecase.IbftUseCase;
+import com.gtelpay.app.orchestration.usecase.IbftSettleUseCase;
+import com.gtelpay.app.orchestration.usecase.IbftReleaseUseCase;
+import com.gtelpay.core.wallet.api.dto.IbftRequestWire;
 import com.gtelpay.core.wallet.api.dto.WithdrawalRequestWire;
 import com.gtelpay.app.orchestration.web.ApiExceptionHandler;
 import com.gtelpay.app.orchestration.web.MemberIdResolver;
@@ -44,6 +48,9 @@ public class HttpServerVerticle extends AbstractVerticle {
         WithdrawUseCase withdrawUseCase = spring.getBean(WithdrawUseCase.class);
         WithdrawSettleUseCase withdrawSettleUseCase = spring.getBean(WithdrawSettleUseCase.class);
         WithdrawReleaseUseCase withdrawReleaseUseCase = spring.getBean(WithdrawReleaseUseCase.class);
+        IbftUseCase ibftUseCase = spring.getBean(IbftUseCase.class);
+        IbftSettleUseCase ibftSettleUseCase = spring.getBean(IbftSettleUseCase.class);
+        IbftReleaseUseCase ibftReleaseUseCase = spring.getBean(IbftReleaseUseCase.class);
         WalletCommandService walletCommandService = spring.getBean(WalletCommandService.class);
         ApiExceptionHandler errors = new ApiExceptionHandler(objectMapper);
 
@@ -110,6 +117,32 @@ public class HttpServerVerticle extends AbstractVerticle {
             String principal = f.get("principal").asText();
             String fee = f.has("fee") ? f.get("fee").asText() : "0";
             return ApiResponse.ok(withdrawSettleUseCase.execute(coaTransId, memberId, businessRef, principal, fee));
+        }, objectMapper));
+
+        router.post("/v1/ibft").handler(ctx -> blocking(ctx, errors, () -> {
+            IbftRequestWire body = objectMapper.readValue(ctx.body().asString(), IbftRequestWire.class);
+            String idempotencyKey = ctx.request().getHeader("X-Idempotency-Key");
+            return ApiResponse.ok(ibftUseCase.execute(body, idempotencyKey));
+        }, objectMapper));
+
+        router.post("/v1/ibft/settle").handler(ctx -> blocking(ctx, errors, () -> {
+            var f = objectMapper.readTree(ctx.body().asString());
+            long coaTransId = f.get("coaTransId").asLong();
+            long memberId = f.get("memberId").asLong();
+            String businessRef = f.get("businessRef").asText();
+            String principal = f.get("principal").asText();
+            String platformFee = f.has("platformFee") ? f.get("platformFee").asText() : "0";
+            String napasCost = f.has("napasCost") ? f.get("napasCost").asText() : "0";
+            return ApiResponse.ok(ibftSettleUseCase.execute(coaTransId, memberId, businessRef, principal, platformFee, napasCost));
+        }, objectMapper));
+
+        router.post("/v1/ibft/release").handler(ctx -> blocking(ctx, errors, () -> {
+            var f = objectMapper.readTree(ctx.body().asString());
+            long coaTransId = f.get("coaTransId").asLong();
+            long memberId = f.get("memberId").asLong();
+            String businessRef = f.get("businessRef").asText();
+            String gross = f.get("gross").asText();
+            return ApiResponse.ok(ibftReleaseUseCase.execute(coaTransId, memberId, businessRef, gross));
         }, objectMapper));
 
         router.post("/v1/withdrawals/release").handler(ctx -> blocking(ctx, errors, () -> {

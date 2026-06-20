@@ -23,4 +23,13 @@ public interface JournalService {
 
     /** Release phase: mark journal FAILED (void pending). Idempotent if already FAILED. */
     void voidWithdraw(long coaTransId);
+
+    /** IBFT accept phase: PENDING journal + Phase A lines (2110 DR / 3400 CR). Idempotent on businessRef. */
+    JournalHeader createPendingIbft(String businessRef, BigDecimal gross, String currency);
+
+    /** IBFT settle phase: Phase B lines (3400 DR / 4130 CR + 1112 CR, plus 5100 DR / 1112 CR Napas cost) and post. */
+    PostJournalResult confirmIbft(long coaTransId, BigDecimal principal, BigDecimal platformFee, BigDecimal napasCost);
+
+    /** IBFT release phase: mark journal FAILED. Idempotent if already FAILED. */
+    void voidIbft(long coaTransId);
 }

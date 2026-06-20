@@ -15,6 +15,7 @@ import com.gtelpay.core.accounting.service.JournalLineCommand;
 import com.gtelpay.core.accounting.service.JournalService;
 import com.gtelpay.core.accounting.service.PostJournalResult;
 import com.gtelpay.core.accounting.service.ReverseJournalCommand;
+import com.gtelpay.core.accounting.validation.IbftPostingValidator;
 import com.gtelpay.core.accounting.validation.WithdrawPostingValidator;
 import com.gtelpay.core.accounting.validation.CoaAccountValidator;
 import com.gtelpay.core.accounting.validation.CreateJournalCommandValidator;
@@ -43,12 +44,17 @@ public class JournalServiceImpl implements JournalService {
 
     private static final String USE_CASE_DEPOSIT = "DEPOSIT";
     private static final String USE_CASE_WITHDRAW = "WITHDRAW";
+    private static final String USE_CASE_IBFT = "IBFT";
     private static final String ACCOUNT_TRANSIT_DEPOSIT = "3100";
     private static final String ACCOUNT_TRANSIT_WITHDRAW = "3200";
+    private static final String ACCOUNT_TRANSIT_IBFT = "3400";
     private static final String ACCOUNT_BANK = "1111";
+    private static final String ACCOUNT_NAPAS_CLEARING = "1112";
     private static final String ACCOUNT_USER_LIABILITY = "2110";
     private static final String ACCOUNT_DEPOSIT_FEE_REVENUE = "4110";
     private static final String ACCOUNT_WITHDRAW_FEE_REVENUE = "4120";
+    private static final String ACCOUNT_IBFT_FEE_REVENUE = "4130";
+    private static final String ACCOUNT_NAPAS_COST_EXPENSE = "5100";
 
     private final CoaTransRepository coaTransRepository;
     private final CoaTransDataRepository coaTransDataRepository;
@@ -268,6 +274,82 @@ public class JournalServiceImpl implements JournalService {
         if (journal.getStatus() != JournalStatus.PENDING) {
             throw new AccountingException(ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND,
                     "can only void a PENDING withdraw journal, current: " + journal.getStatus());
+        }
+        journal.setStatus(JournalStatus.FAILED);
+        coaTransRepository.save(journal);
+    }
+
+    @Override
+    @Transactional
+    public JournalHeader createPendingIbft(String businessRef, BigDecimal gross, String currency) {
+        CoaTransEntity existing = coaTransRepository.findByReferenceIdAndUseCase(businessRef, USE_CASE_IBFT).orElse(null);
+        if (existing != null) {
+            return toHeader(existing);
+        }
+        CoaTransEntity journal = insertJournal(
+                new CreateJournalCommand(businessRef, USE_CASE_IBFT, "IBFT accept - phase A", null));
+        String grossStr = MoneyUtil.normalize(gross).toPlainString();
+        for (JournalLineCommand line : IbftPostingValidator.acceptLines(grossStr, currency)) {
+            persistLine(journal.getId(), line);
+        }
+        return toHeader(journal);
+    }
+
+    @Override
+    @Transactional
+    public PostJournalResult confirmIbft(long coaTransId, BigDecimal principal, BigDecimal platformFee, BigDecimal napasCost) {
+        CoaTransEntity journal = requireJournal(coaTransId);
+        if (journal.getStatus() == JournalStatus.POSTED) {
+            return new PostJournalResult(journal.getId(), journal.getStatus(), journal.getPostedAt(), true);
+        }
+        if (!USE_CASE_IBFT.equals(journal.getUseCase())) {
+            throw new com.gtelpay.core.foundation.exception.ValidationException("confirmIbft only for use_case IBFT");
+        }
+        if (journal.getStatus() != JournalStatus.PENDING) {
+            throw new AccountingException(ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND, "IBFT journal not PENDING");
+        }
+        assertPeriodOpen(journal.getPostingDate());
+
+        BigDecimal normalizedPrincipal = MoneyUtil.normalize(principal);
+        BigDecimal normalizedFee = MoneyUtil.normalizeAllowZero(platformFee);
+        BigDecimal normalizedNapasCost = MoneyUtil.normalizeAllowZero(napasCost);
+        BigDecimal gross = normalizedPrincipal.add(normalizedFee);
+
+        // Phase B: clear transit 3400 (gross = principal + platformFee)
+        persistLine(coaTransId, line(ACCOUNT_TRANSIT_IBFT, gross, LineSide.DEBIT));
+        persistLine(coaTransId, line(ACCOUNT_NAPAS_CLEARING, normalizedPrincipal, LineSide.CREDIT));
+        if (normalizedFee.compareTo(BigDecimal.ZERO) > 0) {
+            persistLine(coaTransId, line(ACCOUNT_IBFT_FEE_REVENUE, normalizedFee, LineSide.CREDIT));
+        }
+        // Napas cost leg: platform expense (independent of 3400 balance)
+        if (normalizedNapasCost.compareTo(BigDecimal.ZERO) > 0) {
+            persistLine(coaTransId, line(ACCOUNT_NAPAS_COST_EXPENSE, normalizedNapasCost, LineSide.DEBIT));
+            persistLine(coaTransId, line(ACCOUNT_NAPAS_CLEARING, normalizedNapasCost, LineSide.CREDIT));
+        }
+
+        List<CoaTransDataEntity> allLines = coaTransDataRepository.findByCoaTransId(coaTransId);
+        JournalBalanceValidator.assertBalanced(allLines);
+        JournalBalanceValidator.assertTransitZero(ACCOUNT_TRANSIT_IBFT, allLines);
+
+        journal.setStatus(JournalStatus.POSTED);
+        journal.setPostedAt(Instant.now());
+        coaTransRepository.save(journal);
+        return new PostJournalResult(journal.getId(), journal.getStatus(), journal.getPostedAt(), false);
+    }
+
+    @Override
+    @Transactional
+    public void voidIbft(long coaTransId) {
+        CoaTransEntity journal = requireJournal(coaTransId);
+        if (journal.getStatus() == JournalStatus.FAILED) {
+            return;
+        }
+        if (!USE_CASE_IBFT.equals(journal.getUseCase())) {
+            throw new com.gtelpay.core.foundation.exception.ValidationException("voidIbft only for use_case IBFT");
+        }
+        if (journal.getStatus() != JournalStatus.PENDING) {
+            throw new AccountingException(ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND,
+                    "can only void a PENDING IBFT journal, current: " + journal.getStatus());
         }
         journal.setStatus(JournalStatus.FAILED);
         coaTransRepository.save(journal);
