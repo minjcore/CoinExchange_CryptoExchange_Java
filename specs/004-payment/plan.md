@@ -123,7 +123,7 @@ SLA SC-001 = 1 000 ms. Budget leaves >750 ms headroom.
 |---|---|---|---|---|
 | Wallet read | `GET /v1/bench/wallet/balance` | **2 566** | 19 ms | Single SELECT by memberId |
 | Wallet write (debit + credit) | `POST /v1/bench/wallet` | **~430** | ~110 ms | No ledger; 4 wallet pairs |
-| Full payment (wallet + JPA ledger) | `POST /v1/payments` | **143** | ~350 ms | 17 DB round trips total |
+| Full payment (wallet + JPA ledger) | `POST /v1/payments` | **124** | ~381 ms | 3 separate commits (ADR-027) |
 
 ### Bottleneck breakdown
 
@@ -161,7 +161,7 @@ The ceiling is **hot-row contention** (4 wallets × 50 connections = ~12 queued 
 | Redis balance + async Postgres | ~5 000–10 000 TPS | In-memory compare-and-swap |
 | TigerBeetle | ~1 000 000+ TPS | Purpose-built; hardware-atomic balance |
 
-Current ceiling **143 TPS** (full payment, in-process JPA). TigerBeetle migration is a future concern, not a v1 blocker.
+Current ceiling **124 TPS** (full payment, in-process JPA, 3-commit ADR-027). TigerBeetle migration is a future concern, not a v1 blocker.
 
 ---
 
