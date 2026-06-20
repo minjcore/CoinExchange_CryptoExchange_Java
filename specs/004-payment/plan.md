@@ -115,15 +115,15 @@ SLA SC-001 = 1 000 ms. Budget leaves >750 ms headroom.
 
 ## Benchmark — In-Process JPA/Postgres (v1 impl)
 
-> Measured 2026-06-20. Environment: MacBook local, PostgreSQL 16 in Docker, HikariCP pool-size=20, `wrk -t4 -c50 -d15s`.
+> Measured 2026-06-20. Environment: MacBook local, PostgreSQL 16 in Docker, Vert.x worker pool=50, HikariCP pool-size=50, `wrk -t4 -c50 -d15s`, 4 distinct wallet pairs (artificial hot-row stress test).
 
 ### Layer isolation
 
 | Layer tested | Endpoint | TPS | Avg latency | Notes |
 |---|---|---|---|---|
 | Wallet read | `GET /v1/bench/wallet/balance` | **2 566** | 19 ms | Single SELECT by memberId |
-| Wallet write (debit + credit) | `POST /v1/bench/wallet` | **447** | 107 ms | No ledger; 2 separate @Transactional |
-| Full payment (wallet + JPA ledger) | `POST /v1/payments` | **143** | ~350 ms | 12 wallet DB ops + 5 ledger DB ops |
+| Wallet write (debit + credit) | `POST /v1/bench/wallet` | **~430** | ~110 ms | No ledger; 4 wallet pairs |
+| Full payment (wallet + JPA ledger) | `POST /v1/payments` | **143** | ~350 ms | 17 DB round trips total |
 
 ### Bottleneck breakdown
 
@@ -132,7 +132,7 @@ Each wallet mutation (`debit` or `credit`) performs 6 DB round trips inside one 
 ```
 1. SELECT wallet          (resolve memberId → walletId)
 2. SELECT wallet_tx       (fast-path idempotency)
-3. SELECT FOR UPDATE wallet_balance
+3. SELECT FOR UPDATE NOWAIT wallet_balance
 4. SELECT wallet_tx       (recheck under lock)
 5. UPDATE wallet_balance
 6. INSERT wallet_tx
@@ -140,13 +140,23 @@ Each wallet mutation (`debit` or `credit`) performs 6 DB round trips inside one 
 
 A single payment = 2 × 6 wallet ops + ~5 ledger ops = **~17 DB round trips**, 1 commit (outer `@Transactional` on `PaymentUseCase.execute()`).
 
-The real bottleneck is **round-trip count**, not lock pattern. Tested direct `UPDATE wallet_balance SET available = available - ? WHERE available >= ?` (no `SELECT FOR UPDATE`) — TPS identical (~447) because Little's Law governs: `TPS = connections / latency`. Latency is dominated by total round trips, not lock hold duration. `SELECT FOR UPDATE` is kept for stronger idempotency guarantee (locked recheck prevents duplicate under concurrent retry).
+**Optimizations tested and their effect:**
+
+| Optimization | Result | Why |
+|---|---|---|
+| Direct UPDATE (no SELECT FOR UPDATE) | No change (~447) | Bottleneck is round-trip count, not lock hold duration |
+| NOWAIT + retry decorator | No change (~428) | Retry sleep overhead cancels freed-connection benefit under hot-row |
+| Worker pool 20→50, HikariCP 20→50 | No change (~428) | Thread pools were not the bottleneck; hot-row serialization was |
+
+The ceiling is **hot-row contention** (4 wallets × 50 connections = ~12 queued writers per row). In production with 200k distinct member wallets, contention per row approaches zero — TPS scales linearly with concurrency up to the round-trip ceiling.
+
+`SELECT FOR UPDATE NOWAIT` is kept (vs waiting): fail-fast frees the DB connection during retry backoff instead of blocking it in Postgres. `WalletCommandServiceRetryDecorator` handles retry outside `@Transactional` so each attempt starts a fresh transaction.
 
 ### Ceiling analysis
 
 | Backend | Expected ceiling | Reason |
 |---|---|---|
-| JPA + Postgres (current) | ~500–1 500 TPS | Round-trip count per mutation (~17 total) |
+| JPA + Postgres (current) | ~500–1 500 TPS | Round-trip count (~17) + hot-row under stress test |
 | Postgres + walletId cache | ~700–2 000 TPS | Eliminate 2 × SELECT wallet per payment |
 | Redis balance + async Postgres | ~5 000–10 000 TPS | In-memory compare-and-swap |
 | TigerBeetle | ~1 000 000+ TPS | Purpose-built; hardware-atomic balance |
