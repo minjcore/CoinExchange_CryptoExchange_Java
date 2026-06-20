@@ -34,7 +34,8 @@ public class WalletCreditCommandListener {
         this.walletCommandService = walletCommandService;
     }
 
-    @RabbitListener(queues = WalletAmqpConfig.WALLET_CREDIT_QUEUE)
+    @RabbitListener(queues = WalletAmqpConfig.WALLET_CREDIT_QUEUE,
+                    containerFactory = WalletAmqpConfig.LISTENER_FACTORY)
     public void onWalletCredit(Map<String, Object> envelope) {
         var ctx = CreditContext.from(envelope);
 

@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -40,12 +41,14 @@ public class BankDepositCommandListener {
     private final JournalService  journalService;
     private final RabbitTemplate  rabbitTemplate;
 
-    public BankDepositCommandListener(JournalService journalService, RabbitTemplate rabbitTemplate) {
+    public BankDepositCommandListener(JournalService journalService,
+                                      @Qualifier("accountingRabbitTemplate") RabbitTemplate rabbitTemplate) {
         this.journalService = journalService;
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    @RabbitListener(queues = AccountingAmqpConfig.BANK_DEPOSIT_QUEUE)
+    @RabbitListener(queues = AccountingAmqpConfig.BANK_DEPOSIT_QUEUE,
+                    containerFactory = AccountingAmqpConfig.LISTENER_FACTORY)
     public void onBankDeposit(Map<String, Object> envelope) {
         var ctx = DepositContext.from(envelope);
 
