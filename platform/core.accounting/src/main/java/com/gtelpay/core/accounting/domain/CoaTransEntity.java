@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
@@ -17,8 +16,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "coa_trans", schema = "accounting",
-        uniqueConstraints = @UniqueConstraint(name = "uq_coa_trans_reference", columnNames = {"reference_id", "use_case"}),
-        indexes = @Index(name = "idx_coa_trans_ref_usecase", columnList = "reference_id, use_case"))
+        uniqueConstraints = @UniqueConstraint(name = "uq_coa_trans_reference", columnNames = {"reference_id", "use_case"}))
 public class CoaTransEntity {
 
     @Id
