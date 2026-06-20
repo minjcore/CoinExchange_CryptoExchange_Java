@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
@@ -19,7 +20,8 @@ import java.time.Instant;
 // corrections are new reversing journals, never edits.
 @Entity
 @Immutable
-@Table(name = "coa_trans_data", schema = "accounting")
+@Table(name = "coa_trans_data", schema = "accounting",
+        indexes = @Index(name = "idx_coa_trans_data_journal", columnList = "coa_trans_id"))
 public class CoaTransDataEntity {
 
     @Id
