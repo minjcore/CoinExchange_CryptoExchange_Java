@@ -132,22 +132,22 @@ Each wallet mutation (`debit` or `credit`) performs 6 DB round trips inside one 
 ```
 1. SELECT wallet          (resolve memberId → walletId)
 2. SELECT wallet_tx       (fast-path idempotency)
-3. SELECT FOR UPDATE wallet_balance   ← serialization point
+3. SELECT FOR UPDATE wallet_balance
 4. SELECT wallet_tx       (recheck under lock)
 5. UPDATE wallet_balance
 6. INSERT wallet_tx
 ```
 
-A single payment = 2 × 6 wallet ops + ~5 ledger ops = **~17 DB round trips**, **2 commits** (debit TX + credit TX when called without outer @Transactional, or 1 commit with outer @Transactional).
+A single payment = 2 × 6 wallet ops + ~5 ledger ops = **~17 DB round trips**, 1 commit (outer `@Transactional` on `PaymentUseCase.execute()`).
 
-`SELECT FOR UPDATE` on `wallet_balance` is a hard serialization point: all concurrent mutations on the same member queue at this lock. With 50 connections and 4 distinct wallet pairs, each row sees ~12 queued writers → ~100 ms wait per request.
+The real bottleneck is **round-trip count**, not lock pattern. Tested direct `UPDATE wallet_balance SET available = available - ? WHERE available >= ?` (no `SELECT FOR UPDATE`) — TPS identical (~447) because Little's Law governs: `TPS = connections / latency`. Latency is dominated by total round trips, not lock hold duration. `SELECT FOR UPDATE` is kept for stronger idempotency guarantee (locked recheck prevents duplicate under concurrent retry).
 
 ### Ceiling analysis
 
 | Backend | Expected ceiling | Reason |
 |---|---|---|
-| JPA + Postgres pessimistic lock (current) | ~500–1 500 TPS | Hot-row SELECT FOR UPDATE |
-| Postgres optimistic lock + retry | ~1 000–2 000 TPS | Thundering herd on high contention |
+| JPA + Postgres (current) | ~500–1 500 TPS | Round-trip count per mutation (~17 total) |
+| Postgres + walletId cache | ~700–2 000 TPS | Eliminate 2 × SELECT wallet per payment |
 | Redis balance + async Postgres | ~5 000–10 000 TPS | In-memory compare-and-swap |
 | TigerBeetle | ~1 000 000+ TPS | Purpose-built; hardware-atomic balance |
 
