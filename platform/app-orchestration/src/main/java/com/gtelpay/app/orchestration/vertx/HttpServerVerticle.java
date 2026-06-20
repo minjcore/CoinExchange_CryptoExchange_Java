@@ -8,6 +8,10 @@ import com.gtelpay.app.orchestration.web.ApiExceptionHandler;
 import com.gtelpay.app.orchestration.web.MemberIdResolver;
 import com.gtelpay.core.foundation.exception.ValidationException;
 import com.gtelpay.core.foundation.response.ApiResponse;
+import com.gtelpay.core.wallet.domain.WalletTxType;
+import com.gtelpay.core.wallet.domain.WalletType;
+import com.gtelpay.core.wallet.service.WalletCommandService;
+import com.gtelpay.core.wallet.service.WalletMutationCommand;
 import com.gtelpay.core.wallet.api.dto.PaymentRequestWire;
 import com.gtelpay.core.wallet.api.dto.TransferRequestWire;
 import io.vertx.core.AbstractVerticle;
@@ -33,6 +37,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         WalletBalanceUseCase walletBalanceUseCase = spring.getBean(WalletBalanceUseCase.class);
         PaymentUseCase paymentUseCase = spring.getBean(PaymentUseCase.class);
         TransferUseCase transferUseCase = spring.getBean(TransferUseCase.class);
+        WalletCommandService walletCommandService = spring.getBean(WalletCommandService.class);
         ApiExceptionHandler errors = new ApiExceptionHandler(objectMapper);
 
         Router router = Router.router(vertx);
@@ -47,6 +52,29 @@ public class HttpServerVerticle extends AbstractVerticle {
             String walletType = ctx.queryParams().get("walletType");
             String currency = ctx.queryParams().get("currency");
             return ApiResponse.ok(walletBalanceUseCase.execute(memberId, walletType, currency));
+        }, objectMapper));
+
+        // bench-only: wallet balance read
+        router.get("/v1/bench/wallet/balance").handler(ctx -> blocking(ctx, errors, () -> {
+            long memberId = Long.parseLong(ctx.queryParams().get("memberId"));
+            return ApiResponse.ok(walletBalanceUseCase.execute(memberId, "USER", "VND"));
+        }, objectMapper));
+
+        // bench-only: wallet debit+credit, no ledger
+        router.post("/v1/bench/wallet").handler(ctx -> blocking(ctx, errors, () -> {
+            var f = objectMapper.readTree(ctx.body().asString());
+            long fromId = f.get("fromMemberId").asLong();
+            long toId   = f.get("toMemberId").asLong();
+            String ref  = f.get("businessRef").asText();
+            String amt  = f.get("amount").asText();
+            var debit = walletCommandService.debit(new WalletMutationCommand(
+                    fromId, WalletType.USER, "VND", new java.math.BigDecimal(amt),
+                    ref, WalletTxType.PAYMENT_DEBIT, null, "BENCH", null));
+            var credit = walletCommandService.credit(new WalletMutationCommand(
+                    toId, WalletType.USER, "VND", new java.math.BigDecimal(amt),
+                    ref, WalletTxType.PAYMENT_CREDIT, null, "BENCH", null));
+            return ApiResponse.ok(java.util.Map.of(
+                    "debitTxId", debit.walletTxId(), "creditTxId", credit.walletTxId()));
         }, objectMapper));
 
         router.post("/v1/payments").handler(ctx -> blocking(ctx, errors, () -> {

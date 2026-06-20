@@ -15,6 +15,7 @@ import com.gtelpay.core.accounting.service.JournalLineCommand;
 import com.gtelpay.core.accounting.service.JournalService;
 import com.gtelpay.core.accounting.service.PostJournalResult;
 import com.gtelpay.core.accounting.service.ReverseJournalCommand;
+import com.gtelpay.core.accounting.validation.CoaAccountValidator;
 import com.gtelpay.core.accounting.validation.CreateJournalCommandValidator;
 import com.gtelpay.core.accounting.validation.JournalLineCommandValidator;
 import com.gtelpay.core.foundation.exception.AccountingException;
@@ -42,16 +43,19 @@ public class JournalServiceImpl implements JournalService {
     private final CoaTransRepository coaTransRepository;
     private final CoaTransDataRepository coaTransDataRepository;
     private final CoaAccountRepository coaAccountRepository;
+    private final CoaAccountValidator coaAccountValidator;
     private final CoaPeriodRepository coaPeriodRepository;
 
     public JournalServiceImpl(
             CoaTransRepository coaTransRepository,
             CoaTransDataRepository coaTransDataRepository,
             CoaAccountRepository coaAccountRepository,
+            CoaAccountValidator coaAccountValidator,
             CoaPeriodRepository coaPeriodRepository) {
         this.coaTransRepository = coaTransRepository;
         this.coaTransDataRepository = coaTransDataRepository;
         this.coaAccountRepository = coaAccountRepository;
+        this.coaAccountValidator = coaAccountValidator;
         this.coaPeriodRepository = coaPeriodRepository;
     }
 
@@ -199,7 +203,7 @@ public class JournalServiceImpl implements JournalService {
 
     private void persistLine(long coaTransId, JournalLineCommand line) {
         JournalLineCommandValidator.validateLine(line);
-        if (!coaAccountRepository.existsById(line.accountCode())) {
+        if (!coaAccountValidator.exists(line.accountCode())) {
             throw new AccountingException(
                     ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND, "unknown account: " + line.accountCode());
         }

@@ -11,6 +11,7 @@ import com.gtelpay.core.wallet.service.WalletMutationCommand;
 import com.gtelpay.core.wallet.service.WalletTxResult;
 import com.gtelpay.core.wallet.validation.PaymentRequestValidator;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Sync payment — {@code design/orchestration/flows.md} + {@code spec/implementation.md} §8.2.
@@ -27,6 +28,7 @@ public class PaymentUseCase {
         this.ledger = ledger;
     }
 
+    @Transactional
     public PaymentResult execute(PaymentRequestWire req, String idempotencyKey) {
         PaymentRequestValidator.validate(req, idempotencyKey);
 

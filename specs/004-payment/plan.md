@@ -113,6 +113,48 @@ SLA SC-001 = 1 000 ms. Budget leaves >750 ms headroom.
 
 ---
 
+## Benchmark — In-Process JPA/Postgres (v1 impl)
+
+> Measured 2026-06-20. Environment: MacBook local, PostgreSQL 16 in Docker, HikariCP pool-size=20, `wrk -t4 -c50 -d15s`.
+
+### Layer isolation
+
+| Layer tested | Endpoint | TPS | Avg latency | Notes |
+|---|---|---|---|---|
+| Wallet read | `GET /v1/bench/wallet/balance` | **2 566** | 19 ms | Single SELECT by memberId |
+| Wallet write (debit + credit) | `POST /v1/bench/wallet` | **447** | 107 ms | No ledger; 2 separate @Transactional |
+| Full payment (wallet + JPA ledger) | `POST /v1/payments` | **143** | ~350 ms | 12 wallet DB ops + 5 ledger DB ops |
+
+### Bottleneck breakdown
+
+Each wallet mutation (`debit` or `credit`) performs 6 DB round trips inside one transaction:
+
+```
+1. SELECT wallet          (resolve memberId → walletId)
+2. SELECT wallet_tx       (fast-path idempotency)
+3. SELECT FOR UPDATE wallet_balance   ← serialization point
+4. SELECT wallet_tx       (recheck under lock)
+5. UPDATE wallet_balance
+6. INSERT wallet_tx
+```
+
+A single payment = 2 × 6 wallet ops + ~5 ledger ops = **~17 DB round trips**, **2 commits** (debit TX + credit TX when called without outer @Transactional, or 1 commit with outer @Transactional).
+
+`SELECT FOR UPDATE` on `wallet_balance` is a hard serialization point: all concurrent mutations on the same member queue at this lock. With 50 connections and 4 distinct wallet pairs, each row sees ~12 queued writers → ~100 ms wait per request.
+
+### Ceiling analysis
+
+| Backend | Expected ceiling | Reason |
+|---|---|---|
+| JPA + Postgres pessimistic lock (current) | ~500–1 500 TPS | Hot-row SELECT FOR UPDATE |
+| Postgres optimistic lock + retry | ~1 000–2 000 TPS | Thundering herd on high contention |
+| Redis balance + async Postgres | ~5 000–10 000 TPS | In-memory compare-and-swap |
+| TigerBeetle | ~1 000 000+ TPS | Purpose-built; hardware-atomic balance |
+
+**Winpay context**: 40 k txn/day ≈ 0.5 TPS average; peak ×100 = 50 TPS — well within current 143 TPS ceiling. TigerBeetle migration is a future concern, not a v1 blocker.
+
+---
+
 ## Key ADRs
 
 | ADR | Title | Relevance |
