@@ -161,7 +161,7 @@ The ceiling is **hot-row contention** (4 wallets × 50 connections = ~12 queued 
 | Redis balance + async Postgres | ~5 000–10 000 TPS | In-memory compare-and-swap |
 | TigerBeetle | ~1 000 000+ TPS | Purpose-built; hardware-atomic balance |
 
-**Winpay context**: 40 k txn/day, peak observed **19 TPS**, max CCU **200**. Current ceiling 143 TPS gives **7.5× headroom** over peak. TigerBeetle migration is a future concern, not a v1 blocker.
+Current ceiling **143 TPS** (full payment, in-process JPA). TigerBeetle migration is a future concern, not a v1 blocker.
 
 ---
 
