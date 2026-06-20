@@ -55,13 +55,15 @@ public class TransferUseCase {
         wallet.provisionIfAbsent(req.fromMemberId(), WalletType.USER, currency);
         wallet.provisionIfAbsent(req.toMemberId(), WalletType.USER, currency);
 
+        // TX 1: debit sender
         WalletTxResult debit = wallet.debit(OpenApiWalletMapper.toTransferDebitCommand(req));
 
-        var journal = ledger.createJournal(new CreateJournalCommand(
-                businessRef, "TRANSFER", "internal transfer", null));
-        ledger.addLines(journal.id(), TransferPostingValidator.buildV1Lines(req.amount(), netAmount, currency));
-        var posted = ledger.postJournal(journal.id());
+        // TX 2: post journal
+        var posted = ledger.createAndPost(
+                new CreateJournalCommand(businessRef, "TRANSFER", "internal transfer", null),
+                TransferPostingValidator.buildV1Lines(req.amount(), netAmount, currency));
 
+        // TX 3: credit receiver
         wallet.credit(OpenApiWalletMapper.toTransferCreditCommand(req, netAmount).withCoaTransId(posted.id()));
 
         return new TransferResult(businessRef, OpenApiWalletMapper.walletTxIdForOpenApi(debit), posted.id(), "SUCCESS");

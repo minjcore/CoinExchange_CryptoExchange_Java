@@ -16,11 +16,12 @@ import java.util.List;
  */
 public interface LedgerGateway {
 
-    JournalHeader createJournal(CreateJournalCommand cmd);
-
-    void addLines(long coaTransId, List<JournalLineCommand> lines);
-
-    PostJournalResult postJournal(long coaTransId);
+    /**
+     * Create journal, add lines, and post atomically — TX 2 of the 3-commit pattern (ADR-027).
+     * Each gateway implementation owns its own transaction boundary; callers must NOT wrap
+     * this in an outer @Transactional.
+     */
+    PostJournalResult createAndPost(CreateJournalCommand cmd, List<JournalLineCommand> lines);
 
     PostJournalResult confirmDeposit(long coaTransId, BigDecimal fee);
 

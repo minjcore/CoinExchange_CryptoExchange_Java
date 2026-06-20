@@ -11,7 +11,6 @@ import com.gtelpay.core.wallet.service.WalletMutationCommand;
 import com.gtelpay.core.wallet.service.WalletTxResult;
 import com.gtelpay.core.wallet.validation.PaymentRequestValidator;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Sync payment — {@code design/orchestration/flows.md} + {@code spec/implementation.md} §8.2.
@@ -28,24 +27,24 @@ public class PaymentUseCase {
         this.ledger = ledger;
     }
 
-    @Transactional
     public PaymentResult execute(PaymentRequestWire req, String idempotencyKey) {
         PaymentRequestValidator.validate(req, idempotencyKey);
 
         wallet.provisionIfAbsent(req.memberId(), WalletType.USER, req.currency());
         wallet.provisionIfAbsent(req.merchantId(), WalletType.MERCHANT, req.currency());
 
+        // TX 1: debit sender
         WalletTxResult debit = wallet.debit(OpenApiWalletMapper.toPaymentDebitCommand(req));
 
-        var journal = ledger.createJournal(new CreateJournalCommand(
-                req.businessRef(), "PAYMENT", "wallet payment", null));
-        ledger.addLines(journal.id(), PaymentPostingValidator.buildV1Lines(
-                req.amount(), req.netToMerchant(), req.currency()));
-        var posted = ledger.postJournal(journal.id());
+        // TX 2: post journal (createJournal + addLines + postJournal in one gateway TX)
+        var posted = ledger.createAndPost(
+                new CreateJournalCommand(req.businessRef(), "PAYMENT", "wallet payment", null),
+                PaymentPostingValidator.buildV1Lines(req.amount(), req.netToMerchant(), req.currency()));
 
+        // TX 3: credit merchant
         WalletMutationCommand credit = OpenApiWalletMapper.toPaymentCreditCommand(req)
                 .withCoaTransId(posted.id());
-        WalletTxResult creditResult = wallet.credit(credit);
+        wallet.credit(credit);
 
         return new PaymentResult(
                 req.businessRef(),
