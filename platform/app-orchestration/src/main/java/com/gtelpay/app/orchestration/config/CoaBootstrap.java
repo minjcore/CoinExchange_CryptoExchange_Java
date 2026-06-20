@@ -27,7 +27,10 @@ public class CoaBootstrap implements ApplicationRunner {
         seed("3100", "Transit — deposit", AccountType.TRANSIT);
         seed("3300", "Transit — internal transfer", AccountType.TRANSIT);
         seed("3500", "Transit — payment", AccountType.TRANSIT);
+        seed("3200", "Transit — withdraw", AccountType.TRANSIT);
+        seed("3400", "Transit — IBFT", AccountType.TRANSIT);
         seed("4110", "Fee revenue — deposit", AccountType.REVENUE);
+        seed("4120", "Fee revenue — withdraw", AccountType.REVENUE);
         seed("4130", "Fee revenue — transfer", AccountType.REVENUE);
     }
 

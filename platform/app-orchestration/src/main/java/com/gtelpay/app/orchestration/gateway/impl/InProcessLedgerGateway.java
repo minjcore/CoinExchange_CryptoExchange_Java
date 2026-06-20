@@ -50,4 +50,22 @@ public class InProcessLedgerGateway implements LedgerGateway {
     public JournalHeader reverseJournal(long coaTransId, ReverseJournalCommand cmd) {
         return journalService.reverseJournal(coaTransId, cmd);
     }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public JournalHeader createPendingWithdraw(String businessRef, BigDecimal gross, String currency) {
+        return journalService.createPendingWithdraw(businessRef, gross, currency);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public PostJournalResult confirmWithdraw(long coaTransId, BigDecimal principal, BigDecimal fee) {
+        return journalService.confirmWithdraw(coaTransId, principal, fee);
+    }
+
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public void voidWithdraw(long coaTransId) {
+        journalService.voidWithdraw(coaTransId);
+    }
 }

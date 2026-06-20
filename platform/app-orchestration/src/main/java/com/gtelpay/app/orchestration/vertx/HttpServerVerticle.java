@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gtelpay.app.orchestration.usecase.PaymentUseCase;
 import com.gtelpay.app.orchestration.usecase.TransferUseCase;
 import com.gtelpay.app.orchestration.usecase.WalletBalanceUseCase;
+import com.gtelpay.app.orchestration.usecase.WithdrawUseCase;
+import com.gtelpay.app.orchestration.usecase.WithdrawSettleUseCase;
+import com.gtelpay.app.orchestration.usecase.WithdrawReleaseUseCase;
+import com.gtelpay.core.wallet.api.dto.WithdrawalRequestWire;
 import com.gtelpay.app.orchestration.web.ApiExceptionHandler;
 import com.gtelpay.app.orchestration.web.MemberIdResolver;
 import com.gtelpay.core.foundation.exception.ValidationException;
@@ -37,6 +41,9 @@ public class HttpServerVerticle extends AbstractVerticle {
         WalletBalanceUseCase walletBalanceUseCase = spring.getBean(WalletBalanceUseCase.class);
         PaymentUseCase paymentUseCase = spring.getBean(PaymentUseCase.class);
         TransferUseCase transferUseCase = spring.getBean(TransferUseCase.class);
+        WithdrawUseCase withdrawUseCase = spring.getBean(WithdrawUseCase.class);
+        WithdrawSettleUseCase withdrawSettleUseCase = spring.getBean(WithdrawSettleUseCase.class);
+        WithdrawReleaseUseCase withdrawReleaseUseCase = spring.getBean(WithdrawReleaseUseCase.class);
         WalletCommandService walletCommandService = spring.getBean(WalletCommandService.class);
         ApiExceptionHandler errors = new ApiExceptionHandler(objectMapper);
 
@@ -87,6 +94,31 @@ public class HttpServerVerticle extends AbstractVerticle {
             TransferRequestWire body = objectMapper.readValue(ctx.body().asString(), TransferRequestWire.class);
             String idempotencyKey = ctx.request().getHeader("X-Idempotency-Key");
             return ApiResponse.ok(transferUseCase.execute(body, idempotencyKey));
+        }, objectMapper));
+
+        router.post("/v1/withdrawals").handler(ctx -> blocking(ctx, errors, () -> {
+            WithdrawalRequestWire body = objectMapper.readValue(ctx.body().asString(), WithdrawalRequestWire.class);
+            String idempotencyKey = ctx.request().getHeader("X-Idempotency-Key");
+            return ApiResponse.ok(withdrawUseCase.execute(body, idempotencyKey));
+        }, objectMapper));
+
+        router.post("/v1/withdrawals/settle").handler(ctx -> blocking(ctx, errors, () -> {
+            var f = objectMapper.readTree(ctx.body().asString());
+            long coaTransId = f.get("coaTransId").asLong();
+            long memberId = f.get("memberId").asLong();
+            String businessRef = f.get("businessRef").asText();
+            String principal = f.get("principal").asText();
+            String fee = f.has("fee") ? f.get("fee").asText() : "0";
+            return ApiResponse.ok(withdrawSettleUseCase.execute(coaTransId, memberId, businessRef, principal, fee));
+        }, objectMapper));
+
+        router.post("/v1/withdrawals/release").handler(ctx -> blocking(ctx, errors, () -> {
+            var f = objectMapper.readTree(ctx.body().asString());
+            long coaTransId = f.get("coaTransId").asLong();
+            long memberId = f.get("memberId").asLong();
+            String businessRef = f.get("businessRef").asText();
+            String gross = f.get("gross").asText();
+            return ApiResponse.ok(withdrawReleaseUseCase.execute(coaTransId, memberId, businessRef, gross));
         }, objectMapper));
 
         vertx.createHttpServer()

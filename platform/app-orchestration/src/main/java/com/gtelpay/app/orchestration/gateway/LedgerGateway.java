@@ -26,4 +26,10 @@ public interface LedgerGateway {
     PostJournalResult confirmDeposit(long coaTransId, BigDecimal fee);
 
     JournalHeader reverseJournal(long coaTransId, ReverseJournalCommand cmd);
+
+    JournalHeader createPendingWithdraw(String businessRef, BigDecimal gross, String currency);
+
+    PostJournalResult confirmWithdraw(long coaTransId, BigDecimal principal, BigDecimal fee);
+
+    void voidWithdraw(long coaTransId);
 }
