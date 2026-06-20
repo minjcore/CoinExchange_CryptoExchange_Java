@@ -40,9 +40,17 @@ claude/confluence/
 │   ├── wallet-api.md                   → CF 51610183 (parent: 51315085)
 │   └── core-commands-api.md            → CF 51643061 (parent: 51315085)
 │
-└── build-process/
-    ├── business-process-deposit.md     → CF 44859411 (parent: 51315106)
-    └── implementation-decisions.md     → CF 49152021 (parent: 51315106)
+├── build-process/
+│   ├── business-process-deposit.md     → CF 44859411 (parent: 51315106)
+│   └── implementation-decisions.md     → CF 49152021 (parent: 51315106)
+│
+└── use-cases/
+    ├── uc3-task-list.md                → CF 51872220 (parent: 51609624)
+    ├── uc3-business-process-payment.md → CF 51806772 (parent: 51609624)
+    ├── uc4-task-list.md                → CF 52199450 (parent: 51544073)
+    ├── uc4-business-process-transfer.md → CF 51872241 (parent: 51544073)
+    ├── uc5-task-list.md                → CF 51839642 (parent: 50332070)
+    └── uc5-business-process-ibft.md    → CF 52199477 (parent: 50332070)
 ```
 
 ## Section Container Pages (nav only, no local content needed)
@@ -106,4 +114,4 @@ claude/confluence/
 ## Pages NOT mirrored here (existing content, managed elsewhere)
 
 - `specs/011-architecture-overview/confluence-draft.md` → platform architecture overview
-- Use case child pages (UC-1..UC-9) → managed under `🔄 Use Cases`
+- Use case child pages (UC-1, UC-2, UC-6..UC-9) → not yet mirrored locally
