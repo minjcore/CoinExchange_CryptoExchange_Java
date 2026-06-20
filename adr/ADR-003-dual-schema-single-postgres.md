@@ -5,13 +5,13 @@
 | Status | Accepted |
 | Date | 2026-06-08 |
 | Deciders | Engineering |
-| Related | [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §1.4, [`core.wallet.md`](../core.wallet.md) §9, [`core.accounting.trd.md`](../core.accounting.trd.md) §8, [ADR-002](ADR-002-core-foundation-shared-library.md) |
+| Related | [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §1.4, [`core.wallet.md`](../core.wallet.md) §9, [`core.accounting.trd.md`](../core.accounting.trd.md) §8, [ADR-002](ADR-002-core-sharedlib.md) |
 
 ---
 
 ## Context
 
-`core.wallet` (`wallet_*`) and `core.accounting` (`coa_*`) are separate bounded contexts ([ADR-002](ADR-002-core-foundation-shared-library.md)) but, in v1, deploy from one repo and one Spring Boot `app-orchestration` process ([`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §1.2).
+`core.wallet` (`wallet_*`) and `core.accounting` (`coa_*`) are separate bounded contexts ([ADR-002](ADR-002-core-sharedlib.md)) but, in v1, deploy from one repo and one Spring Boot `app-orchestration` process ([`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §1.2).
 
 We need a storage layout that:
 
@@ -81,7 +81,7 @@ Use **one PostgreSQL 15+ instance with two schemas, `wallet` and `accounting`** 
 | ADR | Topic |
 |-----|--------|
 | [ADR-001](ADR-001-immutable-ledger.md) | Accounting ledger model inside schema `accounting` |
-| [ADR-002](ADR-002-core-foundation-shared-library.md) | **Code** boundary between domains — this ADR is the **storage** boundary |
+| [ADR-002](ADR-002-core-sharedlib.md) | **Code** boundary between domains — this ADR is the **storage** boundary |
 | [ADR-005](ADR-005-idempotency-key-strategy.md) | Idempotency keys that make separate-commit orchestration safe |
 
 ---

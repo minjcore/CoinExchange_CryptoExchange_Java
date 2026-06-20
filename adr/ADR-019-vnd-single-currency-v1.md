@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Accepted |
+| Status | Pending review |
 | Date | 2026-06-08 |
-| Source | [`core.wallet.md`](../core.wallet.md) §3.2, [`core.business-processes.md`](../core.business-processes.md) §14, [`core.foundation.md`](../core.foundation.md) §6 |
+| Source | [`core.wallet.md`](../core.wallet.md) §3.2, [`core.business-processes.md`](../core.business-processes.md) §14, [`core.sharedlib.md`](../core.sharedlib.md) §6 |
 | Related | [ADR-009](ADR-009-fee-ownership-orchestration.md) |
 
 ---

@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-06-10 |
 | Source | Design discussion; supersedes the in-process framing in [`spec/trd/wallet.md`](../spec/trd/wallet.md) §7.2 and [`spec/architecture-overview.md`](../spec/architecture-overview.md) §2 |
-| Related | [ADR-002](ADR-002-core-foundation-shared-library.md), [ADR-003](ADR-003-dual-schema-single-postgres.md), [ADR-008](ADR-008-saga-compensation-no-2pc.md), [ADR-012](ADR-012-orchestration-integration-forbidden-rules.md) |
+| Related | [ADR-002](ADR-002-core-sharedlib.md), [ADR-003](ADR-003-dual-schema-single-postgres.md), [ADR-008](ADR-008-saga-compensation-no-2pc.md), [ADR-012](ADR-012-orchestration-integration-forbidden-rules.md) |
 
 ---
 

@@ -30,7 +30,7 @@
 
 | ADR | Title | Source |
 |-----|-------|--------|
-| [002](ADR-002-core-foundation-shared-library.md) | `core.foundation` only shared lib | foundation Part I |
+| [002](ADR-002-core-sharedlib.md) | `core.sharedlib` only shared lib | foundation Part I |
 | [003](ADR-003-dual-schema-single-postgres.md) | Schema `wallet` + `accounting` | `IMPLEMENTATION.md` §1.4 |
 | [005](ADR-005-idempotency-key-strategy.md) | `business_ref` end-to-end | `integration-surfaces.md` §8 |
 | [008](ADR-008-saga-compensation-no-2pc.md) | Saga, no 2PC | business-processes §13–15 |

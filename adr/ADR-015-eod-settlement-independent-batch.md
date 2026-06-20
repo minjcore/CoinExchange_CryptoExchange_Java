@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Accepted |
+| Status | Pending review |
 | Date | 2026-06-08 |
-| Source | [`core.foundation.md`](../core.foundation.md) §4, §16, [`core.wallet.md`](../core.wallet.md) §5.8 |
+| Source | [`core.sharedlib.md`](../core.sharedlib.md) §4, §16, [`core.wallet.md`](../core.wallet.md) §5.8 |
 | Related | [ADR-010](ADR-010-transit-accounts-net-zero.md), [ADR-016](ADR-016-qr-pos-default-no-per-txn-wallet.md) |
 
 ---
@@ -12,7 +12,7 @@
 ## Decision
 
 1. QR/POS **capture** posts per txn to **3500** / **2120** — not EOD inline.
-2. **EOD batch** locks **2120** → **3800/3810/3820** → bank out ([`core.foundation.md`](../core.foundation.md) §16).
+2. **EOD batch** locks **2120** → **3800/3810/3820** → bank out ([`core.sharedlib.md`](../core.sharedlib.md) §16).
 3. Idempotent per `(merchantId, settlementDate)`.
 4. File mismatch → **block** entire settlement branch — no partial POSTED.
 5. Bank out fail → amount stays **3810** — retry next cycle; never double-settle.

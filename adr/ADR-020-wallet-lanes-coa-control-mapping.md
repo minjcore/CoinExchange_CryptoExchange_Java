@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Accepted |
+| Status | Pending review |
 | Date | 2026-06-08 |
-| Source | [`core.foundation.md`](../core.foundation.md) §6.2, [`core.wallet.md`](../core.wallet.md) §3.2, [`TERMINOLOGY.md`](../TERMINOLOGY.md) |
+| Source | [`core.sharedlib.md`](../core.sharedlib.md) §6.2, [`core.wallet.md`](../core.wallet.md) §3.2, [`TERMINOLOGY.md`](../TERMINOLOGY.md) |
 | Related | [ADR-014](ADR-014-reconciliation-w5-report-only.md) |
 
 ---
@@ -20,7 +20,7 @@
 1. Mapping is **reconciliation only** — no FK, no COA code on `wallet` row.
 2. One wallet instance per `(member_id, wallet_type, currency)`.
 3. W5 sums by `wallet_type` compare to respective control ([ADR-014](ADR-014-reconciliation-w5-report-only.md)).
-4. Foundation identity: `(1111+1112+1113) = (2110+2120+2130)` at platform level ([`core.foundation.md`](../core.foundation.md) §5).
+4. Foundation identity: `(1111+1112+1113) = (2110+2120+2130)` at platform level ([`core.sharedlib.md`](../core.sharedlib.md) §5).
 
 ---
 
@@ -49,5 +49,5 @@
 
 ## References
 
-- [`core.foundation.md`](../core.foundation.md) — §5–6.2
+- [`core.sharedlib.md`](../core.sharedlib.md) — §5–6.2
 - [`design-v2/wallet.md`](../design-v2/wallet.md) — §2 lanes

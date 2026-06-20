@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-06-08 |
 | Source | [`integration-surfaces.md`](../integration-surfaces.md) §10, [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §8 |
-| Related | [ADR-002](ADR-002-core-foundation-shared-library.md), [ADR-003](ADR-003-dual-schema-single-postgres.md) |
+| Related | [ADR-002](ADR-002-core-sharedlib.md), [ADR-003](ADR-003-dual-schema-single-postgres.md) |
 
 ---
 

@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-06-08 |
 | Deciders | Engineering |
-| Related | [`core.business-processes.md`](../core.business-processes.md) §16, [`design-v2/orchestration.md`](../design-v2/orchestration.md) §5, §20, [`core.foundation.md`](../core.foundation.md) §8–16 (fee accounts) |
+| Related | [`core.business-processes.md`](../core.business-processes.md) §16, [`design-v2/orchestration.md`](../design-v2/orchestration.md) §5, §20, [`core.sharedlib.md`](../core.sharedlib.md) §8–16 (fee accounts) |
 
 ---
 
@@ -23,7 +23,7 @@ Each use case splits **gross vs net** differently (deposit nets fee from credit;
 2. **Wallet never splits fees** — `credit`/`debit`/`freeze` amounts are final ([`core.wallet.md`](../core.wallet.md) out of scope).
 3. **Accounting records given lines** — 4110–4150 revenue, 5100 cost — no product rule engine in `core.accounting`.
 4. **Single computed value** — Same `fee` number used for wallet gross/net split and accounting 4xxx line in one request.
-5. **Rounding** — Scale 4, HALF_UP at orchestration boundary ([`core.foundation.md`](../core.foundation.md) §6).
+5. **Rounding** — Scale 4, HALF_UP at orchestration boundary ([`core.sharedlib.md`](../core.sharedlib.md) §6).
 6. **Bearer rules** — Deposit fee from user (netted); withdraw/transfer/IBFT added to user gross; MDR from merchant; payroll/disbursement per batch policy (§16 table).
 
 Fee **rates** are configurable; **ownership and posting rules** are fixed by this ADR.
@@ -84,5 +84,5 @@ Fee **rates** are configurable; **ownership and posting rules** are fixed by thi
 
 - [`core.business-processes.md`](../core.business-processes.md) — §16 Fee policy
 - [`design-v2/orchestration.md`](../design-v2/orchestration.md) — §5, §20
-- [`core.foundation.md`](../core.foundation.md) — §6.4 revenue accounts, use-case fee lines
+- [`core.sharedlib.md`](../core.sharedlib.md) — §6.4 revenue accounts, use-case fee lines
 - [`design-v2/acceptance.md`](../design-v2/acceptance.md) — Deposit, Payment, Transfer, Withdraw

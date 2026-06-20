@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Accepted |
+| Status | Pending review |
 | Date | 2026-06-08 |
-| Source | [`core.foundation.md`](../core.foundation.md) §5, [`design-v2/accounting.md`](../design-v2/accounting.md) §27, [`references/medium-slope-payments-ledger-pitfalls.md`](../references/medium-slope-payments-ledger-pitfalls.md) |
+| Source | [`core.sharedlib.md`](../core.sharedlib.md) §5, [`design-v2/accounting.md`](../design-v2/accounting.md) §27, [`references/medium-slope-payments-ledger-pitfalls.md`](../references/medium-slope-payments-ledger-pitfalls.md) |
 | Related | [ADR-001](ADR-001-immutable-ledger.md), [ADR-010](ADR-010-transit-accounts-net-zero.md), [ADR-014](ADR-014-reconciliation-w5-report-only.md) |
 
 ---

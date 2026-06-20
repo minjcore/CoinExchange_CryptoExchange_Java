@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | **Accepted** (hybrid — postings in TB; control plane in Postgres) |
+| Status | Pending review |
 | Date | 2026-06-12 (updated from 2026-06-09 Proposed) |
 | Source | Design discussion; [`spec/trd/accounting.md`](../spec/trd/accounting.md) §8, §12; [`sandbox/tigerbeetle/`](../sandbox/tigerbeetle/) spike |
 | Related | [ADR-001](ADR-001-immutable-ledger.md), [ADR-003](ADR-003-dual-schema-single-postgres.md), [ADR-006](ADR-006-two-phase-deposit.md), [ADR-007](ADR-007-freeze-settle-async-outflow.md), [ADR-028](ADR-028-money-scale-four-half-up.md), [ADR-031](ADR-031-sql-ledger-invariant-ci.md), [ADR-041](ADR-041-rabbitmq-orch-to-accounting-worker.md) |

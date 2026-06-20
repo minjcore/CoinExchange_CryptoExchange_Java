@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Accepted |
+| Status | Pending review |
 | Date | 2026-06-08 |
-| Source | [`core.foundation.md`](../core.foundation.md) §6, [`TERMINOLOGY.md`](../TERMINOLOGY.md) |
+| Source | [`core.sharedlib.md`](../core.sharedlib.md) §6, [`TERMINOLOGY.md`](../TERMINOLOGY.md) |
 | Related | [ADR-019](ADR-019-vnd-single-currency-v1.md), [ADR-009](ADR-009-fee-ownership-orchestration.md) |
 
 ---
@@ -42,4 +42,4 @@
 
 ## References
 
-- [`core.foundation.md`](../core.foundation.md) — §6 Identity and money
+- [`core.sharedlib.md`](../core.sharedlib.md) — §6 Identity and money

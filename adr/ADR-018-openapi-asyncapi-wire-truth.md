@@ -4,8 +4,8 @@
 |-------|-------|
 | Status | Accepted |
 | Date | 2026-06-08 |
-| Source | [`core.foundation.md`](../core.foundation.md) §5, [`integration-surfaces.md`](../integration-surfaces.md) §1–3 |
-| Related | [ADR-002](ADR-002-core-foundation-shared-library.md), [ADR-012](ADR-012-orchestration-integration-forbidden-rules.md) |
+| Source | [`core.sharedlib.md`](../core.sharedlib.md) §5, [`integration-surfaces.md`](../integration-surfaces.md) §1–3 |
+| Related | [ADR-002](ADR-002-core-sharedlib.md), [ADR-012](ADR-012-orchestration-integration-forbidden-rules.md) |
 
 ---
 

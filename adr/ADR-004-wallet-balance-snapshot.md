@@ -15,7 +15,7 @@
 
 If wallet followed ADR-001 literally, each balance read and each debit's sufficient-funds check would aggregate the member's entire `wallet_tx` history. That is correct but slow and lock-heavy at the rates wallet must serve.
 
-We need a model that keeps a fast, transactionally-correct spendable balance while preserving a complete, immutable audit trail — and that does not contradict ADR-001 (which governs the accounting ledger, a separate bounded context, [ADR-002](ADR-002-core-foundation-shared-library.md)).
+We need a model that keeps a fast, transactionally-correct spendable balance while preserving a complete, immutable audit trail — and that does not contradict ADR-001 (which governs the accounting ledger, a separate bounded context, [ADR-002](ADR-002-core-sharedlib.md)).
 
 ---
 

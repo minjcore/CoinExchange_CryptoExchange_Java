@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-06-08 |
 | Deciders | Engineering |
-| Related | [`core.foundation.md`](../core.foundation.md) §8, [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §7.5, [`core.business-processes.md`](../core.business-processes.md) §13.1, [ADR-001](ADR-001-immutable-ledger.md) |
+| Related | [`core.sharedlib.md`](../core.sharedlib.md) §8, [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §7.5, [`core.business-processes.md`](../core.business-processes.md) §13.1, [ADR-001](ADR-001-immutable-ledger.md) |
 
 ---
 
@@ -13,7 +13,7 @@
 
 Bank deposits are **async**: funds may be reported before final confirmation. Crediting the member wallet immediately risks double-credit or credit-before-bank-settle.
 
-[`core.foundation.md`](../core.foundation.md) §8 defines a **two-phase** journal: phase A (`PENDING`) holds gross in transit **3100**; phase B (`POSTED`) clears transit, records net liability **2110** and fee **4110**, then downstream wallet credit.
+[`core.sharedlib.md`](../core.sharedlib.md) §8 defines a **two-phase** journal: phase A (`PENDING`) holds gross in transit **3100**; phase B (`POSTED`) clears transit, records net liability **2110** and fee **4110**, then downstream wallet credit.
 
 [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) §7.5 locks phase B in accounting via `confirmDeposit()` — not ad-hoc `addLines` from orchestration.
 
@@ -85,7 +85,7 @@ Bank deposits are **async**: funds may be reported before final confirmation. Cr
 
 ## References
 
-- [`core.foundation.md`](../core.foundation.md) — §8 Deposit
+- [`core.sharedlib.md`](../core.sharedlib.md) — §8 Deposit
 - [`IMPLEMENTATION.md`](../IMPLEMENTATION.md) — §7.5, §8 Deposit boundaries
 - [`design-v2/accounting.md`](../design-v2/accounting.md) — §14 DEPOSIT
 - [`design-v2/orchestration.md`](../design-v2/orchestration.md) — §11

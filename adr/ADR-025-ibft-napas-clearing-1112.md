@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Accepted |
+| Status | Pending review |
 | Date | 2026-06-08 |
-| Source | [`core.foundation.md`](../core.foundation.md) §11, [`design-v2/accounting.md`](../design-v2/accounting.md) §18 |
+| Source | [`core.sharedlib.md`](../core.sharedlib.md) §11, [`design-v2/accounting.md`](../design-v2/accounting.md) §18 |
 | Related | [ADR-010](ADR-010-transit-accounts-net-zero.md), [ADR-007](ADR-007-freeze-settle-async-outflow.md) |
 
 ---
@@ -46,5 +46,5 @@
 
 ## References
 
-- [`core.foundation.md`](../core.foundation.md) — §11 IBFT
+- [`core.sharedlib.md`](../core.sharedlib.md) — §11 IBFT
 - [`design-v2/accounting.md`](../design-v2/accounting.md) — §18

@@ -21,7 +21,9 @@ claude/confluence/
 │
 ├── start-here/
 │   ├── architecture-faq.md             → CF 51544171 (parent: 51315064)
-│   └── terminology.md                  → CF 44924932 (parent: 51315064)
+│   ├── terminology.md                  → CF 44924932 (parent: 51315064)
+│   ├── platform-overview.md            → CF 51839264 (parent: 51315064)
+│   └── wallet-system-in-9-concepts.md  → CF 51839571 (parent: 51315064)
 │
 ├── architecture-principles/
 │   ├── wallet-accounting-overview.md   → CF 45842592 (parent: 51642382)
@@ -72,7 +74,7 @@ claude/confluence/
 | Local file | CF ID | Parent |
 |-----------|-------|--------|
 | adr/ADR-001-immutable-ledger.md | 47972359 | 51642522 |
-| adr/ADR-002-core-foundation-shared-library.md | 51544266 | 51642522 |
+| adr/ADR-002-core-sharedlib.md | 51544266 | 51642522 |
 | adr/ADR-003-dual-schema-single-postgres.md | 48594986 | 51642522 |
 | adr/ADR-004-wallet-balance-snapshot.md | 51184014 | 51642522 |
 | adr/ADR-005-idempotency-key-strategy.md | 51642542 | 51642522 |
@@ -113,7 +115,23 @@ claude/confluence/
 | adr/ADR-040-user-multi-pocket-wallets.md | 51642743 | 51642522 |
 | adr/ADR-041-rabbitmq-orch-to-accounting-worker.md | 50987572 | 51642522 |
 
-## Pages NOT mirrored here (existing content, managed elsewhere)
+## specs/ pages (synced via cf_sync.py)
 
-- `specs/011-architecture-overview/confluence-draft.md` → platform architecture overview
-- Use case child pages (UC-1, UC-6..UC-9) → not yet mirrored locally
+| Local file | CF ID | Title |
+|-----------|-------|-------|
+| specs/011-architecture-overview/confluence-draft.md | 51609646 | Platform Architecture Overview |
+| specs/002-async-deposit/spec.md | 51315033 | UC-1 Async Deposit — Feature Spec |
+| specs/002-async-deposit/data-model.md | 51544126 | UC-1 Data Model |
+| specs/002-async-deposit/plan.md | 51544148 | UC-1 Implementation Plan |
+| specs/002-async-deposit/tasks.md | 51609677 | UC-1 Task List |
+| specs/002-async-deposit/data-flow.md | 50987347 | UC-1 Data Flow |
+| specs/002-async-deposit/quickstart.md | 50987368 | UC-1 Quickstart Validation Guide |
+| specs/002-async-deposit/checklists/adr-prereading.md | 51872153 | ADR Pre-Reading |
+| specs/003-withdraw/spec.md | 50332049 | UC-2 Withdraw — Feature Spec |
+| specs/004-payment/spec.md | 51609624 | UC-3 Wallet Payment — Feature Spec |
+| specs/005-internal-transfer/spec.md | 51544073 | UC-4 Internal Transfer — Feature Spec |
+| specs/006-ibft/spec.md | 50332070 | UC-5 IBFT — Feature Spec |
+| specs/007-qr-pos/spec.md | 51544094 | UC-6 QR/POS — Feature Spec |
+| specs/008-payroll/spec.md | 51576861 | UC-7 Payroll — Feature Spec |
+| specs/009-disbursement/spec.md | 51315011 | UC-8 Disbursement — Feature Spec |
+| specs/010-eod-settlement/spec.md | 51183873 | UC-9 EOD Settlement — Feature Spec |

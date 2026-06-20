@@ -4,7 +4,7 @@
 |-------|-------|
 | Status | Accepted |
 | Date | 2026-06-08 |
-| Source | [`core.foundation.md`](../core.foundation.md) §8.3, [`integration-surfaces.md`](../integration-surfaces.md) §4.1, [`references/moderntreasury-virtual-accounts.md`](../references/moderntreasury-virtual-accounts.md) |
+| Source | [`core.sharedlib.md`](../core.sharedlib.md) §8.3, [`integration-surfaces.md`](../integration-surfaces.md) §4.1, [`references/moderntreasury-virtual-accounts.md`](../references/moderntreasury-virtual-accounts.md) |
 | Related | [ADR-006](ADR-006-two-phase-deposit.md), [ADR-022](ADR-022-mtls-bank-webhooks.md) |
 
 ---

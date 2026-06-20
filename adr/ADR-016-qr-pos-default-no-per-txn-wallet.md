@@ -2,9 +2,9 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Accepted |
+| Status | Pending review |
 | Date | 2026-06-08 |
-| Source | [`core.wallet.md`](../core.wallet.md) §5.8, [`core.foundation.md`](../core.foundation.md) §12 |
+| Source | [`core.wallet.md`](../core.wallet.md) §5.8, [`core.sharedlib.md`](../core.sharedlib.md) §12 |
 | Related | [ADR-015](ADR-015-eod-settlement-independent-batch.md), [ADR-009](ADR-009-fee-ownership-orchestration.md) |
 
 ---

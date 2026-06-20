@@ -5,13 +5,13 @@
 | Status | Accepted |
 | Date | 2026-06-08 |
 | Deciders | Engineering |
-| Related | [`core.foundation.md`](../core.foundation.md) §4–5, §6.3, [`core.accounting.trd.md`](../core.accounting.trd.md), [ADR-001](ADR-001-immutable-ledger.md), [ADR-006](ADR-006-two-phase-deposit.md) |
+| Related | [`core.sharedlib.md`](../core.sharedlib.md) §4–5, §6.3, [`core.accounting.trd.md`](../core.accounting.trd.md), [ADR-001](ADR-001-immutable-ledger.md), [ADR-006](ADR-006-two-phase-deposit.md) |
 
 ---
 
 ## Context
 
-Use cases route funds through **transit accounts** (3100–3820) so in-flight money is visible and trial balance stays interpretable ([`core.foundation.md`](../core.foundation.md) §6.3).
+Use cases route funds through **transit accounts** (3100–3820) so in-flight money is visible and trial balance stays interpretable ([`core.sharedlib.md`](../core.sharedlib.md) §6.3).
 
 Foundation §5 invariant 3: each transit returns to **0** after the use case completes. Leaving transit non-zero indicates a stuck or partial journal.
 
@@ -86,6 +86,6 @@ Foundation §5 invariant 3: each transit returns to **0** after the use case com
 
 ## References
 
-- [`core.foundation.md`](../core.foundation.md) — §4 Rules, §5 invariants, §6.3 transit COA
+- [`core.sharedlib.md`](../core.sharedlib.md) — §4 Rules, §5 invariants, §6.3 transit COA
 - [`design-v2/accounting.md`](../design-v2/accounting.md) — Part II per use case
 - [`design-v2/acceptance.md`](../design-v2/acceptance.md) — All flow features assert transit zero at POSTED
