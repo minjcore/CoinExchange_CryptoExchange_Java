@@ -8,6 +8,7 @@ import com.gtelpay.core.accounting.service.JournalService;
 import com.gtelpay.core.accounting.service.PostJournalResult;
 import com.gtelpay.core.accounting.service.ReverseJournalCommand;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -31,7 +32,7 @@ public class InProcessLedgerGateway implements LedgerGateway {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public PostJournalResult createAndPost(CreateJournalCommand cmd, List<JournalLineCommand> lines) {
         var journal = journalService.createJournal(cmd);
         journalService.addLines(journal.id(), lines);
@@ -39,13 +40,13 @@ public class InProcessLedgerGateway implements LedgerGateway {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public PostJournalResult confirmDeposit(long coaTransId, BigDecimal fee) {
         return journalService.confirmDeposit(coaTransId, fee);
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public JournalHeader reverseJournal(long coaTransId, ReverseJournalCommand cmd) {
         return journalService.reverseJournal(coaTransId, cmd);
     }

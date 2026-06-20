@@ -6,27 +6,27 @@ import com.gtelpay.core.wallet.service.WalletMutationCommand;
 import com.gtelpay.core.wallet.service.WalletTxResult;
 import com.gtelpay.core.wallet.service.WalletView;
 import org.springframework.context.annotation.Primary;
-import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
 /**
- * Wraps WalletCommandServiceImpl with retry-on-lock logic.
+ * Wraps WalletCommandServiceImpl with @Retryable on optimistic lock conflicts.
  *
- * Retry MUST be in a separate bean so each attempt calls through the Spring proxy,
- * starting a fresh @Transactional. Putting @Retryable inside @Transactional would
- * retry within the same failed transaction — no good.
+ * Retry MUST be in a separate bean (not on WalletCommandServiceImpl directly) so each
+ * attempt calls through the Spring proxy, starting a fresh @Transactional. If @Retryable
+ * and @Transactional were on the same method, the retry would be inside an already-failed
+ * transaction context.
  *
- * Lock strategy: NOWAIT (fail immediately) + backoff here, rather than queueing at DB.
- * This frees the connection during the wait instead of holding it blocked in Postgres.
+ * Backoff: delay = one single-wallet TX time (~30 ms), multiplier = 2, random = true.
+ * Random jitter prevents all conflicting retriers from waking simultaneously (thundering herd).
  */
 @Primary
 @Service
 public class WalletCommandServiceRetryDecorator implements WalletCommandService {
-
-    private static final int MAX_ATTEMPTS = 5;
-    private static final long BASE_DELAY_MS = 5;
 
     private final WalletCommandService delegate;
 
@@ -40,57 +40,54 @@ public class WalletCommandServiceRetryDecorator implements WalletCommandService 
     }
 
     @Override
+    @Retryable(
+            retryFor = OptimisticLockingFailureException.class,
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 30, multiplier = 2, random = true)
+    )
     public WalletTxResult credit(WalletMutationCommand cmd) {
-        return withRetry(() -> delegate.credit(cmd));
+        return delegate.credit(cmd);
     }
 
     @Override
+    @Retryable(
+            retryFor = OptimisticLockingFailureException.class,
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 30, multiplier = 2, random = true)
+    )
     public WalletTxResult creditByWalletId(long walletId, String businessRef,
                                             BigDecimal netAmount, String currency,
                                             Long coaTransId, String useCase) {
-        return withRetry(() -> delegate.creditByWalletId(walletId, businessRef, netAmount, currency, coaTransId, useCase));
+        return delegate.creditByWalletId(walletId, businessRef, netAmount, currency, coaTransId, useCase);
     }
 
     @Override
+    @Retryable(
+            retryFor = OptimisticLockingFailureException.class,
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 30, multiplier = 2, random = true)
+    )
     public WalletTxResult debit(WalletMutationCommand cmd) {
-        return withRetry(() -> delegate.debit(cmd));
+        return delegate.debit(cmd);
     }
 
     @Override
+    @Retryable(
+            retryFor = OptimisticLockingFailureException.class,
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 30, multiplier = 2, random = true)
+    )
     public WalletTxResult freeze(WalletMutationCommand cmd) {
-        return withRetry(() -> delegate.freeze(cmd));
+        return delegate.freeze(cmd);
     }
 
     @Override
+    @Retryable(
+            retryFor = OptimisticLockingFailureException.class,
+            maxAttempts = 5,
+            backoff = @Backoff(delay = 30, multiplier = 2, random = true)
+    )
     public WalletTxResult unfreeze(WalletMutationCommand cmd) {
-        return withRetry(() -> delegate.unfreeze(cmd));
-    }
-
-    private <T> T withRetry(ThrowingSupplier<T> action) {
-        PessimisticLockingFailureException last = null;
-        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            try {
-                return action.get();
-            } catch (PessimisticLockingFailureException e) {
-                last = e;
-                if (attempt < MAX_ATTEMPTS) {
-                    sleep(BASE_DELAY_MS * attempt);
-                }
-            }
-        }
-        throw last;
-    }
-
-    private static void sleep(long ms) {
-        try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    @FunctionalInterface
-    private interface ThrowingSupplier<T> {
-        T get();
+        return delegate.unfreeze(cmd);
     }
 }

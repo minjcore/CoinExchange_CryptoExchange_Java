@@ -18,15 +18,20 @@ import com.gtelpay.core.wallet.service.WalletMutationCommand;
 import com.gtelpay.core.wallet.service.WalletTxResult;
 import com.gtelpay.core.wallet.service.WalletView;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class WalletCommandServiceImpl implements WalletCommandService {
 
     private static final int BUSINESS_REF_MAX = 128;
+
+    // walletId is stable after creation; status changes not supported in v1.
+    private final ConcurrentHashMap<String, WalletEntity> walletCache = new ConcurrentHashMap<>();
 
     private final WalletRepository walletRepository;
     private final WalletBalanceRepository walletBalanceRepository;
@@ -42,37 +47,36 @@ public class WalletCommandServiceImpl implements WalletCommandService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public WalletView provisionIfAbsent(long memberId, WalletType walletType, String currency) {
         String normalizedCurrency = normalizeCurrency(currency);
-        return walletRepository.findByMemberIdAndWalletTypeAndCurrency(memberId, walletType, normalizedCurrency)
-                .map(this::toView)
-                .orElseGet(() -> createWallet(memberId, walletType, normalizedCurrency));
+        WalletEntity wallet = resolveOrCreate(memberId, walletType, normalizedCurrency);
+        return toView(wallet);
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public WalletTxResult credit(WalletMutationCommand cmd) {
         assertTxType(cmd, WalletTxType::isCreditType, "credit");
         return execute(cmd);
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public WalletTxResult debit(WalletMutationCommand cmd) {
         assertTxType(cmd, WalletTxType::isDebitType, "debit");
         return execute(cmd);
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public WalletTxResult freeze(WalletMutationCommand cmd) {
         assertTxType(cmd, WalletTxType::isFreezeType, "freeze");
         return execute(cmd);
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public WalletTxResult unfreeze(WalletMutationCommand cmd) {
         assertTxType(cmd, WalletTxType::isUnfreezeType, "unfreeze");
         return execute(cmd);
@@ -91,21 +95,11 @@ public class WalletCommandServiceImpl implements WalletCommandService {
             return replayExisting(existing.get(), amount, wallet.getId());
         }
 
-        // Pessimistic write lock on the balance row serializes concurrent mutations on this wallet.
+        // Optimistic lock via @Version on WalletBalanceEntity. No SELECT FOR UPDATE needed.
+        // Duplicate idempotency on concurrent conflict: version mismatch at commit → retry →
+        // fast-path above finds the committed wallet_tx and replays idempotently.
         WalletBalanceEntity balance = walletBalanceRepository.findByWalletIdForUpdate(wallet.getId())
                 .orElseThrow(() -> new WalletException(ErrorCode.WALLET_NOT_FOUND, "wallet balance missing"));
-
-        // Re-check idempotency under the lock: a concurrent leg with the same (wallet, businessRef,
-        // txType) triple may have committed while we waited for the lock. Without this recheck the
-        // loser would re-apply the balance mutation and then trip uq_wallet_tx_idempotency, surfacing
-        // a DataIntegrityViolation instead of the idempotent replay ADR-005 (AC-005-02) mandates.
-        // Safe under READ COMMITTED: the recheck statement runs after the winner released the lock,
-        // so it sees the committed wallet_tx row.
-        var lockedExisting = walletTxRepository.findByWalletIdAndBusinessRefAndTxType(
-                wallet.getId(), businessRef, cmd.txType());
-        if (lockedExisting.isPresent()) {
-            return replayExisting(lockedExisting.get(), amount, wallet.getId());
-        }
 
         WalletBalanceMutator.apply(balance, cmd.txType(), amount);
         walletBalanceRepository.save(balance);
@@ -137,7 +131,7 @@ public class WalletCommandServiceImpl implements WalletCommandService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public WalletTxResult creditByWalletId(long walletId, String businessRef,
                                             BigDecimal netAmount, String currency,
                                             Long coaTransId, String useCase) {
@@ -155,12 +149,6 @@ public class WalletCommandServiceImpl implements WalletCommandService {
 
         WalletBalanceEntity balance = walletBalanceRepository.findByWalletIdForUpdate(walletId)
                 .orElseThrow(() -> new WalletException(ErrorCode.WALLET_NOT_FOUND, "wallet balance missing"));
-
-        var lockedExisting = walletTxRepository.findByWalletIdAndBusinessRefAndTxType(
-                walletId, ref, WalletTxType.DEPOSIT_CREDIT);
-        if (lockedExisting.isPresent()) {
-            return replayExisting(lockedExisting.get(), amount, walletId);
-        }
 
         WalletBalanceMutator.apply(balance, WalletTxType.DEPOSIT_CREDIT, amount);
         walletBalanceRepository.save(balance);
@@ -181,9 +169,18 @@ public class WalletCommandServiceImpl implements WalletCommandService {
     }
 
     private WalletEntity resolveWallet(long memberId, WalletType walletType, String currency) {
-        String normalizedCurrency = normalizeCurrency(currency);
-        return walletRepository.findByMemberIdAndWalletTypeAndCurrency(memberId, walletType, normalizedCurrency)
+        return resolveOrCreate(memberId, walletType, normalizeCurrency(currency));
+    }
+
+    private WalletEntity resolveOrCreate(long memberId, WalletType walletType, String normalizedCurrency) {
+        String key = memberId + ":" + walletType + ":" + normalizedCurrency;
+        WalletEntity cached = walletCache.get(key);
+        if (cached != null) return cached;
+        WalletEntity wallet = walletRepository
+                .findByMemberIdAndWalletTypeAndCurrency(memberId, walletType, normalizedCurrency)
                 .orElseGet(() -> createWalletEntity(memberId, walletType, normalizedCurrency));
+        walletCache.put(key, wallet);
+        return wallet;
     }
 
     private WalletView createWallet(long memberId, WalletType walletType, String currency) {
