@@ -1,6 +1,8 @@
 package com.gtelpay.app.orchestration.vertx;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gtelpay.app.orchestration.deposit.DepositNotification;
+import com.gtelpay.app.orchestration.deposit.DepositNotifyUseCase;
 import com.gtelpay.app.orchestration.usecase.PaymentUseCase;
 import com.gtelpay.app.orchestration.usecase.TransferUseCase;
 import com.gtelpay.app.orchestration.usecase.WalletBalanceUseCase;
@@ -42,6 +44,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     @Override
     public void start(Promise<Void> startPromise) {
         ObjectMapper objectMapper = spring.getBean(ObjectMapper.class);
+        DepositNotifyUseCase depositNotifyUseCase = spring.getBean(DepositNotifyUseCase.class);
         WalletBalanceUseCase walletBalanceUseCase = spring.getBean(WalletBalanceUseCase.class);
         PaymentUseCase paymentUseCase = spring.getBean(PaymentUseCase.class);
         TransferUseCase transferUseCase = spring.getBean(TransferUseCase.class);
@@ -60,6 +63,14 @@ public class HttpServerVerticle extends AbstractVerticle {
         router.get("/health").handler(ctx -> ctx.response()
                 .putHeader("Content-Type", "application/json")
                 .end("{\"status\":\"UP\"}"));
+
+        router.post("/v1/deposits/notify").handler(ctx -> {
+            ctx.response().setStatusCode(202);
+            blocking(ctx, errors, () -> {
+                DepositNotification body = objectMapper.readValue(ctx.body().asString(), DepositNotification.class);
+                return ApiResponse.ok(depositNotifyUseCase.execute(body));
+            }, objectMapper);
+        });
 
         router.get("/v1/wallets/balance").handler(ctx -> blocking(ctx, errors, () -> {
             long memberId = MemberIdResolver.requireMemberId(ctx);
