@@ -30,9 +30,15 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class JournalServiceImpl implements JournalService {
+
+    // Period status rarely changes (once per month at most). Cache OPEN periods to avoid
+    // a SELECT coa_period on every postJournal call. Cache is invalidated by evicting the
+    // entry when a CLOSED/LOCKED period is detected — forcing a re-check on next call.
+    private final ConcurrentHashMap<String, Boolean> openPeriodCache = new ConcurrentHashMap<>();
 
     private static final String USE_CASE_DEPOSIT = "DEPOSIT";
     private static final String ACCOUNT_TRANSIT_DEPOSIT = "3100";
@@ -64,13 +70,16 @@ public class JournalServiceImpl implements JournalService {
     private void assertPeriodOpen(LocalDate postingDate) {
         LocalDate date = postingDate != null ? postingDate : LocalDate.now();
         String periodCode = String.format("%04d-%02d", date.getYear(), date.getMonthValue());
+        if (openPeriodCache.containsKey(periodCode)) return;
         coaPeriodRepository.findById(periodCode).ifPresent(period -> {
             if (period.getStatus() != PeriodStatus.OPEN) {
+                openPeriodCache.remove(periodCode);
                 throw new AccountingException(
                         ErrorCode.ACCOUNTING_PERIOD_CLOSED,
                         "accounting period " + periodCode + " is " + period.getStatus());
             }
         });
+        openPeriodCache.put(periodCode, Boolean.TRUE);
     }
 
     @Override
