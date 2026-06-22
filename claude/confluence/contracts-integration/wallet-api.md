@@ -6,13 +6,13 @@
 
 ---
 
-## Tổng quan
+## Overview
 
-`app-wallet` expose 6 endpoints HTTP (Internal HTTP / s2-http-internal).
-Không expose ra ngoài.
+`app-wallet` exposes 6 HTTP endpoints (Internal HTTP / s2-http-internal).
+Not exposed externally.
 
-Deposit async path: `app-wallet-worker` nhận `WALLET_CREDIT` từ s6-rabbitmq-cmds → gọi `POST /wallets/{walletId}/credit`.
-Sync path: `app-orchestration` gọi trực tiếp cho payment, transfer, balance read.
+Deposit async path: `app-wallet-worker` receives `WALLET_CREDIT` from s6-rabbitmq-cmds → calls `POST /wallets/{walletId}/credit`.
+Sync path: `app-orchestration` calls directly for payment, transfer, and balance reads.
 
 ---
 
@@ -20,21 +20,21 @@ Sync path: `app-orchestration` gọi trực tiếp cho payment, transfer, balanc
 
 | Method | Path | Operation | Use case |
 |--------|------|-----------|---------|
-| `POST` | `/wallets` | `provisionWallet` | Tạo wallet + zero balance (idempotent) |
-| `POST` | `/wallets/{walletId}/credit` | `creditWallet` | Tăng available (deposit credit, transfer in) |
-| `POST` | `/wallets/{walletId}/debit` | `debitWallet` | Giảm available (payment, transfer out) |
-| `POST` | `/wallets/{walletId}/freeze` | `freezeWallet` | available → frozen (withdraw hold) |
-| `POST` | `/wallets/{walletId}/unfreeze` | `unfreezeWallet` | frozen → available (withdraw cancel) |
+| `POST` | `/wallets` | `provisionWallet` | Create wallet + zero balance (idempotent) |
+| `POST` | `/wallets/{walletId}/credit` | `creditWallet` | Increase available (deposit credit, transfer in) |
+| `POST` | `/wallets/{walletId}/debit` | `debitWallet` | Decrease available (payment, transfer out) |
+| `POST` | `/wallets/{walletId}/freeze` | `freezeWallet` | available → frozen (withdrawal hold) |
+| `POST` | `/wallets/{walletId}/unfreeze` | `unfreezeWallet` | frozen → available (withdrawal cancel) |
 | `GET` | `/wallets/{walletId}/balance` | `getBalance` | Query available + frozen |
 
 ---
 
 ## Idempotency
 
-Mọi mutation idempotent trên `(walletId, business_ref, tx_type)`:
+All mutations are idempotent on `(walletId, business_ref, tx_type)`:
 
-| Trường hợp | Kết quả |
-|-----------|---------|
+| Case | Result |
+|------|--------|
 | Duplicate, same amount | Return existing tx, `idempotent_replay: true` |
 | Duplicate, different amount | 409 `WALLET_DUPLICATE_CONFLICT` |
 | Wallet LOCKED | 422 `WALLET_LOCKED` |
@@ -43,8 +43,8 @@ Mọi mutation idempotent trên `(walletId, business_ref, tx_type)`:
 
 ## creditWallet — Deposit flow
 
-Gọi bởi `app-wallet-worker` sau khi journal POSTED (Phase B complete).
-**FR-3: credit chỉ sau POSTED — không credit trước.**
+Called by `app-wallet-worker` after journal is POSTED (Phase B complete).
+**FR-3: credit only after POSTED — never before.**
 
 ```json
 POST /wallets/5001/credit
@@ -71,7 +71,7 @@ Response:
 
 ## debitWallet — Payment / Transfer
 
-Gọi bởi `app-orchestration` trong sync path.
+Called by `app-orchestration` in the sync path.
 
 ```json
 POST /wallets/5001/debit
@@ -82,7 +82,7 @@ POST /wallets/5001/debit
 }
 ```
 
-Fails với `WALLET_INSUFFICIENT_BALANCE` nếu `available < amount`.
+Fails with `WALLET_INSUFFICIENT_BALANCE` if `available < amount`.
 
 ---
 
@@ -94,16 +94,16 @@ POST /wallets/5001/freeze
   "amount": "200000.0000",
   "business_ref": "wdl-20260618-def456"
 }
-→ available giảm, frozen tăng — cùng transaction
+→ available decreases, frozen increases — same transaction
 ```
 
-Unfreeze: reverse. Dùng khi withdraw bị cancel sau freeze.
+Unfreeze: reverses the freeze. Used when a withdrawal is cancelled after the freeze.
 
 ---
 
 ## provisionWallet — Onboarding
 
-Idempotent trên `(member_id, wallet_type, currency)`:
+Idempotent on `(member_id, wallet_type, currency)`:
 
 ```json
 POST /wallets
@@ -122,9 +122,9 @@ POST /wallets
 | Invariant | Rule |
 |-----------|------|
 | W1 | `available >= 0`, `frozen >= 0` always |
-| W2 | Mỗi balance change = 1 `wallet_tx` trong cùng DB transaction |
+| W2 | Every balance change = 1 `wallet_tx` in the same DB transaction |
 | W3 | Duplicate `business_ref` → same effect, no duplicate movement |
-| W4 | Wallet services không bao giờ mutate `coa_*` |
+| W4 | Wallet services never mutate `coa_*` |
 
 ---
 
@@ -139,12 +139,12 @@ POST /wallets
 
 ## Error Codes
 
-| `error_code` | HTTP | Tình huống |
+| `error_code` | HTTP | Situation |
 |-------------|------|-----------|
-| `WALLET_NOT_FOUND` | 404 | walletId không tồn tại |
+| `WALLET_NOT_FOUND` | 404 | walletId does not exist |
 | `WALLET_INSUFFICIENT_BALANCE` | 422 | Debit/freeze > available |
-| `WALLET_LOCKED` | 422 | Wallet bị lock, reject mutation |
-| `WALLET_DUPLICATE_CONFLICT` | 409 | Same `business_ref` + khác `amount` |
+| `WALLET_LOCKED` | 422 | Wallet is locked, mutation rejected |
+| `WALLET_DUPLICATE_CONFLICT` | 409 | Same `business_ref` + different `amount` |
 
 ---
 

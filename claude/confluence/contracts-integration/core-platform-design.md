@@ -53,38 +53,38 @@ core.wallet  core.accounting
 
 ## Chart of Accounts (COA)
 
-### Nhóm 1 — Tài Sản
+### Group 1 — Assets
 
-| Mã TK | Tên |
-|-------|-----|
-| 1111 | TK Vietinbank — Chuyên dùng |
-| 1112 | TK Napas Clearing |
-| 1113 | TK VPBank — QR/POS |
+| Account | Name |
+|---------|------|
+| 1111 | Vietinbank Nostro — Dedicated |
+| 1112 | Napas Clearing Account |
+| 1113 | VPBank — QR/POS |
 
-### Nhóm 2 — Nợ Phải Trả
+### Group 2 — Liabilities
 
-| Mã TK | Tên |
-|-------|-----|
+| Account | Name |
+|---------|------|
 | 2110 | Wallet Balance — User |
 | 2120 | Wallet Balance — Merchant |
-| 2130 | Ký quỹ — Đối tác Chi hộ |
+| 2130 | Escrow — Disbursement Partner |
 
-### Nhóm 3 — Transit
+### Group 3 — Transit
 
-| Mã TK | Tên | Use case |
-|-------|-----|---------|
-| 3100 | Transit — Nạp tiền | Deposit |
-| 3200 | Transit — Rút tiền | Withdraw |
-| 3300 | Transit — Chuyển tiền nội bộ | Internal transfer |
+| Account | Name | Use case |
+|---------|------|---------|
+| 3100 | Transit — Deposit | Deposit |
+| 3200 | Transit — Withdraw | Withdraw |
+| 3300 | Transit — Internal Transfer | Internal transfer |
 | 3400 | Transit — IBFT | IBFT |
-| 3500 | Transit — Thanh toán | Payment |
-| 3600 | Transit — Chi Lương | Payroll |
-| 3700 | Transit — Chi hộ | Disbursement |
+| 3500 | Transit — Payment | Payment |
+| 3600 | Transit — Payroll | Payroll |
+| 3700 | Transit — Disbursement | Disbursement |
 | 3800 | Transit — Clearing | EOD settlement |
 
 ---
 
-## Use Case: Deposit (Nạp tiền)
+## Use Case: Deposit
 
 Gross 100,000 VND, fee 1,000 VND → net 99,000 VND vào wallet USER.
 
@@ -108,7 +108,7 @@ Gross 100,000 VND, fee 1,000 VND → net 99,000 VND vào wallet USER.
 
 ---
 
-## Use Case: Payment (Thanh toán)
+## Use Case: Payment
 
 USER pays MERCHANT 50,000 VND, fee 500 VND.
 
@@ -127,9 +127,9 @@ Flow: sync. orchestration → `app-accounting` (HTTP) → `app-wallet` (HTTP). N
 
 ---
 
-## Use Case: Transfer nội bộ (Internal Transfer)
+## Use Case: Internal Transfer
 
-Member A gửi 30,000 VND cho Member B, fee 0 VND.
+Member A sends 30,000 VND to Member B, fee 0 VND.
 
 | Step | Account | DR/CR | Amount |
 |------|---------|-------|--------|
@@ -142,9 +142,9 @@ Member A gửi 30,000 VND cho Member B, fee 0 VND.
 
 ---
 
-## Use Case: Withdraw (Rút tiền)
+## Use Case: Withdraw
 
-Member rút 200,000 VND ra ngân hàng, fee 2,000 VND.
+Member withdraws 200,000 VND to bank, fee 2,000 VND.
 
 ### Sync accept (freeze)
 
@@ -155,7 +155,7 @@ Member rút 200,000 VND ra ngân hàng, fee 2,000 VND.
 
 Wallet: `available −200,000` | `frozen +200,000`
 
-### Async settle (khi bank confirm)
+### Async settle (when bank confirms)
 
 | Step | Account | DR/CR | Amount |
 |------|---------|-------|--------|
@@ -170,11 +170,11 @@ Wallet: `available −200,000` | `frozen +200,000`
 
 ## Transit Account Summary
 
-| TK | Tên | Phải = 0 sau khi |
-|----|-----|-----------------|
-| 3100 | Transit Deposit | Mỗi deposit completed (Phase B done) |
-| 3200 | Transit Withdraw | Mỗi withdrawal settled |
-| 3300 | Transit Transfer | Mỗi transfer posted |
-| 3500 | Transit Payment | Mỗi payment posted |
+| Account | Name | Must = 0 after |
+|---------|------|----------------|
+| 3100 | Transit Deposit | Each deposit completed (Phase B done) |
+| 3200 | Transit Withdraw | Each withdrawal settled |
+| 3300 | Transit Transfer | Each transfer posted |
+| 3500 | Transit Payment | Each payment posted |
 
 Transit = 0 là invariant CI-gated (INV-03, ADR-010, ADR-031).

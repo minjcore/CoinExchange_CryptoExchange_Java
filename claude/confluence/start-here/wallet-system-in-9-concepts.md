@@ -1,30 +1,30 @@
-# 9 điều cần biết trước khi code GtelPay Core
+# 9 Things to Know Before Coding GtelPay Core
 
 > **CF page ID:** 51839571 | **Parent:** 📌 Start Here (51315064)
 > **Source of truth:** this file → push to CF
 
-9 điều này là nền tảng kỹ thuật của mọi hệ thống ví tiền. Đọc xong là hình dung được toàn bộ luồng tiền đi từ đâu, lưu ở đâu, và tại sao không bị trùng hay mất.
+These 9 fundamentals underpin every e-money system. After reading them you will be able to picture the full money flow — where it enters, where it is stored, and why it cannot be duplicated or lost.
 
 ---
 
-1. **Schema boundary** — `wallet.*` và `accounting.*` không bao giờ JOIN/FK nhau. `wallet_tx.coa_trans_id` = correlation only. (ADR-003)
+1. **Schema boundary** — `wallet.*` and `accounting.*` never JOIN or share foreign keys. `wallet_tx.coa_trans_id` = correlation only. (ADR-003)
 
-2. **Wallet balance là snapshot** — đọc 1 row, không derive từ sum. Mỗi mutation = 1 `wallet_tx` trong cùng DB transaction. (ADR-004)
+2. **Wallet balance is a snapshot** — read one row, never derived from a sum. Each mutation = one `wallet_tx` in the same DB transaction. (ADR-004)
 
-3. **Deposit là two-phase** — Phase A: TB `flags.pending` (1111→3100). Phase B: `confirmDeposit` → post + 3100→2110+4110. Transit 3100 = 0 sau Phase B, không có ngoại lệ. (ADR-006, ADR-010)
+3. **Deposit is two-phase** — Phase A: TB `flags.pending` (1111→3100). Phase B: `confirmDeposit` → post + 3100→2110+4110. Transit 3100 = 0 after Phase B, no exceptions. (ADR-006, ADR-010)
 
-4. **RabbitMQ is inbound** — orchestration publish command → worker. Kafka = outbound events từ worker ra ngoài. (ADR-041, ADR-013)
+4. **RabbitMQ is inbound** — orchestration publishes commands → worker. Kafka = outbound events from workers to downstream. (ADR-041, ADR-013)
 
-5. **businessRef chạy end-to-end** — `X-Idempotency-Key` → outbox → `BANK_DEPOSIT` → `coa_trans.reference_id` → `WALLET_CREDIT` → `wallet_tx.business_ref`. Replay với cùng data = trả existing IDs, không tạo mới. (ADR-005)
+5. **businessRef runs end-to-end** — `X-Idempotency-Key` → outbox → `BANK_DEPOSIT` → `coa_trans.reference_id` → `WALLET_CREDIT` → `wallet_tx.business_ref`. Replay with the same data = return existing IDs, no new records created. (ADR-005)
 
-6. **Fee tính 1 lần tại orchestration** — worker nhận `grossAmount` + `fee` đã tính sẵn, không tính lại. Fee 4110 nằm trên cùng journal với movement. (ADR-009, ADR-028)
+6. **Fee computed once at orchestration** — workers receive `grossAmount` + pre-computed `fee`, never recompute it. Fee 4110 is on the same journal as the movement. (ADR-009, ADR-028)
 
-7. **POSTED = immutable** — không UPDATE/DELETE `coa_trans_data` của POSTED. Sửa sai = journal đảo ngược mới. (ADR-001)
+7. **POSTED = immutable** — never UPDATE or DELETE `coa_trans_data` of a POSTED journal. Corrections = a new reversing journal. (ADR-001)
 
-8. **Wallet credit chỉ sau POSTED** — gate bắt buộc: `coa_trans.status = POSTED` trước khi INSERT `wallet_tx`. Không credit trên Phase A. (ADR-024, ADR-026)
+8. **Wallet credit only after POSTED** — mandatory gate: `coa_trans.status = POSTED` before INSERT `wallet_tx`. No credit on Phase A. (ADR-024, ADR-026)
 
-9. **Fail-fast tại mọi boundary** — VND + scale≤4 + JWT `sub` tại orchestration. LOCKED wallet reject debit/deposit. Transit≠0 reject `postJournal`. Không silent absorb. (ADR-019, ADR-029, ADR-010, ADR-011)
+9. **Fail-fast at every boundary** — VND + scale≤4 + JWT `sub` enforced at orchestration. LOCKED wallet rejects debit/deposit. Transit≠0 rejects `postJournal`. No silent absorption. (ADR-019, ADR-029, ADR-010, ADR-011)
 
 ---
 
-> Chi tiết từng khái niệm: xem [Architecture FAQ](https://nivc.atlassian.net/wiki/spaces/GtelPay/pages/51544171) và [ADR pre-reading checklist](https://nivc.atlassian.net/wiki/spaces/GtelPay/pages/51872153).
+> For detail on each concept, see [Architecture FAQ](https://nivc.atlassian.net/wiki/spaces/GtelPay/pages/51544171) and [ADR pre-reading checklist](https://nivc.atlassian.net/wiki/spaces/GtelPay/pages/51872153).

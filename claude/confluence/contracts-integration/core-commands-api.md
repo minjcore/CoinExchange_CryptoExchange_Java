@@ -7,9 +7,9 @@
 
 ---
 
-## Tổng quan
+## Overview
 
-Hai channel async của platform:
+Two async channels of the platform:
 
 | Surface | Protocol | Direction | Contract file |
 |---------|---------|-----------|--------------|
@@ -23,7 +23,7 @@ Hai channel async của platform:
 **Producer:** `app-orchestration` (via transactional outbox).
 **Consumers:** `app-accounting-worker`, `app-wallet-worker`.
 
-### Command Envelope (chung cho mọi command)
+### Command Envelope (shared by all commands)
 
 ```json
 {
@@ -35,12 +35,12 @@ Hai channel async của platform:
 }
 ```
 
-| Field | Mandatory | Vai trò |
-|-------|-----------|---------|
+| Field | Mandatory | Role |
+|-------|-----------|------|
 | `commandType` | Yes | Routing key: `BANK_DEPOSIT` \| `WALLET_CREDIT` \| `WITHDRAW_PAYOUT` |
 | `businessRef` | Yes | End-to-end idempotency key = `X-Idempotency-Key` |
-| `messageId` | Yes | Per-publish AMQP dedup — không phải business key |
-| `correlationId` | No | Trace/observability only — không persist |
+| `messageId` | Yes | Per-publish AMQP dedup — not a business key |
+| `correlationId` | No | Trace/observability only — not persisted |
 | `payload` | Yes | Business data per command type |
 
 ---
@@ -72,7 +72,7 @@ Hai channel async của platform:
 |--------------|------|-------|
 | `memberId` | int64 | Resolved from virtualAccount by orchestration |
 | `walletId` | int64 | Pocket wallet BIGINT PK — resolved by orchestration alongside memberId; avoids accounting worker crossing domain boundary to wallet schema |
-| `virtualAccount` | string | Raw VA từ bank notification |
+| `virtualAccount` | string | Raw VA from bank notification |
 | `grossAmount` | decimal string | Scale 4. Phase A: 1111 DR → 3100 CR |
 | `fee` | decimal string | Scale 4. Phase B: 3100 DR → 4110 CR |
 | `currency` | string | `VND` only (v1) |
@@ -137,7 +137,7 @@ Hai channel async của platform:
 
 | Payload field | Type | Notes |
 |--------------|------|-------|
-| `walletId` | int64 | Wallet với frozen amount cần payout |
+| `walletId` | int64 | Wallet with the frozen amount to payout |
 | `amount` | decimal string | Frozen amount to release to bank |
 | `currency` | string | `VND` only (v1) |
 | `bankAccountNumber` | string | Destination bank account |
@@ -243,4 +243,4 @@ X-Idempotency-Key (s1-http-public)
   = wallet_tx.business_ref (DB)
 ```
 
-Không đổi tên, không map sang ID khác, end-to-end.
+Never renamed, never mapped to a different ID, end-to-end.

@@ -5,11 +5,11 @@
 
 ---
 
-## Tại sao có orchestrator? — Integration Surface
+## Why an orchestrator? — Integration Surface
 
-`app-orchestration` là **integration surface duy nhất** của hệ thống — điểm tiếp xúc duy nhất giữa external world và `core.accounting` + `core.wallet`. Nó không quan tâm protocol nào được expose (HTTP, gRPC, hay cái gì khác) — protocol là detail triển khai, không phải bản chất.
+`app-orchestration` is the system's **sole integration surface** — the only contact point between the external world and `core.accounting` + `core.wallet`. It does not care which protocol is exposed (HTTP, gRPC, or anything else) — protocol is an implementation detail, not the essence.
 
-### Vị trí của nó
+### Where it sits
 
 ```
 external world
@@ -18,10 +18,10 @@ external world
 ┌─────────────────────┐
 │  app-orchestration  │  ← integration surface
 │                     │
-│  biết: use case     │
-│  biết: caller intent│
-│  biết: fee policy   │
-│  biết: VA mapping   │
+│  knows: use case    │
+│  knows: caller intent│
+│  knows: fee policy  │
+│  knows: VA mapping  │
 └──────┬──────────────┘
        │
   ┌────┴────────────┐
@@ -30,43 +30,43 @@ core.accounting   core.wallet
 (accounting       (wallet
  ledger)           ledger)
   │
-  biết: double-entry
-  biết: TigerBeetle
-  biết: PENDING/POSTED
-  biết: COA accounts
+  knows: double-entry
+  knows: TigerBeetle
+  knows: PENDING/POSTED
+  knows: COA accounts
 
                    │
-                   biết: available/frozen balance
-                   biết: wallet_tx
-                   biết: freeze/unfreeze/credit/debit
+                   knows: available/frozen balance
+                   knows: wallet_tx
+                   knows: freeze/unfreeze/credit/debit
 ```
 
-### Nhiệm vụ cụ thể — 4 việc, không hơn
+### Exactly 4 responsibilities
 
-| # | Nhiệm vụ | Ví dụ |
-|---|----------|-------|
-| 1 | **Auth + validate inbound request** | Verify mTLS cert của bank, validate businessRef có format đúng không |
-| 2 | **Resolve context** — translate external identity sang internal identity | VA `VCB-001` → `memberId=1001`, `walletId=5001` |
-| 3 | **Apply policy** — tính toán một lần duy nhất trước khi gọi domain | Fee = `grossAmount × 1%`, capped at 10,000 VND |
-| 4 | **Sequence domain calls** — gọi đúng domain theo đúng thứ tự, không để domain tự gọi nhau | Deposit: outbox → accounting worker → wallet worker (theo thứ tự, có gate) |
+| # | Responsibility | Example |
+|---|---------------|---------|
+| 1 | **Auth + validate inbound request** | Verify bank mTLS cert, validate businessRef format |
+| 2 | **Resolve context** — translate external identity to internal identity | VA `VCB-001` → `memberId=1001`, `walletId=5001` |
+| 3 | **Apply policy** — compute once before calling any domain | Fee = `grossAmount × 1%`, capped at 10,000 VND |
+| 4 | **Sequence domain calls** — call the right domain in the right order, domains never call each other | Deposit: outbox → accounting worker → wallet worker (in order, with gate) |
 
-### Những gì nó KHÔNG làm
+### What it does NOT do
 
-- **Không ghi trực tiếp vào `coa_*` hay `wallet_*`** — đó là việc của domain
-- **Không biết TigerBeetle tồn tại** — implementation detail của `core.accounting`
-- **Không tái tính fee trong worker** — fee được tính một lần tại đây, worker nhận kết quả
-- **Không implement business rule của domain** — "transit 3100 phải bằng 0" là rule của `core.accounting`, không phải orchestration
+- **Does not write directly to `coa_*` or `wallet_*`** — that is the domain's job
+- **Does not know TigerBeetle exists** — implementation detail of `core.accounting`
+- **Does not recompute fee in workers** — fee is computed once here; workers receive the result
+- **Does not implement domain business rules** — "transit 3100 must equal 0" is a `core.accounting` rule, not orchestration's
 
-### Nếu không có tầng này
+### Without this layer
 
-| Vấn đề | Hậu quả |
-|--------|---------|
-| `core.accounting` phải tự resolve VA → memberId | Domain thuần bị nhiễm integration concern |
-| Bank webhook gọi thẳng vào accounting worker | Coupling: thay đổi bank protocol → sửa accounting |
-| Fee computation nằm trong domain | Mỗi use case tính fee theo logic riêng, không nhất quán |
-| Mobile app biết về RabbitMQ, TigerBeetle | Caller bị expose internal topology |
+| Problem | Consequence |
+|---------|------------|
+| `core.accounting` must resolve VA → memberId itself | Pure domain is contaminated with integration concerns |
+| Bank webhook calls accounting worker directly | Coupling: change bank protocol → modify accounting |
+| Fee computation lives in the domain | Each use case computes fee differently, inconsistent |
+| Mobile app knows about RabbitMQ and TigerBeetle | Internal topology is exposed to callers |
 
-`core.accounting` và `core.wallet` chỉ nhận data đã được resolve và validated — không biết caller là ai, không biết protocol là gì.
+`core.accounting` and `core.wallet` only receive data that has already been resolved and validated — they have no knowledge of who the caller is or what protocol was used.
 
 ---
 

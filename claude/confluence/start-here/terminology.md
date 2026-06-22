@@ -49,27 +49,27 @@
 
 ## Wallet Terms
 
-| Term | Table/Field | Ý nghĩa |
+| Term | Table/Field | Meaning |
 |------|-------------|---------|
-| **Available** | `wallet_balance.available` | Số dư có thể chi tiêu ngay |
-| **Frozen** | `wallet_balance.frozen` | Đang giữ cho giao dịch đang xử lý (VD: rút tiền) |
-| **wallet_tx** | `wallet_tx` | Mỗi thay đổi balance = một dòng append-only |
-| **Provision** | Tạo `wallet` + `wallet_balance(0)` | Khởi tạo ví lần đầu cho member |
+| **Available** | `wallet_balance.available` | Immediately spendable balance |
+| **Frozen** | `wallet_balance.frozen` | Held for an in-progress transaction (e.g. withdrawal) |
+| **wallet_tx** | `wallet_tx` | Each balance change = one append-only row |
+| **Provision** | Create `wallet` + `wallet_balance(0)` | Initial wallet setup for a new member |
 
-**Balance invariant:** `available >= 0`, `frozen >= 0`, mỗi thay đổi = 1 `wallet_tx` trong cùng transaction.
+**Balance invariant:** `available >= 0`, `frozen >= 0`, every change = 1 `wallet_tx` in the same transaction.
 
 ---
 
 ## Messaging Terms
 
-| Term | Surface | Ý nghĩa |
+| Term | Surface | Meaning |
 |------|---------|---------|
 | `businessRef` | s1-http-public body, s6-rabbitmq-cmds envelope, DB | End-to-end idempotency key = `X-Idempotency-Key` |
-| `reference_id` | s2-http-internal OpenAPI (accounting) | Alias của `businessRef` tại accounting API |
-| `correlationId` | s6-rabbitmq-cmds envelope, s3-kafka-events (optional) | Trace observability only — không persist vào DB |
-| `messageId` | s6-rabbitmq-cmds envelope | AMQP dedup per-publish — không phải business key |
-| `BANK_DEPOSIT` | s6-rabbitmq-cmds command | Trigger Phase A+B tại `app-accounting-worker` |
-| `WALLET_CREDIT` | s6-rabbitmq-cmds command | Trigger wallet credit tại `app-wallet-worker` |
+| `reference_id` | s2-http-internal OpenAPI (accounting) | Alias of `businessRef` at the accounting API |
+| `correlationId` | s6-rabbitmq-cmds envelope, s3-kafka-events (optional) | Trace/observability only — not persisted to DB |
+| `messageId` | s6-rabbitmq-cmds envelope | AMQP dedup per-publish — not a business key |
+| `BANK_DEPOSIT` | s6-rabbitmq-cmds command | Triggers Phase A+B at `app-accounting-worker` |
+| `WALLET_CREDIT` | s6-rabbitmq-cmds command | Triggers wallet credit at `app-wallet-worker` |
 
 ---
 

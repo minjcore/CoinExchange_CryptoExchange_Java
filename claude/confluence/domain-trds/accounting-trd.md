@@ -73,28 +73,28 @@ public record CreateJournalCommand(
 ```
 
 **Rules:**
-- `confirmDeposit` nhận `fee` riêng (được tính bởi orchestration, truyền vào qua BANK_DEPOSIT command) — phép tính `net = grossAmount − fee` thực hiện bên trong `confirmDeposit`
-- `createJournal` idempotent: `UNIQUE(businessRef, useCase)` → duplicate trả về existing PENDING
+- `confirmDeposit` receives `fee` separately (computed by orchestration, passed via the BANK_DEPOSIT command) — the calculation `net = grossAmount − fee` is performed inside `confirmDeposit`
+- `createJournal` is idempotent: `UNIQUE(businessRef, useCase)` → duplicate returns existing PENDING
 - Dependencies: `core.sharedlib` only. Zero framework imports.
 
 ---
 
-## TigerBeetle là gì?
+## What is TigerBeetle?
 
-TigerBeetle là database chuyên dụng cho financial transactions — không phải general-purpose DB. Viết bằng Zig, thiết kế từ đầu cho double-entry bookkeeping.
+TigerBeetle is a purpose-built database for financial transactions — not a general-purpose DB. Written in Zig, designed from the ground up for double-entry bookkeeping.
 
-| Đặc điểm | Chi tiết |
-|----------|---------|
-| **Native pending/post/void** | Transfer có 3 trạng thái built-in — không cần tự implement saga |
-| **O(1) balance reads** | Mỗi Account object tích lũy `debits_posted`, `credits_posted` — không cần `SUM` |
-| **u128 amounts** | Không có floating-point. VND × 10⁴ stored as integer |
-| **Throughput** | 1M+ TPS trên single node, deterministic consensus (VSSR) |
-| **Immutability** | Transfer không bao giờ bị xóa hay sửa — chỉ append |
+| Characteristic | Detail |
+|---------------|--------|
+| **Native pending/post/void** | Transfers have 3 built-in states — no need to implement saga manually |
+| **O(1) balance reads** | Each Account object accumulates `debits_posted`, `credits_posted` — no `SUM` query needed |
+| **u128 amounts** | No floating-point. VND × 10⁴ stored as integer |
+| **Throughput** | 1M+ TPS on single node, deterministic consensus (VSSR) |
+| **Immutability** | Transfers are never deleted or modified — append only |
 
-**Tại sao dùng cho `core.accounting`?**
-PostgreSQL có thể làm được double-entry, nhưng cần `SUM(amount) WHERE account_id = X` mỗi lần đọc balance — O(n) theo số dòng. TigerBeetle giữ running balance trong Account object — O(1) bất kể có bao nhiêu transfers.
+**Why use it for `core.accounting`?**
+PostgreSQL can handle double-entry, but requires `SUM(amount) WHERE account_id = X` on every balance read — O(n) by row count. TigerBeetle keeps a running balance in the Account object — O(1) regardless of transfer count.
 
-**Chỉ `core.accounting` mở TB client** — ADR-037. Không module nào khác được access TigerBeetle trực tiếp.
+**Only `core.accounting` opens a TB client** — ADR-037. No other module is allowed to access TigerBeetle directly.
 
 ---
 
@@ -140,9 +140,9 @@ public record AccountBalance(
 ```
 
 **Locked decisions:**
-- `transferId` = `long` (64-bit) — đủ cho scale VN
-- `accountId` = COA code (1111, 3100...) — không phải internal DB id
-- `postPendingTransfer` không nhận `amount` — TB post full, không partial
+- `transferId` = `long` (64-bit) — sufficient for VN scale
+- `accountId` = COA code (1111, 3100...) — not the internal DB id
+- `postPendingTransfer` does not take `amount` — TB posts the full amount, no partial posting
 
 ---
 
@@ -180,7 +180,7 @@ public interface CoaTransDataRepository {
 - `CoaTransRepository.findByBusinessRefAndUseCase` drives idempotency for `createJournal`.
 - `CoaTransDataRepository` is append-only. Lines are never updated after POSTED.
 - `save` on `CoaTrans` handles both INSERT (Phase A) and status UPDATE (Phase B `PENDING → POSTED`).
-- No Spring/JPA annotation in these interfaces. Zero framework imports.
+- No Spring or JPA annotations in these interfaces. Zero framework imports.
 
 ---
 

@@ -10,22 +10,22 @@
 
 | Question | Answer |
 |----------|--------|
-| `request_id` xuyên suốt toàn hệ? | **Không.** Không có field `request_id`. Trace dùng `correlationId` (optional, observability only). |
-| `reference_id` vs `business_ref`? | **Cùng một giá trị.** Khác tên theo lớp: s2-http-internal/OpenAPI dùng `reference_id`; DB dùng `business_ref`; JSON wire dùng `businessRef`. |
-| Khóa idempotent end-to-end? | `businessRef` = `X-Idempotency-Key` (ADR-005) |
-| `messageId`? | Chỉ dedup transport tại s6-rabbitmq-cmds. Không phải business key. |
+| Is there a `request_id` across the entire system? | **No.** There is no `request_id` field. Tracing uses `correlationId` (optional, observability only). |
+| `reference_id` vs `business_ref`? | **Same value.** Different names by layer: s2-http-internal/OpenAPI uses `reference_id`; DB uses `business_ref`; JSON wire uses `businessRef`. |
+| End-to-end idempotency key? | `businessRef` = `X-Idempotency-Key` (ADR-005) |
+| `messageId`? | Transport-level dedup at s6-rabbitmq-cmds only. Not a business key. |
 
 ---
 
 ## Identity Map
 
-| Key | Wire / header | DB / domain | Vai trò | Bắt buộc? |
-|-----|--------------|-------------|---------|-----------|
-| `businessRef` | s1-http-public body + `X-Idempotency-Key`; s6-rabbitmq-cmds envelope | `coa_trans.business_ref`, `wallet_tx.business_ref` | **Idempotency nghiệp vụ** | Mutation s1-http-public: yes |
-| `reference_id` | s2-http-internal JSON accounting-internal.yaml | = `business_ref` trên `coa_trans` | Alias của `businessRef` tại s2-http-internal | s2-http-internal create: yes |
-| `correlationId` | s6-rabbitmq-cmds envelope; s3-kafka-events (optional) | Không persist | **Trace** HTTP → queue → Kafka | Optional |
-| `messageId` | s6-rabbitmq-cmds envelope only | Không | Dedup một lần publish AMQP | s6-rabbitmq-cmds: yes |
-| `coaTransId` | s2-http-internal response; s3-kafka-events `JournalPosted` | `coa_trans.id`; `wallet_tx.coa_trans_id` (no FK) | Correlation journal ↔ wallet | Sau khi post |
+| Key | Wire / header | DB / domain | Role | Mandatory? |
+|-----|--------------|-------------|------|-----------|
+| `businessRef` | s1-http-public body + `X-Idempotency-Key`; s6-rabbitmq-cmds envelope | `coa_trans.business_ref`, `wallet_tx.business_ref` | **Business idempotency** | Mutation s1-http-public: yes |
+| `reference_id` | s2-http-internal JSON accounting-internal.yaml | = `business_ref` on `coa_trans` | Alias of `businessRef` at s2-http-internal | s2-http-internal create: yes |
+| `correlationId` | s6-rabbitmq-cmds envelope; s3-kafka-events (optional) | Not persisted | **Trace** HTTP → queue → Kafka | Optional |
+| `messageId` | s6-rabbitmq-cmds envelope only | No | AMQP dedup per publish | s6-rabbitmq-cmds: yes |
+| `coaTransId` | s2-http-internal response; s3-kafka-events `JournalPosted` | `coa_trans.id`; `wallet_tx.coa_trans_id` (no FK) | Correlation journal ↔ wallet | After posting |
 
 ---
 
@@ -40,7 +40,7 @@ X-Idempotency-Key
   = wallet_tx.business_ref
 ```
 
-**Casing:** JSON wire = `camelCase`; PostgreSQL = `snake_case`; s2-http-internal accounting OpenAPI = `snake_case` với tên `reference_id`.
+**Casing:** JSON wire = `camelCase`; PostgreSQL = `snake_case`; s2-http-internal accounting OpenAPI = `snake_case` with name `reference_id`.
 
 ---
 
@@ -69,7 +69,7 @@ app-wallet-worker
   UNIQUE(wallet_id, business_ref, tx_type) → idempotency
 ```
 
-Cùng một key từ đầu đến cuối. Không biến đổi, không map sang ID khác.
+Same key from start to finish. Never transformed, never mapped to a different ID.
 
 ---
 
@@ -87,8 +87,8 @@ Cùng một key từ đầu đến cuối. Không biến đổi, không map sang
 
 ## Decisions (locked)
 
-- `businessRef` là canonical business idempotency key end-to-end
-- `reference_id` là alias của `businessRef` trong s2-http-internal/accounting
-- `correlationId` chỉ phục vụ trace/observability
-- `messageId` và `eventId` không được dùng thay cho business key
-- `request_id` không phải field chuẩn trong spec hiện tại
+- `businessRef` is the canonical business idempotency key end-to-end
+- `reference_id` is an alias of `businessRef` in s2-http-internal/accounting
+- `correlationId` serves trace/observability only
+- `messageId` and `eventId` must not be used in place of the business key
+- `request_id` is not a standard field in the current spec

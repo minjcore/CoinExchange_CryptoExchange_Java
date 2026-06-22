@@ -58,7 +58,7 @@ Application (orchestration)
 
 ### wallet_tx — Internal Ledger
 
-`wallet_tx` là internal ledger của wallet domain: append-only, immutable, ghi nhận toàn bộ lịch sử balance change của mỗi wallet. Khác với `core.accounting` (double-entry, COA accounts, balance equation), `wallet_tx` chỉ ghi nhận effect lên balance của một wallet cụ thể — không có DR/CR pair.
+`wallet_tx` is the wallet domain's internal ledger: append-only, immutable, recording the complete balance change history of each wallet. Unlike `core.accounting` (double-entry, COA accounts, balance equation), `wallet_tx` only records the effect on a specific wallet's balance — there is no DR/CR pair.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -73,7 +73,7 @@ Application (orchestration)
 
 **Idempotency uniqueness:** `(wallet_id, business_ref, tx_type)`
 
-**Ledger rule:** mỗi balance change = đúng một `wallet_tx` INSERT trong cùng DB transaction với `wallet_balance` update. Không bao giờ update hoặc delete `wallet_tx`. (Principle III, W2)
+**Ledger rule:** every balance change = exactly one `wallet_tx` INSERT in the same DB transaction as the `wallet_balance` update. Never update or delete `wallet_tx`. (Principle III, W2)
 
 > **ID type: BIGINT (locked).** UUID bị loại — 16 bytes vs 8 bytes/FK index, random v4 gây B-tree page split, write chậm hơn ~50%. BIGINT sequential = optimal.
 
@@ -110,7 +110,7 @@ public record WalletTxResult(
     BigDecimal available,
     BigDecimal frozen,
     String currency,
-    boolean idempotentReplay  // true nếu businessRef đã tồn tại
+    boolean idempotentReplay  // true if businessRef already existed
 ) {}
 ```
 
@@ -157,9 +157,9 @@ public interface WalletTxRepository {
 
 **Notes:**
 - `WalletRepository` owns wallet + balance — same aggregate, same DB transaction.
-- `WalletTxRepository` is append-only. `WalletService` only calls `save` after idempotency check passes.
-- `findBalanceForUpdate` dùng **optimistic lock** — `wallet_balance.version` tăng mỗi lần update. Adapter ném exception khi version stale. Domain không import `@Lock` hay `@Version`.
-- No Spring/JPA annotation in these interfaces. Zero framework imports.
+- `WalletTxRepository` is append-only. `WalletService` only calls `save` after the idempotency check passes.
+- `findBalanceForUpdate` uses **optimistic locking** — `wallet_balance.version` increments on each update. The adapter throws when the version is stale. The domain does not import `@Lock` or `@Version`.
+- No Spring or JPA annotations in these interfaces. Zero framework imports.
 
 ---
 

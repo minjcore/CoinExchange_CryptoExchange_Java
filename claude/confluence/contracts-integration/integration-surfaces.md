@@ -33,7 +33,7 @@
 
 ## s6-rabbitmq-cmds Command Envelope
 
-Mọi message trên s6-rabbitmq-cmds dùng chung envelope:
+All messages on s6-rabbitmq-cmds share a common envelope:
 
 ```json
 {
@@ -52,8 +52,8 @@ Mọi message trên s6-rabbitmq-cmds dùng chung envelope:
 }
 ```
 
-| Field | Mandatory | Vai trò |
-|-------|-----------|---------|
+| Field | Mandatory | Role |
+|-------|-----------|------|
 | `commandType` | Yes | Routing key (BANK_DEPOSIT, WALLET_CREDIT, ...) |
 | `businessRef` | Yes | = `X-Idempotency-Key` end-to-end |
 | `messageId` | Yes | AMQP dedup per broker |
@@ -67,13 +67,13 @@ Mọi message trên s6-rabbitmq-cmds dùng chung envelope:
 | Code | HTTP | Scenario |
 |------|------|---------|
 | `WALLET_INSUFFICIENT_BALANCE` | 422 | Debit > available |
-| `WALLET_NOT_FOUND` | 404 | walletId không tồn tại |
-| `WALLET_LOCKED` | 422 | Wallet bị lock, reject mutation |
-| `WALLET_DUPLICATE_CONFLICT` | 409 | Cùng businessRef + khác amount |
-| `JOURNAL_NOT_FOUND` | 404 | coaTransId không tồn tại |
-| `JOURNAL_ALREADY_POSTED` | 409 | Phase B gọi lại sau POSTED |
-| `JOURNAL_ALREADY_FAILED` | 409 | Thao tác trên journal đã FAILED |
-| `IDEMPOTENCY_CONFLICT` | 409 | businessRef dùng lại với data khác |
+| `WALLET_NOT_FOUND` | 404 | walletId does not exist |
+| `WALLET_LOCKED` | 422 | Wallet is locked, mutation rejected |
+| `WALLET_DUPLICATE_CONFLICT` | 409 | Same businessRef + different amount |
+| `JOURNAL_NOT_FOUND` | 404 | coaTransId does not exist |
+| `JOURNAL_ALREADY_POSTED` | 409 | Phase B called again after POSTED |
+| `JOURNAL_ALREADY_FAILED` | 409 | Operation on an already-FAILED journal |
+| `IDEMPOTENCY_CONFLICT` | 409 | businessRef reused with different data |
 
 ---
 

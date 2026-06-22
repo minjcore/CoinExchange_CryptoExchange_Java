@@ -6,13 +6,13 @@
 
 ---
 
-## Tổng quan
+## Overview
 
-`app-accounting` expose 4 endpoints HTTP (Internal HTTP / s2-http-internal).
-Không expose ra ngoài — chỉ `app-orchestration` được gọi.
+`app-accounting` exposes 4 HTTP endpoints (Internal HTTP / s2-http-internal).
+Not exposed externally — only `app-orchestration` is allowed to call it.
 
-Trong deposit flow, `app-orchestration` KHÔNG gọi trực tiếp — dùng outbox → RabbitMQ → `app-accounting-worker`.
-API này dành cho sync use cases (payment, transfer) hoặc query trạng thái.
+In the deposit flow, `app-orchestration` does NOT call this API directly — it uses outbox → RabbitMQ → `app-accounting-worker`.
+This API is for sync use cases (payment, transfer) or status queries.
 
 ---
 
@@ -20,10 +20,10 @@ API này dành cho sync use cases (payment, transfer) hoặc query trạng thái
 
 | Method | Path | Operation | Use case |
 |--------|------|-----------|---------|
-| `POST` | `/journals` | `createJournal` | Phase A — tạo PENDING journal + TB pending transfer |
+| `POST` | `/journals` | `createJournal` | Phase A — create PENDING journal + TB pending transfer |
 | `POST` | `/journals/{coaTransId}/post` | `postJournal` | Phase B — post pending + split fee |
 | `POST` | `/journals/{coaTransId}/void` | `voidPending` | Reversal — void pending TB transfer |
-| `GET` | `/journals/{coaTransId}` | `getJournal` | Query trạng thái journal |
+| `GET` | `/journals/{coaTransId}` | `getJournal` | Query journal status |
 
 ---
 
@@ -63,7 +63,7 @@ TB transfer ID = `hash(businessRef + ":phaseA")` — deterministic idempotency.
 
 ## postJournal — Phase B
 
-**Input:** `coaTransId` (từ Phase A) + `fee` (tính tại orchestration).
+**Input:** `coaTransId` (from Phase A) + `fee` (computed at orchestration).
 
 ```json
 POST /journals/9001/post
@@ -85,8 +85,8 @@ Response: same shape, `status: "POSTED"`, `fee: "1000.0000"`, `net_amount: "9900
 
 ## voidPending — Reversal
 
-Dùng khi bank deposit bị reverse sau Phase A hoặc Phase A cần rollback.
-Không thể void journal đã POSTED — dùng compensating journal.
+Used when a bank deposit is reversed after Phase A, or when Phase A needs to be rolled back.
+Cannot void a POSTED journal — use a compensating journal instead.
 
 ```
 POST /journals/9001/void
@@ -106,13 +106,13 @@ POST /journals/9001/void
 
 ## Error Codes
 
-| `error_code` | HTTP | Tình huống |
+| `error_code` | HTTP | Situation |
 |-------------|------|-----------|
-| `JOURNAL_NOT_FOUND` | 404 | coaTransId không tồn tại |
-| `JOURNAL_ALREADY_POSTED` | 409 | `voidPending` gọi sau POSTED |
-| `JOURNAL_ALREADY_FAILED` | 409 | `postJournal` gọi sau FAILED; với `voidPending` thì trả 200 no-op |
-| `IDEMPOTENCY_CONFLICT` | 409 | reference_id dùng lại với data khác |
-| `INVALID_FEE` | 422 | fee âm hoặc vượt grossAmount |
+| `JOURNAL_NOT_FOUND` | 404 | coaTransId does not exist |
+| `JOURNAL_ALREADY_POSTED` | 409 | `voidPending` called after POSTED |
+| `JOURNAL_ALREADY_FAILED` | 409 | `postJournal` called after FAILED; `voidPending` returns 200 no-op |
+| `IDEMPOTENCY_CONFLICT` | 409 | reference_id reused with different data |
+| `INVALID_FEE` | 422 | fee is negative or exceeds grossAmount |
 
 ---
 

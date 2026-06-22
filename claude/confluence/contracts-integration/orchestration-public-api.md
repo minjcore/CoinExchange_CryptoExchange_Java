@@ -6,9 +6,9 @@
 
 ---
 
-## Tổng quan
+## Overview
 
-`s1-http-public` là điểm vào duy nhất từ bên ngoài. Mọi request đều qua API Gateway → `app-orchestration`. Không có service nào khác được expose ra ngoài.
+`s1-http-public` is the sole external entry point. Every request passes through API Gateway → `app-orchestration`. No other service is exposed externally.
 
 ```
 Client / Bank webhook
@@ -17,34 +17,34 @@ Client / Bank webhook
 API Gateway
     │
     ▼
-app-orchestration       ← xử lý tất cả inbound logic ở đây
+app-orchestration       ← all inbound logic handled here
     ├─ Redis pre-checks (auth, idempotency, limits)
     ├─ Fee computation
-    └─ outbox write → RabbitMQ (async) hoặc sync DB write
+    └─ outbox write → RabbitMQ (async) or sync DB write
 ```
 
 ---
 
 ## Authentication
 
-| Caller | Cơ chế |
-|--------|--------|
-| Mobile / Partner | `Authorization: Bearer <JWT>` — JWT do GtelPay auth service cấp |
+| Caller | Mechanism |
+|--------|-----------|
+| Mobile / Partner | `Authorization: Bearer <JWT>` — JWT issued by GtelPay auth service |
 | Bank webhook | `X-Bank-Signature: <HMAC-SHA256>` — shared secret per bank |
 
 ---
 
 ## Idempotency
 
-Tất cả mutation endpoints yêu cầu header:
+All mutation endpoints require the header:
 
 ```
 X-Idempotency-Key: dep-20260618-abc123
 ```
 
-- Giá trị này = `businessRef` — được mang end-to-end qua s6-rabbitmq-cmds, DB
-- Duplicate request cùng key → trả về response gốc, không xử lý lại
-- Format gợi ý: `{prefix}-{YYYYMMDD}-{random}` (max 64 ký tự)
+- This value = `businessRef` — carried end-to-end through s6-rabbitmq-cmds and DB
+- Duplicate request with the same key → returns the original response, not reprocessed
+- Suggested format: `{prefix}-{YYYYMMDD}-{random}` (max 64 characters)
 
 ---
 
@@ -78,7 +78,7 @@ X-Bank-Signature: <hmac>
 }
 ```
 
-Errors: **401** X-Bank-Signature thiếu/sai · **403** bank không có quyền · **409** idempotency conflict · **422** VA not found
+Errors: **401** X-Bank-Signature missing/invalid · **403** bank not authorized · **409** idempotency conflict · **422** VA not found
 
 Response **202** — không chờ xử lý, không block:
 
@@ -164,7 +164,7 @@ Response **200** — cả hai wallets updated + ledger POSTED:
 
 ## POST /v1/withdrawals — Withdraw to bank
 
-Freeze ngay → 200. Payout async sau đó.
+Freeze immediately → 200. Payout async afterwards.
 
 ```json
 POST /v1/withdrawals
@@ -215,16 +215,16 @@ Authorization: Bearer <jwt>
 
 ## Error Codes
 
-| `error_code` | HTTP | Tình huống |
+| `error_code` | HTTP | Situation |
 |-------------|------|-----------|
 | `WALLET_INSUFFICIENT_BALANCE` | 422 | Debit / freeze > available |
-| `WALLET_NOT_FOUND` | 404 | Member chưa được provision wallet |
-| `WALLET_LOCKED` | 422 | Wallet bị khóa |
-| `VIRTUAL_ACCOUNT_NOT_FOUND` | 422 | VA không tồn tại trong hệ thống |
-| `IDEMPOTENCY_CONFLICT` | 409 | X-Idempotency-Key dùng lại với payload khác |
-| `CURRENCY_NOT_SUPPORTED` | 422 | Chỉ hỗ trợ VND v1 |
-| _(no error_code)_ | 401 | X-Bank-Signature thiếu hoặc sai — `/deposits/notify` only |
-| _(no error_code)_ | 403 | Bank chưa được cấp quyền gọi endpoint — `/deposits/notify` only |
+| `WALLET_NOT_FOUND` | 404 | Member wallet not yet provisioned |
+| `WALLET_LOCKED` | 422 | Wallet is locked |
+| `VIRTUAL_ACCOUNT_NOT_FOUND` | 422 | VA does not exist in the system |
+| `IDEMPOTENCY_CONFLICT` | 409 | X-Idempotency-Key reused with different payload |
+| `CURRENCY_NOT_SUPPORTED` | 422 | Only VND supported in v1 |
+| _(no error_code)_ | 401 | X-Bank-Signature missing or invalid — `/deposits/notify` only |
+| _(no error_code)_ | 403 | Bank not authorized to call the endpoint — `/deposits/notify` only |
 
 ---
 
