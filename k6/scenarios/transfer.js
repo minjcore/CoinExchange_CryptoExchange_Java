@@ -16,7 +16,10 @@ import { Rate, Trend } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const TARGET_RPS = parseInt(__ENV.TARGET_RPS || '100');
-const HDR = { 'Content-Type': 'application/json' };
+
+function hdr(ref) {
+  return { 'Content-Type': 'application/json', 'X-Idempotency-Key': ref };
+}
 
 const errorRate = new Rate('transfer_errors');
 const latency = new Trend('transfer_latency', true);
@@ -52,8 +55,8 @@ export default function () {
     toMemberId: to,
     amount: '1000',
     currency: 'VND',
-    feeAmount: '0',
-  }), { headers: HDR });
+    // feeAmount omitted — parseAmount rejects '0'
+  }), { headers: hdr(ref) });
 
   const ok = check(res, {
     'status 200': r => r.status === 200,

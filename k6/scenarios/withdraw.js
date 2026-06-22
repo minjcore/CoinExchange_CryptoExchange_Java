@@ -15,7 +15,10 @@ import { Rate, Trend } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const CONCURRENT = parseInt(__ENV.CONCURRENT_USERS || '50');
-const HDR = { 'Content-Type': 'application/json' };
+
+function hdr(ref) {
+  return { 'Content-Type': 'application/json', 'X-Idempotency-Key': ref };
+}
 
 const acceptErrors = new Rate('withdraw_accept_errors');
 const settleErrors = new Rate('withdraw_settle_errors');
@@ -50,7 +53,7 @@ export default function () {
     amount: amount,
     currency: 'VND',
     useFreeze: true,
-  }), { headers: HDR });
+  }), { headers: hdr(ref) });
 
   const acceptOk = check(accept, {
     'accept 200': r => r.status === 200,
@@ -61,12 +64,14 @@ export default function () {
   if (!acceptOk) return;
 
   // Phase 2: Settle (simulates bank payout confirmed)
+  const coaTransId = JSON.parse(accept.body).data.coaTransId;
+
   const settle = http.post(`${BASE_URL}/v1/withdrawals/settle`, JSON.stringify({
     businessRef: ref,
     memberId: memberId,
-    amount: amount,
-    currency: 'VND',
-  }), { headers: HDR });
+    coaTransId: coaTransId,
+    principal: amount,
+  }), { headers: hdr(`${ref}:settle`) });
 
   const settleOk = check(settle, {
     'settle 200': r => r.status === 200,

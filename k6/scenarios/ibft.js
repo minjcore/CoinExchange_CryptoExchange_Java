@@ -16,7 +16,10 @@ import { Rate, Trend } from 'k6/metrics';
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const CONCURRENT = parseInt(__ENV.CONCURRENT_USERS || '30');
-const HDR = { 'Content-Type': 'application/json' };
+
+function hdr(ref) {
+  return { 'Content-Type': 'application/json', 'X-Idempotency-Key': ref };
+}
 
 const acceptErrors = new Rate('ibft_accept_errors');
 const settleErrors = new Rate('ibft_settle_errors');
@@ -59,27 +62,29 @@ function acceptIbft(memberId, ref) {
     currency: 'VND',
     destinationBankAccountNumber: '9999888877776666',
     destinationBankCode: 'VCB',
-  }), { headers: HDR });
+  }), { headers: hdr(ref) });
 
   acceptErrors.add(res.status !== 200);
   acceptLatency.add(res.timings.duration);
-  return res.status === 200;
+  if (res.status !== 200) return null;
+  return JSON.parse(res.body).data.coaTransId;
 }
 
 export function settleFlow() {
   const memberId = 3000 + ((__VU - 1) % 100) + 1;
   const ref = `ibft-s-${__VU}-${__ITER}`;
 
-  if (!acceptIbft(memberId, ref)) return;
+  const coaTransId = acceptIbft(memberId, ref);
+  if (!coaTransId) return;
 
   const settle = http.post(`${BASE_URL}/v1/ibft/settle`, JSON.stringify({
     businessRef: ref,
     memberId: memberId,
-    principalAmount: '500000',
+    coaTransId: coaTransId,
+    principal: '500000',
     platformFee: '5000',
     napasCost: '1100',
-    currency: 'VND',
-  }), { headers: HDR });
+  }), { headers: hdr(`${ref}:settle`) });
 
   settleErrors.add(settle.status !== 200);
   settleLatency.add(settle.timings.duration);
@@ -90,13 +95,15 @@ export function releaseFlow() {
   const memberId = 3000 + ((__VU - 1) % 100) + 1;
   const ref = `ibft-r-${__VU}-${__ITER}`;
 
-  if (!acceptIbft(memberId, ref)) return;
+  const coaTransId = acceptIbft(memberId, ref);
+  if (!coaTransId) return;
 
   const release = http.post(`${BASE_URL}/v1/ibft/release`, JSON.stringify({
     businessRef: ref,
     memberId: memberId,
-    currency: 'VND',
-  }), { headers: HDR });
+    coaTransId: coaTransId,
+    gross: '506100',  // principal + platformFee + napasCost
+  }), { headers: hdr(`${ref}:release`) });
 
   releaseErrors.add(release.status !== 200);
   check(release, { 'ibft release 200': r => r.status === 200 });

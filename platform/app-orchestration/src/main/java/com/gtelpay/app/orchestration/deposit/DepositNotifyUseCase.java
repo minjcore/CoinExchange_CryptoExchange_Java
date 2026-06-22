@@ -60,7 +60,7 @@ public class DepositNotifyUseCase {
 
     private void publishBankDeposit(DepositNotification req, long memberId, long walletId) {
         // v1: no deposit fee
-        String fee = MoneyUtil.normalize(BigDecimal.ZERO).toPlainString();
+        String fee = MoneyUtil.normalizeAllowZero(BigDecimal.ZERO).toPlainString();
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("grossAmount", req.grossAmount());

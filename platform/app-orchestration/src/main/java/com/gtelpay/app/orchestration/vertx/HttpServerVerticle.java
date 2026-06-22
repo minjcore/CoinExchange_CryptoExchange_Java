@@ -126,7 +126,7 @@ public class HttpServerVerticle extends AbstractVerticle {
             long memberId = f.get("memberId").asLong();
             String businessRef = f.get("businessRef").asText();
             String principal = f.get("principal").asText();
-            String fee = f.has("fee") ? f.get("fee").asText() : "0";
+            String fee = f.has("fee") ? f.get("fee").asText() : null;
             return ApiResponse.ok(withdrawSettleUseCase.execute(coaTransId, memberId, businessRef, principal, fee));
         }, objectMapper));
 
@@ -142,8 +142,8 @@ public class HttpServerVerticle extends AbstractVerticle {
             long memberId = f.get("memberId").asLong();
             String businessRef = f.get("businessRef").asText();
             String principal = f.get("principal").asText();
-            String platformFee = f.has("platformFee") ? f.get("platformFee").asText() : "0";
-            String napasCost = f.has("napasCost") ? f.get("napasCost").asText() : "0";
+            String platformFee = f.has("platformFee") ? f.get("platformFee").asText() : null;
+            String napasCost = f.has("napasCost") ? f.get("napasCost").asText() : null;
             return ApiResponse.ok(ibftSettleUseCase.execute(coaTransId, memberId, businessRef, principal, platformFee, napasCost));
         }, objectMapper));
 
