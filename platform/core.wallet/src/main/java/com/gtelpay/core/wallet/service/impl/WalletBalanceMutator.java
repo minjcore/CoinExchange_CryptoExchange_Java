@@ -1,7 +1,7 @@
 package com.gtelpay.core.wallet.service.impl;
 
-import com.gtelpay.core.foundation.exception.ErrorCode;
-import com.gtelpay.core.foundation.exception.WalletException;
+import com.gtelpay.core.sharedlib.exception.ErrorCode;
+import com.gtelpay.core.sharedlib.exception.WalletException;
 import com.gtelpay.core.wallet.domain.WalletBalanceEntity;
 import com.gtelpay.core.wallet.domain.WalletTxType;
 

@@ -12,7 +12,7 @@
     <description>Fiat wallet + accounting — parent POM (see 10_core/spec/implementation.md)</description>
 
     <modules>
-        <module>core.foundation</module>
+        <module>core.sharedlib</module>
         <module>core.wallet</module>
         <module>core.accounting</module>
         <module>app-orchestration</module>
@@ -37,7 +37,7 @@
             </dependency>
             <dependency>
                 <groupId>com.gtelpay.core</groupId>
-                <artifactId>core.foundation</artifactId>
+                <artifactId>core.sharedlib</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

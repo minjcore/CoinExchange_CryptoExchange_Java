@@ -1,7 +1,7 @@
 package com.gtelpay.core.wallet.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gtelpay.core.foundation.exception.BaseException;
+import com.gtelpay.core.sharedlib.exception.BaseException;
 import com.gtelpay.core.wallet.domain.WalletType;
 import com.gtelpay.core.wallet.service.WalletCommandService;
 import com.gtelpay.core.wallet.service.WalletMutationCommand;

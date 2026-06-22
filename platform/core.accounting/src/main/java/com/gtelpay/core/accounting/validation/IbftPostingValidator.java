@@ -2,8 +2,8 @@ package com.gtelpay.core.accounting.validation;
 
 import com.gtelpay.core.accounting.domain.LineSide;
 import com.gtelpay.core.accounting.service.JournalLineCommand;
-import com.gtelpay.core.foundation.exception.ValidationException;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 
 import java.math.BigDecimal;
 import java.util.List;

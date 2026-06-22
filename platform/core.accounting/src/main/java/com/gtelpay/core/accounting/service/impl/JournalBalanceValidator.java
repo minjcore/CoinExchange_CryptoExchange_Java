@@ -2,9 +2,9 @@ package com.gtelpay.core.accounting.service.impl;
 
 import com.gtelpay.core.accounting.domain.CoaTransDataEntity;
 import com.gtelpay.core.accounting.domain.LineSide;
-import com.gtelpay.core.foundation.exception.ErrorCode;
-import com.gtelpay.core.foundation.exception.AccountingException;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.exception.ErrorCode;
+import com.gtelpay.core.sharedlib.exception.AccountingException;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 
 import java.math.BigDecimal;
 import java.util.List;

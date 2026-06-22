@@ -1,7 +1,7 @@
 package com.gtelpay.core.wallet.service;
 
-import com.gtelpay.core.foundation.page.PageResult;
-import com.gtelpay.core.foundation.request.PageRequest;
+import com.gtelpay.core.sharedlib.page.PageResult;
+import com.gtelpay.core.sharedlib.request.PageRequest;
 import com.gtelpay.core.wallet.domain.WalletType;
 
 public interface WalletQueryService {

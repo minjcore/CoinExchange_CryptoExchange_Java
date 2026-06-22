@@ -1,7 +1,7 @@
 package com.gtelpay.core.wallet.validation;
 
-import com.gtelpay.core.foundation.exception.ValidationException;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 import com.gtelpay.core.wallet.api.dto.IbftRequestWire;
 
 import java.math.BigDecimal;

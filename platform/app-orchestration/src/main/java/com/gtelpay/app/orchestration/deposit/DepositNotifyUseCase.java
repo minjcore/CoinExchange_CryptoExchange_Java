@@ -1,7 +1,7 @@
 package com.gtelpay.app.orchestration.deposit;
 
-import com.gtelpay.core.foundation.exception.ValidationException;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

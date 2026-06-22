@@ -1,7 +1,7 @@
 package com.gtelpay.core.accounting.validation;
 
 import com.gtelpay.core.accounting.domain.LineSide;
-import com.gtelpay.core.foundation.exception.ValidationException;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

@@ -2,7 +2,7 @@ package com.gtelpay.app.orchestration.usecase;
 
 import com.gtelpay.app.orchestration.gateway.LedgerGateway;
 import com.gtelpay.app.orchestration.gateway.WalletGateway;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 import com.gtelpay.core.wallet.domain.WalletTxType;
 import com.gtelpay.core.wallet.domain.WalletType;
 import com.gtelpay.core.wallet.service.WalletMutationCommand;

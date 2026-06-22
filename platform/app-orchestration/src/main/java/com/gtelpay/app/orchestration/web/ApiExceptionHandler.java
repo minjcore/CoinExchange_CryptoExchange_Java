@@ -1,9 +1,9 @@
 package com.gtelpay.app.orchestration.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gtelpay.core.foundation.exception.BaseException;
-import com.gtelpay.core.foundation.exception.ErrorCode;
-import com.gtelpay.core.foundation.response.ApiResponse;
+import com.gtelpay.core.sharedlib.exception.BaseException;
+import com.gtelpay.core.sharedlib.exception.ErrorCode;
+import com.gtelpay.core.sharedlib.response.ApiResponse;
 import io.vertx.ext.web.RoutingContext;
 
 public final class ApiExceptionHandler {

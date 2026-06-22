@@ -9,7 +9,7 @@ import com.gtelpay.core.accounting.service.CreateJournalCommand;
 import com.gtelpay.core.accounting.service.JournalHeader;
 import com.gtelpay.core.accounting.service.JournalLineCommand;
 import com.gtelpay.core.accounting.service.PostJournalResult;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 
 import java.math.BigDecimal;
 import java.util.List;

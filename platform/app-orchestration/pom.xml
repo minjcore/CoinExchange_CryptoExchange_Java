@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.gtelpay.core</groupId>
-            <artifactId>core.foundation</artifactId>
+            <artifactId>core.sharedlib</artifactId>
         </dependency>
         <dependency>
             <groupId>com.gtelpay.core</groupId>

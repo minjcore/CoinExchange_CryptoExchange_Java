@@ -1,6 +1,6 @@
 package com.gtelpay.core.wallet.amqp;
 
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 import com.gtelpay.core.wallet.service.WalletCommandService;
 import com.gtelpay.core.wallet.service.WalletTxResult;
 import org.slf4j.Logger;

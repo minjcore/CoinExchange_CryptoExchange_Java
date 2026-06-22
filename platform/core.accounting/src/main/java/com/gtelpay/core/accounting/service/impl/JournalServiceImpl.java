@@ -20,10 +20,10 @@ import com.gtelpay.core.accounting.validation.WithdrawPostingValidator;
 import com.gtelpay.core.accounting.validation.CoaAccountValidator;
 import com.gtelpay.core.accounting.validation.CreateJournalCommandValidator;
 import com.gtelpay.core.accounting.validation.JournalLineCommandValidator;
-import com.gtelpay.core.foundation.exception.AccountingException;
-import com.gtelpay.core.foundation.exception.ErrorCode;
-import com.gtelpay.core.foundation.exception.ValidationException;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.exception.AccountingException;
+import com.gtelpay.core.sharedlib.exception.ErrorCode;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -234,7 +234,7 @@ public class JournalServiceImpl implements JournalService {
             return new PostJournalResult(journal.getId(), journal.getStatus(), journal.getPostedAt(), true);
         }
         if (!USE_CASE_WITHDRAW.equals(journal.getUseCase())) {
-            throw new com.gtelpay.core.foundation.exception.ValidationException("confirmWithdraw only for use_case WITHDRAW");
+            throw new com.gtelpay.core.sharedlib.exception.ValidationException("confirmWithdraw only for use_case WITHDRAW");
         }
         if (journal.getStatus() != JournalStatus.PENDING) {
             throw new AccountingException(ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND, "withdraw journal not PENDING");
@@ -269,7 +269,7 @@ public class JournalServiceImpl implements JournalService {
             return;
         }
         if (!USE_CASE_WITHDRAW.equals(journal.getUseCase())) {
-            throw new com.gtelpay.core.foundation.exception.ValidationException("voidWithdraw only for use_case WITHDRAW");
+            throw new com.gtelpay.core.sharedlib.exception.ValidationException("voidWithdraw only for use_case WITHDRAW");
         }
         if (journal.getStatus() != JournalStatus.PENDING) {
             throw new AccountingException(ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND,
@@ -303,7 +303,7 @@ public class JournalServiceImpl implements JournalService {
             return new PostJournalResult(journal.getId(), journal.getStatus(), journal.getPostedAt(), true);
         }
         if (!USE_CASE_IBFT.equals(journal.getUseCase())) {
-            throw new com.gtelpay.core.foundation.exception.ValidationException("confirmIbft only for use_case IBFT");
+            throw new com.gtelpay.core.sharedlib.exception.ValidationException("confirmIbft only for use_case IBFT");
         }
         if (journal.getStatus() != JournalStatus.PENDING) {
             throw new AccountingException(ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND, "IBFT journal not PENDING");
@@ -345,7 +345,7 @@ public class JournalServiceImpl implements JournalService {
             return;
         }
         if (!USE_CASE_IBFT.equals(journal.getUseCase())) {
-            throw new com.gtelpay.core.foundation.exception.ValidationException("voidIbft only for use_case IBFT");
+            throw new com.gtelpay.core.sharedlib.exception.ValidationException("voidIbft only for use_case IBFT");
         }
         if (journal.getStatus() != JournalStatus.PENDING) {
             throw new AccountingException(ErrorCode.ACCOUNTING_JOURNAL_NOT_FOUND,

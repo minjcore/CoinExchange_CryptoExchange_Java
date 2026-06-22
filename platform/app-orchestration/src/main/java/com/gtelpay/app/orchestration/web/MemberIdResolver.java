@@ -1,6 +1,6 @@
 package com.gtelpay.app.orchestration.web;
 
-import com.gtelpay.core.foundation.exception.ValidationException;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
 import io.vertx.ext.web.RoutingContext;
 
 /**

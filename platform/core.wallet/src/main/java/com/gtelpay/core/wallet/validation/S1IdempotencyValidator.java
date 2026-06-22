@@ -1,6 +1,6 @@
 package com.gtelpay.core.wallet.validation;
 
-import com.gtelpay.core.foundation.exception.ValidationException;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
 
 /**
  * S1 idempotency wire rules — {@code design/platform/idempotency.md}.

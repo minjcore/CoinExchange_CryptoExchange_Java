@@ -1,6 +1,6 @@
 package com.gtelpay.core.wallet.service;
 
-import com.gtelpay.core.foundation.exception.WalletException;
+import com.gtelpay.core.sharedlib.exception.WalletException;
 import com.gtelpay.core.wallet.domain.WalletTxType;
 import com.gtelpay.core.wallet.domain.WalletType;
 import org.junit.jupiter.api.Test;

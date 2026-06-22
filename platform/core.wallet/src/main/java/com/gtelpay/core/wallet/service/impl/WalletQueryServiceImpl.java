@@ -1,9 +1,9 @@
 package com.gtelpay.core.wallet.service.impl;
 
-import com.gtelpay.core.foundation.exception.ErrorCode;
-import com.gtelpay.core.foundation.exception.WalletException;
-import com.gtelpay.core.foundation.page.PageResult;
-import com.gtelpay.core.foundation.request.PageRequest;
+import com.gtelpay.core.sharedlib.exception.ErrorCode;
+import com.gtelpay.core.sharedlib.exception.WalletException;
+import com.gtelpay.core.sharedlib.page.PageResult;
+import com.gtelpay.core.sharedlib.request.PageRequest;
 import com.gtelpay.core.wallet.domain.WalletEntity;
 import com.gtelpay.core.wallet.domain.WalletTxEntity;
 import com.gtelpay.core.wallet.domain.WalletType;

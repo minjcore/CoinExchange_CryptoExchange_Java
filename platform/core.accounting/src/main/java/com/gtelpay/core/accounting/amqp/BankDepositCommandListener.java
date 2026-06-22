@@ -6,7 +6,7 @@ import com.gtelpay.core.accounting.service.JournalHeader;
 import com.gtelpay.core.accounting.service.JournalService;
 import com.gtelpay.core.accounting.service.PostJournalResult;
 import com.gtelpay.core.accounting.validation.DepositPostingValidator;
-import com.gtelpay.core.foundation.util.MoneyUtil;
+import com.gtelpay.core.sharedlib.util.MoneyUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

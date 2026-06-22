@@ -1,7 +1,7 @@
 package com.gtelpay.core.accounting.validation;
 
 import com.gtelpay.core.accounting.service.CreateJournalCommand;
-import com.gtelpay.core.foundation.exception.ValidationException;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
 
 public final class CreateJournalCommandValidator {
 

@@ -1,6 +1,6 @@
 package com.gtelpay.core.wallet.validation;
 
-import com.gtelpay.core.foundation.exception.ValidationException;
+import com.gtelpay.core.sharedlib.exception.ValidationException;
 import com.gtelpay.core.wallet.api.dto.PaymentRequestWire;
 import org.junit.jupiter.api.Test;
 
