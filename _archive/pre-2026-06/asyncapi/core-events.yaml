@@ -112,7 +112,7 @@ components:
   schemas:
     ErrorCode:
       type: string
-      description: Aligns with core.foundation Part I §4.3 and OpenAPI ApiResponseError.data.errorCode
+      description: Aligns with core.sharedlib Part I §4.3 and OpenAPI ApiResponseError.data.errorCode
       enum:
         - COMMON_INVALID_REQUEST
         - COMMON_NOT_FOUND

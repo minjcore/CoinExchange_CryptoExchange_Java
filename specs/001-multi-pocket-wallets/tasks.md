@@ -45,7 +45,7 @@ Artifacts (this repo): `adr/`, `spec/implementation.md`, `spec/contracts/open-ap
 - [X] T003 Finalize DDL in `spec/implementation.md` §3: `wallet_pocket_def` table, `wallet.pocket_code` FK + `label`, `uq_wallet_member_type_ccy_label`, partial unique `uq_wallet_single_nonuser`, `idx_wallet_tx_wallet_created (wallet_id, created_at DESC, id DESC)`
 - [X] T004 [P] Author migration `V_n__pocket_def.sql` (create + seed `wallet_pocket_def`) per data-model.md §Migration
 - [X] T005 [P] Author migration `V_n+1__wallet_pockets.sql` (ALTER wallet ADD pocket_code/label DEFAULTs; swap UNIQUE; add partial unique) — backfill via DEFAULT, reversible
-- [X] T006 [P] Register `WALLET_POCKET_DEF_INVALID`, `WALLET_POCKET_EXISTS`, `WALLET_POCKET_NOT_EMPTY`, `WALLET_INVALID_TRANSFER` in `core.foundation` ErrorCode (per `spec/foundation.md` §4.3 error table)
+- [X] T006 [P] Register `WALLET_POCKET_DEF_INVALID`, `WALLET_POCKET_EXISTS`, `WALLET_POCKET_NOT_EMPTY`, `WALLET_INVALID_TRANSFER` in `core.sharedlib` ErrorCode (per `spec/foundation.md` §4.3 error table)
 - [X] T007 [P] Add the same `WALLET_POCKET_*` codes to `spec/contracts/async-api/core-events.yaml` ErrorCode enum (align with ADR-018)
 - [X] T008 Finalize pocket→`wallet_id` resolution rule in `design-v2/orchestration.md` §1.2 (verify table: walletId | pocketCode/label | default | non-USER single)
 

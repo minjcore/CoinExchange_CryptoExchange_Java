@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-06-03 |
 | Deciders | Engineering |
-| Related | [`core.accounting.trd.md`](../core.accounting.trd.md), [`core.foundation.md`](../core.foundation.md) |
+| Related | [`core.accounting.trd.md`](../core.accounting.trd.md), [`core.sharedlib.md`](../core.sharedlib.md) |
 
 ---
 
@@ -96,11 +96,11 @@ We adopt an **immutable ledger** as the accounting source of truth from day one.
 | Posted line | `coa_trans_data` | `ledger_entries` (after POSTED) |
 | Idempotency key | `business_ref` on `coa_trans` | `reference_id` |
 
-**Rule:** `coa_trans` = **journal**; `coa_trans_data` = **journal_entry** — not “journal entry = header”. TRD REST may still say `/v1/journal-entries` for the journal resource. See [`core.foundation.md` §2.2](../core.foundation.md).
+**Rule:** `coa_trans` = **journal**; `coa_trans_data` = **journal_entry** — not “journal entry = header”. TRD REST may still say `/v1/journal-entries` for the journal resource. See [`core.sharedlib.md` §2.2](../core.sharedlib.md).
 
 ---
 
 ## References
 
 - [`core.accounting.trd.md`](../core.accounting.trd.md) — §12 Recommended Architecture; FR-5, FR-6, FR-7; NFR-2, NFR-3
-- [`core.foundation.md`](../core.foundation.md) — `coa_*` tables §2, posting flow §3, deposit two-phase §8
+- [`core.sharedlib.md`](../core.sharedlib.md) — `coa_*` tables §2, posting flow §3, deposit two-phase §8

@@ -1,4 +1,4 @@
-# core.foundation (minimal shared lib)
+# core.sharedlib (minimal shared lib)
 
 Bottom of stack. JDK only — no Spring, no JPA, no domain entities.
 

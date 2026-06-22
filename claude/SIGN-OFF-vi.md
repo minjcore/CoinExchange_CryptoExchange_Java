@@ -3,7 +3,7 @@
 | Mục | Giá trị |
 |-----|---------|
 | Tài liệu | Phê duyệt thiết kế & core đã kiểm chứng |
-| Thành phần | `core.accounting` + `core.wallet` (+ `core.foundation`, `app-orchestration`) |
+| Thành phần | `core.accounting` + `core.wallet` (+ `core.sharedlib`, `app-orchestration`) |
 | Lĩnh vực | Thanh toán fiat (VND) |
 | Trạng thái | **Bản nháp — chờ phê duyệt** |
 | Trình cho | Architecture / Engineering / Finance / Product duyệt |
@@ -17,7 +17,7 @@
 **Trong phạm vi**
 - `core.accounting` — sổ cái ghi kép bất biến (chart of accounts, journal, transit, EOD).
 - `core.wallet` — số dư tiêu được theo member (available / frozen), movement chỉ-thêm.
-- `core.foundation` — shared lib (envelope, error, money utils).
+- `core.sharedlib` — shared lib (envelope, error, money utils).
 - `app-orchestration` — sequencer saga điều phối hai domain.
 - Tiền tệ: **chỉ VND (fiat).**
 
@@ -35,7 +35,7 @@
 | Hành vi | Luồng nghiệp vụ (`spec/processes.md`), fund flow foundation |
 | Contracts | OpenAPI + AsyncAPI (`spec/contracts/`) là nguồn sự thật của wire |
 | Conformance | **150+ kịch bản nghiệm thu** (Given/When/Then) |
-| Hiện thực | `core.foundation` · `core.wallet` · `core.accounting` · `app-orchestration` (Java / Spring Boot 3) — build được |
+| Hiện thực | `core.sharedlib` · `core.wallet` · `core.accounting` · `app-orchestration` (Java / Spring Boot 3) — build được |
 | Test tự động | **38 test pass** (`mvn test`, BUILD SUCCESS) |
 
 ---

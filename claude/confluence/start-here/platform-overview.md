@@ -79,7 +79,7 @@ GtelPay platform has **8 deployable modules** split into two layers:
   - `core.wallet` = **wallet ledger** — available/frozen balance, wallet_tx, mutation rules
 - **Application shells** (`app-*`) — Spring Boot, wire ledger to HTTP or queue
 
-No `core.*` module imports another `core.*` module. They share only `core.foundation`.
+No `core.*` module imports another `core.*` module. They share only `core.sharedlib`.
 
 ---
 

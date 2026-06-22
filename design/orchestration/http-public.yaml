@@ -4,7 +4,7 @@ info:
   description: |
     Public/mobile/partner HTTP surface for GtelPay fiat wallet orchestration.
     Implement in Application (BFF); upstream target for API Gateway.
-    Design: `10_core` — `integration-surfaces.md`, `core.wallet.md`, `core.foundation.md`.
+    Design: `10_core` — `integration-surfaces.md`, `core.wallet.md`, `core.sharedlib.md`.
   version: 1.0.0
   contact:
     name: GtelPay Platform

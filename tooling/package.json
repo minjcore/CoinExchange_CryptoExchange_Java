@@ -2,7 +2,7 @@
   "name": "10-core-md2pdf",
   "private": true,
   "scripts": {
-    "pdf": "md-to-pdf core.foundation.md"
+    "pdf": "md-to-pdf core.sharedlib.md"
   },
   "devDependencies": {
     "md-to-pdf": "^5.2.4"

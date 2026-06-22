@@ -226,13 +226,13 @@ Full list: [`integration-surfaces.md`](../integration-surfaces.md) §9.
 
 - Wire index: [`integration-surfaces.md`](../integration-surfaces.md)
 - Conformance: [`acceptance.md`](./acceptance.md)
-- Shared types: [`core.foundation.md`](../core.foundation.md) Part I
+- Shared types: [`core.sharedlib.md`](../core.sharedlib.md) Part I
 
 ---
 
 # Part II — Per use case (orchestration depth)
 
-Orchestration owns **step order, fees, auth, saga recovery, and wire mapping**. Domains own local invariants. DR/CR templates: [`core.foundation.md`](../core.foundation.md) §8–16.
+Orchestration owns **step order, fees, auth, saga recovery, and wire mapping**. Domains own local invariants. DR/CR templates: [`core.sharedlib.md`](../core.sharedlib.md) §8–16.
 
 ---
 
@@ -671,7 +671,7 @@ The orchestrator chooses per use case; both go through the gateway seam, neither
 | QR/POS MDR | Merchant | 4140 | % of amount |
 | Payroll / disbursement | Merchant / Partner | 4150 | per recipient |
 
-Rounding: scale 4, HALF_UP at boundary ([`core.foundation.md`](../core.foundation.md) §6). Orchestration logs computed fee on saga record for audit.
+Rounding: scale 4, HALF_UP at boundary ([`core.sharedlib.md`](../core.sharedlib.md) §6). Orchestration logs computed fee on saga record for audit.
 
 ---
 
@@ -827,4 +827,4 @@ Wallet stores only `available` + `frozen` ([`wallet.md`](./wallet.md) §2.1). Or
 | `orchestration.md` | 760+ | This file — §25 ref synthesis |
 | `acceptance.md` | 1700+ | ~177 Gherkin scenarios |
 | `references/` | 32.726 | 108 scraped files — index in `references/README.md` |
-| **Total design-v2** | **~3900+** | DR/CR stays in `core.foundation.md` |
+| **Total design-v2** | **~3900+** | DR/CR stays in `core.sharedlib.md` |

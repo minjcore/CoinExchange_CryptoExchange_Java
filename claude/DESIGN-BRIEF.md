@@ -48,7 +48,7 @@ A truly over-engineered design wouldn't have a "what we refused" list this long.
 
 ## Why it's credible — this is not paper, it runs
 
-- `core.foundation`, `core.wallet`, `core.accounting`, `app-orchestration` are **implemented (Java / Spring Boot 3) with passing tests** — not slideware.
+- `core.sharedlib`, `core.wallet`, `core.accounting`, `app-orchestration` are **implemented (Java / Spring Boot 3) with passing tests** — not slideware.
 - The money-critical safety rules are **coded and tested**: authoritative single-row balance + append-only movement in one DB transaction; **idempotency re-checked under lock** (a retry can't double-apply); balanced, immutable journals; two-phase deposit (funds credited only after the ledger posts).
 - **41 Architecture Decision Records** lock each choice with acceptance criteria + test cases; a **SQL invariant suite gates the build** (e.g. every journal balances, transit nets to zero) — so drift fails CI instead of reaching production.
 
@@ -64,7 +64,7 @@ We evaluated off-the-shelf ledgers (Blnk, Formance, TigerBeetle). They **merge b
 
 ## Scope
 
-`core.accounting` (ledger) + `core.wallet` (member balance) + `core.foundation` (shared lib) + `app-orchestration` (sequencer). **Fiat (VND).** Full ADRs, process flows, contracts, and 150+ acceptance scenarios exist as backing material, available on request.
+`core.accounting` (ledger) + `core.wallet` (member balance) + `core.sharedlib` (shared lib) + `app-orchestration` (sequencer). **Fiat (VND).** Full ADRs, process flows, contracts, and 150+ acceptance scenarios exist as backing material, available on request.
 
 ---
 

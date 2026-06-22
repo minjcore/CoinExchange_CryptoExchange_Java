@@ -4,8 +4,8 @@
 **Status:** Draft  
 **Scope:** `10_core/` — language-agnostic acceptance/conformance scenarios for every flow. Two implementations (e.g. Java and Go) MUST produce identical observable behavior against these scenarios.
 
-> **How to read:** Assertions reference only **observable state** — journal `status`, ledger account deltas, transit = 0, wallet `available`/`frozen`, `wallet_tx` rows, idempotency outcome, emitted events. No classes, SQL, or framework. Amounts follow the canonical examples in [`core.foundation.md`](./core.foundation.md) §8–16.  
-> **Source of truth:** postings → [`core.foundation.md`](./core.foundation.md) §8–16 · flows & failures → [`core.business-processes.md`](./core.business-processes.md) §3–§15 · keys → [ADR-005](./adr/ADR-005-idempotency-key-strategy.md) · `tx_type` → [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) §2.1.  
+> **How to read:** Assertions reference only **observable state** — journal `status`, ledger account deltas, transit = 0, wallet `available`/`frozen`, `wallet_tx` rows, idempotency outcome, emitted events. No classes, SQL, or framework. Amounts follow the canonical examples in [`core.sharedlib.md`](./core.sharedlib.md) §8–16.  
+> **Source of truth:** postings → [`core.sharedlib.md`](./core.sharedlib.md) §8–16 · flows & failures → [`core.business-processes.md`](./core.business-processes.md) §3–§15 · keys → [ADR-005](./adr/ADR-005-idempotency-key-strategy.md) · `tx_type` → [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) §2.1.  
 > **Conventions:** currency VND; amounts scale 4; `businessRef` is the idempotency key; "ledger delta" = net change to the COA account after the flow.
 
 ---
@@ -357,7 +357,7 @@ Scenario Outline: Global invariants hold after any completed flow
 
 | Topic | Document |
 |-------|----------|
-| DR/CR postings per use case | [`core.foundation.md`](./core.foundation.md) §8–16 |
+| DR/CR postings per use case | [`core.sharedlib.md`](./core.sharedlib.md) §8–16 |
 | Flow narrative + failure/compensation design | [`core.business-processes.md`](./core.business-processes.md) §3–§15 |
 | `tx_type` enum | [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) §2.1 |
 | Idempotency keys & sub-keys | [ADR-005](./adr/ADR-005-idempotency-key-strategy.md) |

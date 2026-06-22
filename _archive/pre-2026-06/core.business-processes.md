@@ -5,8 +5,8 @@
 **Scope:** `10_core/` — end-to-end business processes for the whole core (deposit, withdraw, payment, transfer, payroll, disbursement, EOD settlement).
 
 > **What this doc is:** A **business / design** view — actors, preconditions, end-to-end flow, DR/CR postings, wallet effects, and the **non-happy paths**: failure & compensation (saga, §13), edge cases (§14), reliability patterns (§15), fee policy (§16), auth (§17). Stated in domain terms so it survives a language/runtime change. Not a replacement for schema / wire specs.  
-> **Sources (read directly):** postings & COA → [`core.foundation.md`](./core.foundation.md) §6–16; wallet branch → [`core.wallet.md`](./core.wallet.md) §5; step order & surfaces → [`integration-surfaces.md`](./integration-surfaces.md) §4–7; accounting FR → [`core.accounting.trd.md`](./core.accounting.trd.md); terminology → [`TERMINOLOGY.md`](./TERMINOLOGY.md).  
-> **ADR:** [ADR-001](./adr/ADR-001-immutable-ledger.md) immutable ledger · [ADR-002](./adr/ADR-002-core-foundation-shared-library.md) `core.foundation`.
+> **Sources (read directly):** postings & COA → [`core.sharedlib.md`](./core.sharedlib.md) §6–16; wallet branch → [`core.wallet.md`](./core.wallet.md) §5; step order & surfaces → [`integration-surfaces.md`](./integration-surfaces.md) §4–7; accounting FR → [`core.accounting.trd.md`](./core.accounting.trd.md); terminology → [`TERMINOLOGY.md`](./TERMINOLOGY.md).  
+> **ADR:** [ADR-001](./adr/ADR-001-immutable-ledger.md) immutable ledger · [ADR-002](./adr/ADR-002-core-foundation-shared-library.md) `core.sharedlib`.
 
 ---
 
@@ -19,7 +19,7 @@
 | `core.accounting` (`coa_*`) | Double-entry ledger, COA **2110/2120/2130**, transit accounts, DR/CR postings | Aggregate liabilities and accounting fund flow |
 | `core.wallet` (`wallet_*`) | Per-member balance: `available` / `frozen` | "How much can this member spend right now?" |
 
-The two never share tables / JOIN; they stay aligned through **orchestration** (Application) via commands/events and reconciliation jobs ([`core.foundation.md`](./core.foundation.md) Part I §3, [`core.wallet.md`](./core.wallet.md) §1.1).
+The two never share tables / JOIN; they stay aligned through **orchestration** (Application) via commands/events and reconciliation jobs ([`core.sharedlib.md`](./core.sharedlib.md) Part I §3, [`core.wallet.md`](./core.wallet.md) §1.1).
 
 ### 1.2 Actors
 
@@ -33,7 +33,7 @@ The two never share tables / JOIN; they stay aligned through **orchestration** (
 | `core.wallet` | Updates `wallet_balance` + `wallet_tx` |
 | Worker (RabbitMQ S6) | Handles async commands: bank deposit, wallet credit, payout |
 
-### 1.3 Foundation invariants ([`core.foundation.md`](./core.foundation.md) §5)
+### 1.3 Foundation invariants ([`core.sharedlib.md`](./core.sharedlib.md) §5)
 
 1. `(1111 + 1112 + 1113)` = `(2110 + 2120 + 2130)` — bank assets = total wallet liabilities.
 2. Actual bank balance = sum of wallet balances.
@@ -44,7 +44,7 @@ The two never share tables / JOIN; they stay aligned through **orchestration** (
 
 `businessRef` is the idempotency key end-to-end: S1 header `X-Idempotency-Key` = S2 `reference_id` = S6 envelope `businessRef` = `wallet_tx.business_ref` = `coa_trans.business_ref` ([`integration-surfaces.md`](./integration-surfaces.md) §8). A duplicate `businessRef` with the same semantics → return the prior result, no second effect.
 
-### 1.5 COA map used in this doc ([`core.foundation.md`](./core.foundation.md) §6)
+### 1.5 COA map used in this doc ([`core.sharedlib.md`](./core.sharedlib.md) §6)
 
 | Group | Code | Meaning |
 |-------|------|---------|
@@ -79,7 +79,7 @@ Use case × surface matrix and required step order: [`integration-surfaces.md`](
 **Goal:** A member transfers funds into a virtual account (VA); the system records it and credits the net amount to the wallet. **Two-phase**, tied to transit **3100**.
 
 **Actors:** Member → Bank (Vietinbank) → Orchestration → Accounting worker → Wallet.  
-**Canonical example:** principal 100,000 + deposit fee 1,000 → wallet receives net **99,000** ([`core.foundation.md`](./core.foundation.md) §8).
+**Canonical example:** principal 100,000 + deposit fee 1,000 → wallet receives net **99,000** ([`core.sharedlib.md`](./core.sharedlib.md) §8).
 
 ### 3.1 End-to-end flow ([`integration-surfaces.md`](./integration-surfaces.md) §4.1)
 
@@ -96,7 +96,7 @@ Member   Bank        Gateway/BFF       Worker(S6)     core.accounting   core.wal
   |       |              |                 |--JournalPosted / WalletCreditCommand-->| credit +99k
 ```
 
-### 3.2 Postings ([`core.foundation.md`](./core.foundation.md) §8.1)
+### 3.2 Postings ([`core.sharedlib.md`](./core.sharedlib.md) §8.1)
 
 | Step | Account | DR/CR | Amount | Phase |
 |------|---------|-------|--------|-------|
@@ -114,7 +114,7 @@ Member   Bank        Gateway/BFF       Worker(S6)     core.accounting   core.wal
 - Phase A (PENDING): wallet **unchanged** — funds still in transit 3100.
 - Phase B (POSTED): orchestration calls `credit(member, USER, 99000, businessRef, coaTransId)` → `wallet_tx` with `tx_type = DEPOSIT_CREDIT` (direction `CREDIT`). The wallet **does not** compute fees; it credits exactly `amount = 99000` from the command.
 
-### 3.4 Rules & error handling ([`core.foundation.md`](./core.foundation.md) §8.5, [`core.wallet.md`](./core.wallet.md) §8)
+### 3.4 Rules & error handling ([`core.sharedlib.md`](./core.sharedlib.md) §8.5, [`core.wallet.md`](./core.wallet.md) §8)
 
 | Situation | Handling |
 |-----------|----------|
@@ -129,7 +129,7 @@ Member   Bank        Gateway/BFF       Worker(S6)     core.accounting   core.wal
 ## 4. Withdraw
 
 **Goal:** A member withdraws funds to a bank. **Wallet branch is synchronous** (hold funds) before returning **200**; **bank branch is asynchronous** (payout).  
-**Example:** withdraw principal 100,000 + fee 1,000 → wallet debited **101,000** ([`core.foundation.md`](./core.foundation.md) §9).
+**Example:** withdraw principal 100,000 + fee 1,000 → wallet debited **101,000** ([`core.sharedlib.md`](./core.sharedlib.md) §9).
 
 ### 4.1 End-to-end flow
 
@@ -144,7 +144,7 @@ Member    Gateway/BFF      core.wallet        Payout worker(S6)     Bank
   |            |                |    fail    → release (unfreeze)      |
 ```
 
-### 4.2 Postings ([`core.foundation.md`](./core.foundation.md) §9)
+### 4.2 Postings ([`core.sharedlib.md`](./core.sharedlib.md) §9)
 
 | Step | Account | DR/CR | Amount |
 |------|---------|-------|--------|
@@ -172,7 +172,7 @@ Member    Gateway/BFF      core.wallet        Payout worker(S6)     Bank
 ## 5. Wallet payment
 
 **Goal:** A user pays a merchant from the wallet, **synchronously** in one request → **200**.  
-**Example:** 100,000 ([`core.foundation.md`](./core.foundation.md) §13).
+**Example:** 100,000 ([`core.sharedlib.md`](./core.sharedlib.md) §13).
 
 ### 5.1 Required step order ([`integration-surfaces.md`](./integration-surfaces.md) §4.2)
 
@@ -183,7 +183,7 @@ Member    Gateway/BFF      core.wallet        Payout worker(S6)     Bank
 4. S1     : 200 + walletTxId / coaTransId
 ```
 
-### 5.2 Postings ([`core.foundation.md`](./core.foundation.md) §13)
+### 5.2 Postings ([`core.sharedlib.md`](./core.sharedlib.md) §13)
 
 | Step | Account | DR/CR | Amount |
 |------|---------|-------|--------|
@@ -208,7 +208,7 @@ Same `businessRef`, one distinct `tx_type` per leg. Insufficient funds → rejec
 ## 6. Internal transfer
 
 **Goal:** Move funds wallet A → wallet B within the system, **synchronously**.  
-**Example:** 100,000 + fee 1,000 ([`core.foundation.md`](./core.foundation.md) §10).
+**Example:** 100,000 + fee 1,000 ([`core.sharedlib.md`](./core.sharedlib.md) §10).
 
 ### 6.1 Postings
 
@@ -232,7 +232,7 @@ Debit A (USER) `tx_type = TRANSFER_DEBIT` for the **gross** (principal + fee, e.
 ## 7. IBFT (interbank transfer)
 
 **Goal:** A member transfers out to another bank via Napas. The wallet branch debits funds; the bank branch flows through 1112 (Napas Clearing).  
-**Example:** principal 100,000 + fee 1,000, Napas cost 500 ([`core.foundation.md`](./core.foundation.md) §11).
+**Example:** principal 100,000 + fee 1,000, Napas cost 500 ([`core.sharedlib.md`](./core.sharedlib.md) §11).
 
 ### 7.1 Postings
 
@@ -254,7 +254,7 @@ Debit A (USER) `tx_type = TRANSFER_DEBIT` for the **gross** (principal + fee, e.
 ## 8. QR/POS payment
 
 **Goal:** A customer pays via QR/POS; funds land in the acquirer account **1113 (VPBank)**, crediting the merchant wallet **2120** (pending EOD settlement).  
-**Example:** 100,000, acquiring fee 500 ([`core.foundation.md`](./core.foundation.md) §12).
+**Example:** 100,000, acquiring fee 500 ([`core.sharedlib.md`](./core.sharedlib.md) §12).
 
 ### 8.1 Postings
 
@@ -276,7 +276,7 @@ Debit A (USER) `tx_type = TRANSFER_DEBIT` for the **gross** (principal + fee, e.
 ## 9. Payroll
 
 **Goal:** A merchant pays salaries to employees in bulk, out to banks.  
-**Example:** 5 employees × 100,000 + fee 5,000, Napas cost 2,500 ([`core.foundation.md`](./core.foundation.md) §14).
+**Example:** 5 employees × 100,000 + fee 5,000, Napas cost 2,500 ([`core.sharedlib.md`](./core.sharedlib.md) §14).
 
 ### 9.1 Postings
 
@@ -298,7 +298,7 @@ Debit A (USER) `tx_type = TRANSFER_DEBIT` for the **gross** (principal + fee, e.
 ## 10. Disbursement
 
 **Goal:** A partner pre-funds an escrow (**2130**) then disburses out to recipient banks.  
-([`core.foundation.md`](./core.foundation.md) §15)
+([`core.sharedlib.md`](./core.sharedlib.md) §15)
 
 ### 10.1 Postings
 
@@ -315,7 +315,7 @@ Debit A (USER) `tx_type = TRANSFER_DEBIT` for the **gross** (principal + fee, e.
 
 ## 11. EOD settlement & clearing
 
-**Goal:** At end of day, aggregate pending merchant balances (**2120**), split MDR, and settle the net to merchant banks. Runs as an **independent batch**, not inline with payment ([`core.foundation.md`](./core.foundation.md) §4, §16).
+**Goal:** At end of day, aggregate pending merchant balances (**2120**), split MDR, and settle the net to merchant banks. Runs as an **independent batch**, not inline with payment ([`core.sharedlib.md`](./core.sharedlib.md) §4, §16).
 
 ### 11.1 Flow
 
@@ -487,7 +487,7 @@ Wire/IdP specifics live at the Gateway; the **binding rules** below are the desi
 
 | Question | Document |
 |----------|----------|
-| Detailed DR/CR postings, COA, transit | [`core.foundation.md`](./core.foundation.md) §6–16 |
+| Detailed DR/CR postings, COA, transit | [`core.sharedlib.md`](./core.sharedlib.md) §6–16 |
 | `wallet_*` tables, credit/debit/freeze FR | [`core.wallet.md`](./core.wallet.md) |
 | Surfaces, step order, idempotency, Kafka/RabbitMQ | [`integration-surfaces.md`](./integration-surfaces.md) |
 | Accounting FR / NFR | [`core.accounting.trd.md`](./core.accounting.trd.md) |

@@ -9,7 +9,7 @@
 | Author | Engineering |
 | Date | June 2026 |
 
-**Related:** [`core.foundation.md`](./core.foundation.md), [`integration-surfaces.md`](./integration-surfaces.md), [`open-api/accounting-internal.yaml`](./open-api/accounting-internal.yaml), [`async-api/core-events.yaml`](./async-api/core-events.yaml).  
+**Related:** [`core.sharedlib.md`](./core.sharedlib.md), [`integration-surfaces.md`](./integration-surfaces.md), [`open-api/accounting-internal.yaml`](./open-api/accounting-internal.yaml), [`async-api/core-events.yaml`](./async-api/core-events.yaml).  
 **ADR:** [ADR-001](./adr/ADR-001-immutable-ledger.md), [ADR-002](./adr/ADR-002-core-foundation-shared-library.md)
 
 ---
@@ -622,7 +622,7 @@ Model the system as an **immutable ledger from day one**. Avoid storing balances
 
 ---
 
-## 13. Alignment with `core.foundation` (GtelPay)
+## 13. Alignment with `core.sharedlib` (GtelPay)
 
 This TRD uses **industry API names** (`journal_entries`, `journal_lines`). **`core.accounting` semantics:**
 
@@ -634,11 +634,11 @@ This TRD uses **industry API names** (`journal_entries`, `journal_lines`). **`co
 | Chart of accounts row | COA master | **`coa_account`** |
 | Reference id | External idempotency key | **`business_ref`** on `coa_trans` |
 
-**Naming:** Tables use prefix **`coa_`**. Semantic map: **`coa_trans` = journal**, **`coa_trans_data` = journal_entry** (not the other way around). See [`core.foundation.md` §2.2](./core.foundation.md) and [ADR-001](./adr/ADR-001-immutable-ledger.md).
+**Naming:** Tables use prefix **`coa_`**. Semantic map: **`coa_trans` = journal**, **`coa_trans_data` = journal_entry** (not the other way around). See [`core.sharedlib.md` §2.2](./core.sharedlib.md) and [ADR-001](./adr/ADR-001-immutable-ledger.md).
 
 TRD FR/API names vs platform:
 
-| TRD (this document) | Platform term | `core.foundation` / GtelPay table |
+| TRD (this document) | Platform term | `core.sharedlib` / GtelPay table |
 |---------------------|---------------|-----------------------------------|
 | `journal_entries` | **Journal** | `coa_trans` (`use_case`, `business_ref`, `status`, time) |
 | `journal_lines` | **Journal entry** | `coa_trans_data` (`coa_trans_id`, `account_code`, DR/CR, amount) |
@@ -646,7 +646,7 @@ TRD FR/API names vs platform:
 | Draft → Posted | e.g. deposit **PENDING** → **POSTED** (two-phase with transit **3100**) |
 | `reference_id` | `business_ref` (idempotent key, e.g. bank ref) |
 | Reversal | Additional `coa_trans` with reversed lines; no edit after close |
-| Wallet credit | **Out of scope** for accounting service — event/API to `core.wallet` after POSTED ([`core.foundation.md` §3](./core.foundation.md)) |
+| Wallet credit | **Out of scope** for accounting service — event/API to `core.wallet` after POSTED ([`core.sharedlib.md` §3](./core.sharedlib.md)) |
 | COA account types | Asset, Liability, Transit, Revenue, Expense, Equity (§6 COA in foundation) |
 
 **Invariant (foundation):** every use case leaves transit accounts at **zero** when complete; `sum(DR) = sum(CR)` per `coa_trans`.
@@ -657,4 +657,4 @@ TRD FR/API names vs platform:
 
 ## Conclusion
 
-The Accounting Service TRD defines domain model, ledger architecture, consistency, APIs, integrations, compliance-oriented auditability, and operational targets before implementation. Implement `core.accounting` against this TRD while honoring boundaries and use cases documented in `core.foundation.md`.
+The Accounting Service TRD defines domain model, ledger architecture, consistency, APIs, integrations, compliance-oriented auditability, and operational targets before implementation. Implement `core.accounting` against this TRD while honoring boundaries and use cases documented in `core.sharedlib.md`.

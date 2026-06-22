@@ -4,10 +4,10 @@
 **Last updated:** 2026-06-04  
 **Scope:** `10_core/` — `core.wallet`. Terms: [`TERMINOLOGY.md`](./TERMINOLOGY.md). **Status:** Design only — not implemented in repo.
 
-**Related:** [`integration-surfaces.md`](./integration-surfaces.md) (HTTP/Kafka index), [`core.foundation.md`](./core.foundation.md) (Part I §3 boundary, Part II §8–16 ledger), [`core.accounting.trd.md`](./core.accounting.trd.md), [`open-api/README.md`](./open-api/README.md).  
-**ADR:** [ADR-002 — `core.foundation` shared library](./adr/ADR-002-core-foundation-shared-library.md).
+**Related:** [`integration-surfaces.md`](./integration-surfaces.md) (HTTP/Kafka index), [`core.sharedlib.md`](./core.sharedlib.md) (Part I §3 boundary, Part II §8–16 ledger), [`core.accounting.trd.md`](./core.accounting.trd.md), [`open-api/README.md`](./open-api/README.md).  
+**ADR:** [ADR-002 — `core.sharedlib` shared library](./adr/ADR-002-core-foundation-shared-library.md).
 
-**Integration:** Surface matrix and orchestration step order → [`integration-surfaces.md`](./integration-surfaces.md) §4. `wallet_*` detail → this doc; DR/CR → [`core.foundation.md`](./core.foundation.md) Part II §8+.
+**Integration:** Surface matrix and orchestration step order → [`integration-surfaces.md`](./integration-surfaces.md) §4. `wallet_*` detail → this doc; DR/CR → [`core.sharedlib.md`](./core.sharedlib.md) Part II §8+.
 
 ---
 
@@ -40,7 +40,7 @@ Accounting (`core.accounting`) records **aggregate** liabilities on COA **2110 /
 |--------------|-------|
 | Ledger posting, DR/CR lines, transit accounts | `core.accounting` |
 | Bank webhooks, public HTTP, Kafka bindings | Application / integration layer |
-| Fee revenue recognition, EOD settlement | `core.accounting` ([`core.foundation.md`](./core.foundation.md) Part II §16) |
+| Fee revenue recognition, EOD settlement | `core.accounting` ([`core.sharedlib.md`](./core.sharedlib.md) Part II §16) |
 | Crypto / on-chain custody | Not in fiat v1 design |
 
 ---
@@ -56,17 +56,17 @@ Accounting (`core.accounting`) records **aggregate** liabilities on COA **2110 /
     wallet, wallet_balance, wallet_tx
               │
               ▼
-       core.foundation  (envelope, errors — v1)
+       core.sharedlib  (envelope, errors — v1)
               │
               ▼
              JDK
 ```
 
-**Rules** ([`core.foundation.md`](./core.foundation.md) Part I §3, [ADR-002](./adr/ADR-002-core-foundation-shared-library.md)):
+**Rules** ([`core.sharedlib.md`](./core.sharedlib.md) Part I §3, [ADR-002](./adr/ADR-002-core-foundation-shared-library.md)):
 
 - `core.wallet` **must not** import `core.accounting`, touch `coa_*`, or read `coa_trans`.
 - Sync with accounting: **after** `coa_trans.status = POSTED` (deposit credit) or **within orchestration transaction boundaries** in the order Application defines (sync pay/transfer) — the wallet never posts the ledger.
-- May import **`core.foundation`** only for shared types (errors, paging) — see [`core.foundation.md`](./core.foundation.md) Part I §5 (no command DTOs in foundation v1).
+- May import **`core.sharedlib`** only for shared types (errors, paging) — see [`core.sharedlib.md`](./core.sharedlib.md) Part I §5 (no command DTOs in foundation v1).
 
 ---
 
@@ -172,7 +172,7 @@ On first need (or member onboarding hook from Application):
 
 - Increase `available` by `amount`.
 - Insert `wallet_tx` (`direction = CREDIT`).
-- **Deposit path:** only after orchestration confirms ledger **POSTED** ([`core.foundation.md`](./core.foundation.md) Part II §8).
+- **Deposit path:** only after orchestration confirms ledger **POSTED** ([`core.sharedlib.md`](./core.sharedlib.md) Part II §8).
 - Duplicate `business_ref`: return existing `wallet_tx` / `walletTxId` — no second credit.
 
 ### FR-4 Debit
@@ -199,7 +199,7 @@ On first need (or member onboarding hook from Application):
 
 ## 5. Use cases — wallet branch only
 
-Ledger lines: [`core.foundation.md`](./core.foundation.md) Part II §8–16. Below is **only** what `core.wallet` does when Application calls it.
+Ledger lines: [`core.sharedlib.md`](./core.sharedlib.md) Part II §8–16. Below is **only** what `core.wallet` does when Application calls it.
 
 ### 5.1 Deposit (fiat, async recommended)
 
@@ -255,7 +255,7 @@ Enum values are locked in [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) §2.1 — t
 
 ### 5.5 Interbank transfer (IBFT, bank async)
 
-Like withdraw, the bank leg is async, so the wallet **freezes on accept** then settles/releases ([`core.foundation.md`](./core.foundation.md) Part II §11; ledger transit **3400**).
+Like withdraw, the bank leg is async, so the wallet **freezes on accept** then settles/releases ([`core.sharedlib.md`](./core.sharedlib.md) Part II §11; ledger transit **3400**).
 
 1. **Freeze** user gross (principal + fee) before orchestration returns **200** accept.
 2. Napas/bank payout async. On success → **settle** (debit from frozen); on failure / cancel → **release** (unfreeze).
@@ -266,11 +266,11 @@ Like withdraw, the bank leg is async, so the wallet **freezes on accept** then s
 | `IBFT_SETTLE` | DEBIT | Bank success — deduct from frozen |
 | `IBFT_RELEASE` | UNFREEZE | Payout failed / cancel |
 
-Wallet models the member leg only; the bank cost (5100) and fee revenue (4130) are accounting-side ([`core.foundation.md`](./core.foundation.md) §11).
+Wallet models the member leg only; the bank cost (5100) and fee revenue (4130) are accounting-side ([`core.sharedlib.md`](./core.sharedlib.md) §11).
 
 ### 5.6 Partner lane (`PARTNER`)
 
-Partner escrow / disbursement pre-fund ([`core.foundation.md`](./core.foundation.md) Part II §15): credit/debit **PARTNER** wallet when orchestration issues commands — same FR rules.
+Partner escrow / disbursement pre-fund ([`core.sharedlib.md`](./core.sharedlib.md) Part II §15): credit/debit **PARTNER** wallet when orchestration issues commands — same FR rules.
 
 | `tx_type` | Direction | When |
 |-----------|-----------|------|
@@ -356,10 +356,10 @@ Paths and schemas: [`open-api/gtelpay-public.yaml`](./open-api/gtelpay-public.ya
 | Duplicate `business_ref`, conflicting amount | Reject — `CONFLICT` / wallet error |
 | Debit when `available` insufficient | Reject — no partial debit |
 | Credit after POSTED retry | Safe no-op via idempotency |
-| Ledger POSTED but wallet credit fails | Retry consumer; **do not** reverse ledger from wallet — ops reconciliation ([`core.foundation.md`](./core.foundation.md) Part II §8.5) |
+| Ledger POSTED but wallet credit fails | Retry consumer; **do not** reverse ledger from wallet — ops reconciliation ([`core.sharedlib.md`](./core.sharedlib.md) Part II §8.5) |
 | Wallet `LOCKED` | Reject debit/freeze |
 
-**Error codes:** extend `core.foundation` `ErrorCode` — e.g. `WALLET_INSUFFICIENT_BALANCE`, `WALLET_NOT_FOUND`, `WALLET_LOCKED`, `WALLET_DUPLICATE_CONFLICT`.
+**Error codes:** extend `core.sharedlib` `ErrorCode` — e.g. `WALLET_INSUFFICIENT_BALANCE`, `WALLET_NOT_FOUND`, `WALLET_LOCKED`, `WALLET_DUPLICATE_CONFLICT`.
 
 ---
 
@@ -399,4 +399,4 @@ Wallet credit is **out of scope** for the accounting service ([`core.accounting.
 
 ## 12. Summary
 
-`core.wallet` owns per-member `available` / `frozen` and append-only `wallet_tx`. Accounting owns **COA** and the ledger; Application sequences both via commands and events — wallet repo **must not** call accounting repo. Implement this TRD when the wallet module is added to the repo; until then, boundaries and orchestration order follow [`core.foundation.md`](./core.foundation.md) Part I §3 and Part II §8+.
+`core.wallet` owns per-member `available` / `frozen` and append-only `wallet_tx`. Accounting owns **COA** and the ledger; Application sequences both via commands and events — wallet repo **must not** call accounting repo. Implement this TRD when the wallet module is added to the repo; until then, boundaries and orchestration order follow [`core.sharedlib.md`](./core.sharedlib.md) Part I §3 and Part II §8+.

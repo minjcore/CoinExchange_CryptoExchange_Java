@@ -21,4 +21,4 @@ redocly lint open-api/accounting-internal.yaml
 
 AsyncAPI: [https://www.asyncapi.com/tools/generator](https://www.asyncapi.com/tools/generator)
 
-Surface index: [`integration-surfaces.md`](../integration-surfaces.md) · Journals: [`core.foundation.md`](../core.foundation.md) §8–16 · Wallet: [`core.wallet.md`](../core.wallet.md)
+Surface index: [`integration-surfaces.md`](../integration-surfaces.md) · Journals: [`core.sharedlib.md`](../core.sharedlib.md) §8–16 · Wallet: [`core.wallet.md`](../core.wallet.md)

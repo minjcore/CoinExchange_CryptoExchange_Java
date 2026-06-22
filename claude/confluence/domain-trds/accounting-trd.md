@@ -75,7 +75,7 @@ public record CreateJournalCommand(
 **Rules:**
 - `confirmDeposit` nhận `fee` riêng (được tính bởi orchestration, truyền vào qua BANK_DEPOSIT command) — phép tính `net = grossAmount − fee` thực hiện bên trong `confirmDeposit`
 - `createJournal` idempotent: `UNIQUE(businessRef, useCase)` → duplicate trả về existing PENDING
-- Dependencies: `core.foundation` only. Zero framework imports.
+- Dependencies: `core.sharedlib` only. Zero framework imports.
 
 ---
 

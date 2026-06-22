@@ -5,7 +5,7 @@
 **Status:** Draft — locks open choices so code can start.  
 **Scope:** Repo layout, DDL, service contracts, orchestration classes, idempotency algorithms, build phases. Domain narrative stays in TRDs / wire specs.
 
-**Related:** [`core.foundation.md`](./core.foundation.md) Part I · [`core.wallet.md`](./core.wallet.md) · [`core.accounting.trd.md`](./core.accounting.trd.md) · [`integration-surfaces.md`](./integration-surfaces.md).
+**Related:** [`core.sharedlib.md`](./core.sharedlib.md) Part I · [`core.wallet.md`](./core.wallet.md) · [`core.accounting.trd.md`](./core.accounting.trd.md) · [`integration-surfaces.md`](./integration-surfaces.md).
 
 ---
 
@@ -26,7 +26,7 @@
 ```
 core/
 ├── pom.xml                          # parent BOM, dependencyManagement
-├── core.foundation/
+├── core.sharedlib/
 │   └── src/main/java/com/gtelpay/core/foundation/
 │       ├── request/                 PageRequest, SortParam, SortDirection
 │       ├── response/                ApiResponse
@@ -63,7 +63,7 @@ core/
 
 | Module | Depends on | Spring | JPA | Flyway | Testcontainers |
 |--------|------------|--------|-----|--------|----------------|
-| `core.foundation` | JDK | ✗ | ✗ | ✗ | ✗ |
+| `core.sharedlib` | JDK | ✗ | ✗ | ✗ | ✗ |
 | `core.wallet` | foundation | `@Transactional`, `@Service` only | ✓ | wallet schema | ✓ in test |
 | `core.accounting` | foundation | same | ✓ | accounting schema | ✓ in test |
 | `app-orchestration` | wallet + accounting | Boot full stack | auto-config both | runs both migrators | ✓ IT |
@@ -252,7 +252,7 @@ CREATE INDEX idx_coa_trans_data_journal ON accounting.coa_trans_data (coa_trans_
 
 ### 4.1 COA seed (`V2__seed_coa.sql`)
 
-Insert **every** account used by the v1 flows in [`core.foundation.md`](./core.foundation.md) §6–16 (a flow posting to a missing `account_code` fails the FK on `coa_trans_data`). `account_type` ∈ `ASSET | LIABILITY | TRANSIT | REVENUE | EXPENSE | EQUITY`.
+Insert **every** account used by the v1 flows in [`core.sharedlib.md`](./core.sharedlib.md) §6–16 (a flow posting to a missing `account_code` fails the FK on `coa_trans_data`). `account_type` ∈ `ASSET | LIABILITY | TRANSIT | REVENUE | EXPENSE | EQUITY`.
 
 | code | name | type | used by |
 |------|------|------|---------|
@@ -284,7 +284,7 @@ Insert **every** account used by the v1 flows in [`core.foundation.md`](./core.f
 
 ---
 
-## 5. `core.foundation` — implement first (P0)
+## 5. `core.sharedlib` — implement first (P0)
 
 Pure Java; **no** `spring-*` on compile classpath.
 
@@ -433,13 +433,13 @@ public interface AccountQueryService {
 
 UNIQUE `(reference_id, use_case)` on `coa_trans`:
 
-- Duplicate `createJournal` → return existing header (same as [`core.foundation.md`](./core.foundation.md) §8.5)
+- Duplicate `createJournal` → return existing header (same as [`core.sharedlib.md`](./core.sharedlib.md) §8.5)
 - `postJournal` when already POSTED → no-op, return current state
 - Before post: validate **sum(DR) = sum(CR)** → else `ACCOUNTING_UNBALANCED_JOURNAL`
 
 ### 7.4 Posting — wallet payment (use_case `PAYMENT`)
 
-Orchestration builds lines from [`core.foundation.md`](./core.foundation.md) §13 (amount = gross 100,000 example):
+Orchestration builds lines from [`core.sharedlib.md`](./core.sharedlib.md) §13 (amount = gross 100,000 example):
 
 | Step | account | side | amount |
 |------|---------|------|--------|
@@ -457,7 +457,7 @@ All lines in one `addLines` + single `postJournal` — transit **3500 = 0** afte
 | 1111 | DR | gross bank amount |
 | 3100 | CR | gross |
 
-Phase B (`POSTED`): add lines per [`core.foundation.md`](./core.foundation.md) §8.1 steps 3–6 (3100 DR, 2110 CR net, fee to 4110).
+Phase B (`POSTED`): add lines per [`core.sharedlib.md`](./core.sharedlib.md) §8.1 steps 3–6 (3100 DR, 2110 CR net, fee to 4110).
 
 **Locked:** phase B is a dedicated `confirmDeposit(long coaTransId, BigDecimal fee)` method on `JournalService`. It (1) loads the PENDING journal, (2) appends the §8.1 steps 3–6 lines (3100 DR gross, 2110 CR net, 2110 DR fee, 4110 CR fee), (3) validates `sum(DR)=sum(CR)` and transit 3100 = 0, (4) sets `status = POSTED`, `posted_at = now()`. Do **not** use a bare `addLines` + `postJournal` from orchestration for deposit — the two-phase template lives inside accounting so the transit-zero invariant is enforced in one place. Idempotent: calling `confirmDeposit` on an already-POSTED journal is a no-op returning current state.
 
@@ -577,7 +577,7 @@ Consumer (accounting worker or same app `@RabbitListener`): idempotent on `(BANK
 
 ### P0 — foundation (1–2 days)
 
-- [ ] Maven module `core.foundation`
+- [ ] Maven module `core.sharedlib`
 - [ ] All classes §5.1 + unit tests
 - [ ] Parent POM dependencyManagement (Jackson, JUnit 5, AssertJ — test scope in child modules)
 
@@ -680,8 +680,8 @@ Flyway: configure **per datasource** — `spring.flyway.schemas=wallet` on walle
 | Task | Read |
 |------|------|
 | Table columns / FR | [`core.wallet.md`](./core.wallet.md), [`core.accounting.trd.md`](./core.accounting.trd.md) |
-| DR/CR / transit | [`core.foundation.md`](./core.foundation.md) Part II §8–16 |
+| DR/CR / transit | [`core.sharedlib.md`](./core.sharedlib.md) Part II §8–16 |
 | Step order | [`integration-surfaces.md`](./integration-surfaces.md) §4 |
 | HTTP / Kafka / RabbitMQ payloads | `open-api/`, `async-api/` |
-| Shared types | [`core.foundation.md`](./core.foundation.md) Part I §4 |
+| Shared types | [`core.sharedlib.md`](./core.sharedlib.md) Part I §4 |
 | **This file** | Layout, DDL, algorithms, phases, class names |

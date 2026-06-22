@@ -22,7 +22,7 @@
 ```
 core/
 ├── pom.xml
-├── core.foundation/
+├── core.sharedlib/
 ├── core.wallet/
 ├── core.accounting/
 ├── app-orchestration/
@@ -34,7 +34,7 @@ core/
 
 | Module | Responsibility | Not allowed |
 |--------|---------------|-------------|
-| `core.foundation` | Shared pure-Java primitives | Spring, JPA, Flyway |
+| `core.sharedlib` | Shared pure-Java primitives | Spring, JPA, Flyway |
 | `core.wallet` | Wallet domain, balance mutations | accounting dependency |
 | `core.accounting` | Journal domain, posting logic | wallet dependency |
 | `app-orchestration` | Inbound HTTP, auth, saga sequencing | Direct JPA to domain tables |

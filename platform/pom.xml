@@ -15,6 +15,7 @@
         <module>core.sharedlib</module>
         <module>core.wallet</module>
         <module>core.accounting</module>
+        <module>core.reconciliation</module>
         <module>app-orchestration</module>
     </modules>
 
@@ -48,6 +49,11 @@
             <dependency>
                 <groupId>com.gtelpay.core</groupId>
                 <artifactId>core.accounting</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.gtelpay.core</groupId>
+                <artifactId>core.reconciliation</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -191,7 +191,7 @@ After phase A PENDING → orchestration/worker calls `confirmDeposit` qua **S2 H
 
 ## 4. Errors (S2 ↔ accounting)
 
-Từ [`model.md`](./model.md) § Errors — align `ErrorCode` in `core.foundation`:
+Từ [`model.md`](./model.md) § Errors — align `ErrorCode` in `core.sharedlib`:
 
 | `errorCode` | HTTP | Accounting cause |
 |-------------|------|------------------|

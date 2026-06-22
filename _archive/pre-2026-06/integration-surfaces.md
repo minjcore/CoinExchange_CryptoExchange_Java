@@ -6,7 +6,7 @@
 
 > **Purpose:** List integration surfaces (S1–S6) — who publishes/consumes, which spec file, which domain doc to read.  
 > **Public HTTP:** S1 (`gtelpay-public.yaml`) — implement trong **BFF/orchestration**, route qua S4 Gateway. **`core.wallet` / `core.accounting`:** domain library, không tự expose HTTP. **Internal:** S2, S3, S6.  
-> **Does not replace:** `wallet_*` schema → [`core.wallet.md`](./core.wallet.md); COA / transit postings → [`core.foundation.md`](./core.foundation.md) §8–16; accounting FR → [`core.accounting.trd.md`](./core.accounting.trd.md).
+> **Does not replace:** `wallet_*` schema → [`core.wallet.md`](./core.wallet.md); COA / transit postings → [`core.sharedlib.md`](./core.sharedlib.md) §8–16; accounting FR → [`core.accounting.trd.md`](./core.accounting.trd.md).
 
 ---
 
@@ -38,7 +38,7 @@
 | S2 | Accounting API | HTTPS (internal) | [`open-api/accounting-internal.yaml`](./open-api/accounting-internal.yaml) | `core.accounting` (adapter) | Orchestration only |
 | S3 | Domain events (internal) | Kafka | [`async-api/core-events.yaml`](./async-api/core-events.yaml) | Orchestration, accounting, wallet adapters | Orchestration, wallet consumer |
 | S4 | Gateway routes (public edge) | Config | [`gateway/routes.example.yaml`](./gateway/routes.example.yaml) | DevOps | Edge proxy → BFF only |
-| S5 | Shared envelope (errors, paging) | Library (design) | [`core.foundation.md`](./core.foundation.md) Part I §4 | — | Application, `core.*` |
+| S5 | Shared envelope (errors, paging) | Library (design) | [`core.sharedlib.md`](./core.sharedlib.md) Part I §4 | — | Application, `core.*` |
 | S6 | Worker commands (internal) | AMQP (RabbitMQ) | [`async-api/core-commands.yaml`](./async-api/core-commands.yaml) | Orchestration | Accounting worker, wallet worker, payout worker |
 
 **Default runtime flow:**
@@ -58,7 +58,7 @@ Orchestration **must not** write `wallet_*` / `coa_*` directly ([§9](#9-forbidd
 | Role | Read first | Then |
 |------|------------|------|
 | API Gateway | S4, S1 | `open-api/README.md` (lint) |
-| BFF / orchestration | This file §4, S1+S2+S3+S6 | `core.foundation.md` Part I §3, Part II §8+ (step order) |
+| BFF / orchestration | This file §4, S1+S2+S3+S6 | `core.sharedlib.md` Part I §3, Part II §8+ (step order) |
 | Implement `core.wallet` | [`core.wallet.md`](./core.wallet.md) | S3 events + S6 `WALLET_CREDIT` consumer; do not implement S1/S2 inside wallet module |
 | Implement `core.accounting` | `core.accounting.trd.md` | S2; consume S6 `BANK_DEPOSIT`; publish `JournalPosted` (S3) |
 | Worker / adapter | S6 envelope §6.1–6.3 | Same field names as S1/S3 ([§8](#8-idempotency--correlation)) |
@@ -68,7 +68,7 @@ Orchestration **must not** write `wallet_*` / `coa_*` directly ([§9](#9-forbidd
 
 ## 4. Use case × surface matrix
 
-**Wallet branch** (detail): [`core.wallet.md` §5](./core.wallet.md). **Ledger branch:** [`core.foundation.md`](./core.foundation.md) §8–16.
+**Wallet branch** (detail): [`core.wallet.md` §5](./core.wallet.md). **Ledger branch:** [`core.sharedlib.md`](./core.sharedlib.md) §8–16.
 
 | Use case | S1 HTTP public | S2 Accounting | S6 RabbitMQ (worker) | S3 Kafka (fan-out) | Wallet (orchestration calls) | Notes |
 |----------|----------------|---------------|----------------------|-------------------|------------------------------|-------|
@@ -241,8 +241,8 @@ Internal journal API (S2) is **not** routed on the public Gateway.
 | Question | Document |
 |----------|----------|
 | `wallet` tables, credit/debit FR? | [`core.wallet.md`](./core.wallet.md) |
-| Boundary between two cores? | [`core.foundation.md`](./core.foundation.md) Part I §3 |
-| Transit 3100, deposit DR/CR? | [`core.foundation.md`](./core.foundation.md) Part II §8 |
+| Boundary between two cores? | [`core.sharedlib.md`](./core.sharedlib.md) Part I §3 |
+| Transit 3100, deposit DR/CR? | [`core.sharedlib.md`](./core.sharedlib.md) Part II §8 |
 | Accounting NFR / API FR? | [`core.accounting.trd.md`](./core.accounting.trd.md) |
 | Lint OpenAPI? | [`open-api/README.md`](./open-api/README.md) |
 | RabbitMQ command envelope? | [`async-api/core-commands.yaml`](./async-api/core-commands.yaml) · §6 |

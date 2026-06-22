@@ -26,7 +26,7 @@
 ```
 core/
 ├── pom.xml                          # parent BOM, dependencyManagement
-├── core.foundation/
+├── core.sharedlib/
 │   └── src/main/java/com/gtelpay/core/foundation/
 │       ├── request/                 PageRequest, SortParam, SortDirection
 │       ├── response/                ApiResponse
@@ -66,7 +66,7 @@ core/
 
 | Module | Depends on | Spring | JPA | Flyway | Testcontainers |
 |--------|------------|--------|-----|--------|----------------|
-| `core.foundation` | JDK | ✗ | ✗ | ✗ | ✗ |
+| `core.sharedlib` | JDK | ✗ | ✗ | ✗ | ✗ |
 | `core.wallet` | foundation | `@Transactional`, `@Service` only | ✓ | wallet schema | ✓ in test |
 | `core.accounting` | foundation | same | ✓ | accounting schema | ✓ in test |
 | `app-orchestration` | foundation (+ HTTP clients only) | Boot **without** `starter-web`; Vert.x core inbound | **Không** JPA domain — gọi wallet/accounting pod HTTP | — | ✓ IT (Testcontainers + wiremock) |
@@ -352,7 +352,7 @@ CREATE INDEX idx_outbox_pending ON accounting.outbox (created_at)
 
 ---
 
-## 5. `core.foundation` — implement first (P0)
+## 5. `core.sharedlib` — implement first (P0)
 
 Pure Java; **no** `spring-*` on compile classpath.
 
@@ -672,7 +672,7 @@ Consumer (accounting worker or same app `@RabbitListener`): idempotent on `(BANK
 
 ### P0 — foundation (1–2 days)
 
-- [x] Maven module `core.foundation`
+- [x] Maven module `core.sharedlib`
 - [x] All classes §5.1 + unit tests
 - [x] Parent POM dependencyManagement (Jackson, JUnit 5, AssertJ — test scope in child modules)
 

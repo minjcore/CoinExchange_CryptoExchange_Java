@@ -2,7 +2,7 @@
 
 **Status:** Draft · **Scope:** per-member balance (`wallet_*`) · **Not:** ledger, COA, fee rates, public HTTP
 
-Ledger postings: [`core.foundation.md`](../core.foundation.md) Part II §8–16 · Accounting behavior: [`accounting.md`](./accounting.md)
+Ledger postings: [`core.sharedlib.md`](../core.sharedlib.md) Part II §8–16 · Accounting behavior: [`accounting.md`](./accounting.md)
 
 This document defines **wallet obligations, operations, failures, and boundaries** — not a second copy of [`core.wallet.md`](../core.wallet.md) DDL sections.
 

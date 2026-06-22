@@ -1,6 +1,6 @@
 # Terminology — platform vs TRD / REST
 
-Quick lookup when reviewing. Detail: [`core.foundation.md`](./core.foundation.md) Part II §2.2, [`core.accounting.trd.md`](./core.accounting.trd.md) §13, [ADR-001](./adr/ADR-001-immutable-ledger.md).
+Quick lookup when reviewing. Detail: [`core.sharedlib.md`](./core.sharedlib.md) Part II §2.2, [`core.accounting.trd.md`](./core.accounting.trd.md) §13, [ADR-001](./adr/ADR-001-immutable-ledger.md).
 
 ## Platform (DB / code)
 
@@ -41,7 +41,7 @@ Quick lookup when reviewing. Detail: [`core.foundation.md`](./core.foundation.md
 
 | Area | Prefix | Docs |
 |------|--------|------|
-| Accounting | **`coa_`** | [`core.foundation.md`](./core.foundation.md) Part II, [`core.accounting.trd.md`](./core.accounting.trd.md) |
+| Accounting | **`coa_`** | [`core.sharedlib.md`](./core.sharedlib.md) Part II, [`core.accounting.trd.md`](./core.accounting.trd.md) |
 | Wallet | **`wallet_`** | [`core.wallet.md`](./core.wallet.md) |
 
 COA **2110 / 2120 / 2130** = aggregate liabilities (accounting). **`wallet_balance`** = per member (wallet).

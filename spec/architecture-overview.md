@@ -53,7 +53,7 @@ flowchart TB
   subgraph Domains["Domain pods — no cross-import"]
     W["core.wallet pod<br/>wallet-internal HTTP"]
     A["core.accounting pod<br/>S2 HTTP"]
-    F[core.foundation lib]
+    F[core.sharedlib lib]
   end
 
   subgraph Messaging["Async infra"]

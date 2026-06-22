@@ -116,7 +116,7 @@ Over-engineering = complexity with **no payoff**. Here, each piece pays for itse
 
 # Not paper — running code
 
-- `core.foundation` · `core.wallet` · `core.accounting` · `app-orchestration`
+- `core.sharedlib` · `core.wallet` · `core.accounting` · `app-orchestration`
   → **built, tests passing** (Java / Spring Boot 3).
 - Money-critical rules are **coded and tested**, not just described:
   - idempotency re-checked **under lock** → no double-apply

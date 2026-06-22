@@ -1,24 +1,24 @@
-# core.foundation — Shared Library Design
+# core.sharedlib — Shared Library Design
 
 **Author:** Cao Khang Đoàn  
 **Last updated:** 2026-06-04  
-**Scope:** `10_core/` — `core.foundation` (shared library) + Part II accounting fund flow in this file.  
+**Scope:** `10_core/` — `core.sharedlib` (shared library) + Part II accounting fund flow in this file.  
 **Status:** Design only — not implemented in repo.
 
 **Related:** [ADR-002](./adr/ADR-002-core-foundation-shared-library.md), [`TERMINOLOGY.md`](./TERMINOLOGY.md), [`integration-surfaces.md`](./integration-surfaces.md), [`core.wallet.md`](./core.wallet.md), [`core.accounting.trd.md`](./core.accounting.trd.md).  
 **Wire:** [`spec/contracts/open-api/`](./contracts/open-api/), [`spec/contracts/async-api/`](./contracts/async-api/).
 
-This file has **two parts:** **Part I** (sections below) = `core.foundation` only. **Part II** = fiat accounting fund flow (`coa_*`, use cases §8–16) kept in this file for document history; service FR/NFR also appear in [`core.accounting.trd.md`](./core.accounting.trd.md).
+This file has **two parts:** **Part I** (sections below) = `core.sharedlib` only. **Part II** = fiat accounting fund flow (`coa_*`, use cases §8–16) kept in this file for document history; service FR/NFR also appear in [`core.accounting.trd.md`](./core.accounting.trd.md).
 
 ---
 
-## Part I — `core.foundation`
+## Part I — `core.sharedlib`
 
 ### 1. Overview
 
 #### 1.1 Purpose
 
-`core.foundation` is the **shared library** at the bottom of the `core` stack — there is **no second “common” module** ([ADR-002](./adr/ADR-002-core-foundation-shared-library.md)). Application, `core.wallet`, and `core.accounting` share one set of:
+`core.sharedlib` is the **shared library** at the bottom of the `core` stack — there is **no second “common” module** ([ADR-002](./adr/ADR-002-core-foundation-shared-library.md)). Application, `core.wallet`, and `core.accounting` share one set of:
 
 - **Envelope** JSON HTTP (`ApiResponse`) and **error codes**
 - **Pagination** (`PageRequest`, `PageResult`)
@@ -59,7 +59,7 @@ Foundation **does not** contain wallet or accounting business rules, **does not*
      │                 │
      └────────┬────────┘
               ▼
-       core.foundation
+       core.sharedlib
               │
               ▼
              JDK
@@ -87,7 +87,7 @@ Foundation **does not** contain wallet or accounting business rules, **does not*
 
 ### 4. Components
 
-#### 4.1 Request (`core.foundation.request`)
+#### 4.1 Request (`core.sharedlib.request`)
 
 | Type | Fields | Notes |
 |------|--------|-------|
@@ -97,7 +97,7 @@ Foundation **does not** contain wallet or accounting business rules, **does not*
 
 No servlet or Spring Web types in this package.
 
-#### 4.2 Response (`core.foundation.response`)
+#### 4.2 Response (`core.sharedlib.response`)
 
 **`ApiResponse<T>`** — aligns with public OpenAPI `ApiEnvelope` + `data`:
 
@@ -110,7 +110,7 @@ No servlet or Spring Web types in this package.
 
 Factories (design): `ApiResponse.ok(data)`, `ApiResponse.fail(ErrorCode, message)`.
 
-#### 4.3 Errors (`core.foundation.exception`)
+#### 4.3 Errors (`core.sharedlib.exception`)
 
 | Type | Role |
 |------|------|
@@ -135,7 +135,7 @@ Factories (design): `ApiResponse.ok(data)`, `ApiResponse.fail(ErrorCode, message
 
 Application maps `ErrorCode` → HTTP status; foundation does not depend on `spring-web`.
 
-#### 4.4 Pagination (`core.foundation.page`)
+#### 4.4 Pagination (`core.sharedlib.page`)
 
 **`PageResult<T>`:**
 
@@ -148,7 +148,7 @@ Application maps `ErrorCode` → HTTP status; foundation does not depend on `spr
 
 Empty page: `content=[]`, `total=0`.
 
-#### 4.5 Util (`core.foundation.util`)
+#### 4.5 Util (`core.sharedlib.util`)
 
 | Area | Examples | Rules |
 |------|----------|-------|
@@ -188,7 +188,7 @@ Empty page: `content=[]`, `total=0`.
 ### 7. Dependency rules
 
 ```
-Application  ──►  core.wallet | core.accounting  ──►  core.foundation  ──►  JDK
+Application  ──►  core.wallet | core.accounting  ──►  core.sharedlib  ──►  JDK
 ```
 
 | Allowed | Forbidden |
@@ -221,7 +221,7 @@ Step order: [`integration-surfaces.md`](./integration-surfaces.md) §4.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   core.foundation                        │
+│                   core.sharedlib                        │
 ├─────────────────────────────────────────────────────────┤
 │  request   PageRequest, SortParam                      │
 │  response  ApiResponse<T>                                │
@@ -250,7 +250,7 @@ Step order: [`integration-surfaces.md`](./integration-surfaces.md) §4.
 
 ### 11. Part I summary
 
-`core.foundation` (when implemented) should stay **small**: `ApiResponse`, errors, pagination, small utils. Domain tables and posting live in `core.wallet` / `core.accounting` (Part II). Do not add `api.*` command layers until a concrete second consumer exists.
+`core.sharedlib` (when implemented) should stay **small**: `ApiResponse`, errors, pagination, small utils. Domain tables and posting live in `core.wallet` / `core.accounting` (Part II). Do not add `api.*` command layers until a concrete second consumer exists.
 
 ---
 
@@ -684,4 +684,4 @@ Exception branch: reverse 3810/3820 → 3800 → 2120 if reconciliation mismatch
 
 ## Conclusion
 
-`core.accounting` owns accounting end-to-end: COA, `coa_trans` / `coa_trans_data`, transit accounts, and EOD settlement (fund flows §8–16). Per-member balances (`wallet_*`) belong in [`core.wallet.md`](./core.wallet.md) — synchronized via event/API ([`integration-surfaces.md`](./integration-surfaces.md)); wallet and accounting code **must not** `JOIN` in one query. All modules depend on **Part I** `core.foundation`.
+`core.accounting` owns accounting end-to-end: COA, `coa_trans` / `coa_trans_data`, transit accounts, and EOD settlement (fund flows §8–16). Per-member balances (`wallet_*`) belong in [`core.wallet.md`](./core.wallet.md) — synchronized via event/API ([`integration-surfaces.md`](./integration-surfaces.md)); wallet and accounting code **must not** `JOIN` in one query. All modules depend on **Part I** `core.sharedlib`.

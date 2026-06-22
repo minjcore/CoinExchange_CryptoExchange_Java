@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | Document | Design & verified-core sign-off |
-| Component | `core.accounting` + `core.wallet` (+ `core.foundation`, `app-orchestration`) |
+| Component | `core.accounting` + `core.wallet` (+ `core.sharedlib`, `app-orchestration`) |
 | Domain | Fiat payments (VND) |
 | Status | **Draft — awaiting approval** |
 | Prepared for | Architecture / Engineering / Finance / Product approval |
@@ -17,7 +17,7 @@
 **In scope**
 - `core.accounting` — immutable double-entry ledger (chart of accounts, journals, transit, EOD).
 - `core.wallet` — per-member spendable balance (available / frozen), append-only movements.
-- `core.foundation` — shared lib (envelope, errors, money utils).
+- `core.sharedlib` — shared lib (envelope, errors, money utils).
 - `app-orchestration` — saga sequencer across the two domains.
 - Currency: **VND (fiat) only.**
 
@@ -35,7 +35,7 @@
 | Behaviour | Process flows (`spec/processes.md`), foundation fund flows |
 | Contracts | OpenAPI + AsyncAPI (`spec/contracts/`) as the wire source of truth |
 | Conformance | **150+ acceptance scenarios** (Given/When/Then) |
-| Implementation | `core.foundation` · `core.wallet` · `core.accounting` · `app-orchestration` (Java / Spring Boot 3) — building |
+| Implementation | `core.sharedlib` · `core.wallet` · `core.accounting` · `app-orchestration` (Java / Spring Boot 3) — building |
 | Automated tests | **38 tests passing** (`mvn test`, BUILD SUCCESS) |
 
 ---

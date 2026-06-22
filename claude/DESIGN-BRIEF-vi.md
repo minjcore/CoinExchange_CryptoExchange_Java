@@ -48,7 +48,7 @@ Một thiết kế over-engineering thật sự sẽ không có danh sách "đã
 
 ## Vì sao đáng tin — không phải giấy, nó chạy
 
-- `core.foundation`, `core.wallet`, `core.accounting`, `app-orchestration` đã **build, test pass** (Java / Spring Boot 3) — không phải slide.
+- `core.sharedlib`, `core.wallet`, `core.accounting`, `app-orchestration` đã **build, test pass** (Java / Spring Boot 3) — không phải slide.
 - Các luật trọng yếu về tiền được **code và test**: số dư 1 dòng làm chủ + log chỉ-thêm trong cùng transaction; **idempotency check lại dưới lock** (retry không áp hai lần); journal cân + bất biến; nạp tiền hai pha (chỉ credit sau khi sổ cái post).
 - **41 ADR** khóa từng quyết định kèm tiêu chí nghiệm thu + test case; **bộ invariant SQL gác build** (mọi journal cân, trung chuyển về 0) — lệch là rớt CI, không lọt production.
 
@@ -64,7 +64,7 @@ Một thiết kế over-engineering thật sự sẽ không có danh sách "đã
 
 ## Phạm vi
 
-`core.accounting` (sổ cái) + `core.wallet` (số dư member) + `core.foundation` (shared lib) + `app-orchestration` (sequencer). **Fiat (VND).** Toàn bộ ADR, luồng nghiệp vụ, contracts, và 150+ kịch bản nghiệm thu có sẵn làm tài liệu nền, cung cấp khi cần.
+`core.accounting` (sổ cái) + `core.wallet` (số dư member) + `core.sharedlib` (shared lib) + `app-orchestration` (sequencer). **Fiat (VND).** Toàn bộ ADR, luồng nghiệp vụ, contracts, và 150+ kịch bản nghiệm thu có sẵn làm tài liệu nền, cung cấp khi cần.
 
 ---
 

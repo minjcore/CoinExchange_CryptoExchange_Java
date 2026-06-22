@@ -116,7 +116,7 @@ Over-engineering = phức tạp mà **không đem lại gì**. Ở đây, từng
 
 # Không phải giấy — code chạy thật
 
-- `core.foundation` · `core.wallet` · `core.accounting` · `app-orchestration`
+- `core.sharedlib` · `core.wallet` · `core.accounting` · `app-orchestration`
   → **đã build, test pass** (Java / Spring Boot 3).
 - Luật trọng yếu về tiền được **code và test**, không chỉ mô tả:
   - idempotency check lại **dưới lock** → không áp hai lần

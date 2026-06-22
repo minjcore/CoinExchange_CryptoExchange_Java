@@ -2,7 +2,7 @@
 
 **Updated:** 2026-06-08 (lần 8 — VAS/IFRS VN + ADR-036) · **Tool:** Firecrawl CLI · **Scope:** `10_core/references/` only
 
-Tài liệu tham chiếu ngành — **không phải** spec dự án. Đối chiếu với `core.foundation.md`, `core.wallet.md`, `design-v2/`, ADR.
+Tài liệu tham chiếu ngành — **không phải** spec dự án. Đối chiếu với `core.sharedlib.md`, `core.wallet.md`, `design-v2/`, ADR.
 
 **Tổng:** 124 corpus files + README · **~37.820 dòng** markdown/txt
 
@@ -300,7 +300,7 @@ Spec dự án: [`core.wallet.md`](../core.wallet.md) · [`design-v2/wallet.md`](
 
 | Chủ đề | Reference | Dự án |
 |--------|-----------|-------|
-| Double-entry COA | MT accounting I–III, Square Books | `core.foundation.md` §6–16 |
+| Double-entry COA | MT accounting I–III, Square Books | `core.sharedlib.md` §6–16 |
 | Wallet vs ledger | MT build wallet, Finlego WaaS | `core.wallet.md`, `design-v2/wallet.md` |
 | Transaction pending/posted | MT scale III–V, TigerBeetle | `accounting.md` §5, deposit §8 |
 | Immutable ledger | Square Books, Formance | ADR-001 |
@@ -313,7 +313,7 @@ Spec dự án: [`core.wallet.md`](../core.wallet.md) · [`design-v2/wallet.md`](
 | Optimistic locking | MT locking, StackOverflow | `wallet.md` §9, `IMPLEMENTATION.md` version |
 | Event sourcing (optional) | Microsoft, Redpanda | ADR-001 append-only; không bắt buộc v1 |
 | VA / deposit mapping | MT virtual accounts | `integration-surfaces.md` deposit §4.1 |
-| Bounded context wallet/accounting | Fowler, Airwallex | ADR-002, ADR-003, `core.foundation.md` §3 |
+| Bounded context wallet/accounting | Fowler, Airwallex | ADR-002, ADR-003, `core.sharedlib.md` §3 |
 | Stripe-scale ledger QA | stripe-dev-ledger | recon W5, `accounting.md` §10 |
 | Napas products index | napas-api-portal-intro | IBFT transit 3400, `foundation.md` §11 |
 | INFLIGHT/APPLIED (Blnk) | blnk-transaction-lifecycle | deposit PENDING, withdraw frozen |

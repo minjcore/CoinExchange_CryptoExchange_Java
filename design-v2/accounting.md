@@ -2,7 +2,7 @@
 
 **Status:** Draft · **Scope:** ledger domain only (`coa_*`) · **Not:** wallet, HTTP, fee rates, bank adapters
 
-Posting amounts and DR/CR line templates live in [`core.foundation.md`](../core.foundation.md) Part II §8–16.  
+Posting amounts and DR/CR line templates live in [`core.sharedlib.md`](../core.sharedlib.md) Part II §8–16.  
 This document defines **behavior, obligations, failures, and boundaries** — not a second copy of those tables.
 
 ---
@@ -70,7 +70,7 @@ Async = journal may POSTED before external bank leg completes (withdraw/IBFT wal
 | DISBURSEMENT | 3700 | pre-fund + batch | 3700 = 0 | PARTNER lane if product requires |
 | SETTLEMENT | 3800/3810/3820 | EOD batch | all three = 0 | Optional bulk merchant wallet |
 
-DR/CR for each row: [`core.foundation.md`](../core.foundation.md) §8–16.
+DR/CR for each row: [`core.sharedlib.md`](../core.sharedlib.md) §8–16.
 
 ---
 
@@ -233,7 +233,7 @@ Tax, invoice generation, payroll calculation, public API, wallet mutations, Gate
 
 | Need | Read |
 |------|------|
-| DR/CR line tables | [`core.foundation.md`](../core.foundation.md) Part II §8–16 |
+| DR/CR line tables | [`core.sharedlib.md`](../core.sharedlib.md) Part II §8–16 |
 | TRD FR/NFR | [`core.accounting.trd.md`](../core.accounting.trd.md) |
 | Wallet mirror | [`wallet.md`](./wallet.md) |
 | Given/When/Then | [`acceptance.md`](./acceptance.md) |
@@ -243,7 +243,7 @@ Tax, invoice generation, payroll calculation, public API, wallet mutations, Gate
 
 # Part II — Per use case (accounting-only depth)
 
-Part II is the **expandable body** of this design. DR/CR amounts stay in [`core.foundation.md`](../core.foundation.md) §8–16 — here we specify **states, observables, failures, idempotency, and reconciliation** per use case. Target corpus (all `design-v2/` files + acceptance scenarios): on the order of **hundreds of pages** when printed; not duplicated padding.
+Part II is the **expandable body** of this design. DR/CR amounts stay in [`core.sharedlib.md`](../core.sharedlib.md) §8–16 — here we specify **states, observables, failures, idempotency, and reconciliation** per use case. Target corpus (all `design-v2/` files + acceptance scenarios): on the order of **hundreds of pages** when printed; not duplicated padding.
 
 **How to read each section**
 
@@ -261,7 +261,7 @@ Part II is the **expandable body** of this design. DR/CR amounts stay in [`core.
 
 ## 14. DEPOSIT (transit 3100, two-phase)
 
-**Foundation reference:** [`core.foundation.md`](../core.foundation.md) §8 (example: gross 100,000, fee 1,000, net liability 99,000).
+**Foundation reference:** [`core.sharedlib.md`](../core.sharedlib.md) §8 (example: gross 100,000, fee 1,000, net liability 99,000).
 
 ### 14.1 Obligation
 
@@ -622,7 +622,7 @@ On file mismatch: reverse lock per foundation §16 — **2120** restored, transi
 
 ## 26. Reference synthesis — ledger & accounting (`references/`)
 
-Industry corpus (~108 files, ~32.7k lines) mapped to **this domain**. DR/CR amounts stay in [`core.foundation.md`](../core.foundation.md) — here we capture **behaviors and invariants** only.
+Industry corpus (~108 files, ~32.7k lines) mapped to **this domain**. DR/CR amounts stay in [`core.sharedlib.md`](../core.sharedlib.md) — here we capture **behaviors and invariants** only.
 
 ### 26.1 Double-entry & immutable ledger
 
@@ -710,7 +710,7 @@ From [`medium-slope-payments-ledger-pitfalls.md`](../references/medium-slope-pay
 
 ## 29. Accounting principles — synthesis (internet corpus)
 
-Nguyên tắc kế toán từ GAAP/IFRS và tài liệu fintech — **không thay** COA hay DR/CR trong `core.foundation.md`. Dùng khi review thiết kế ledger và khi giải thích vì sao platform chọn accrual + immutable + two-phase.
+Nguyên tắc kế toán từ GAAP/IFRS và tài liệu fintech — **không thay** COA hay DR/CR trong `core.sharedlib.md`. Dùng khi review thiết kế ledger và khi giải thích vì sao platform chọn accrual + immutable + two-phase.
 
 ### 29.1 Ba trụ cột kỹ thuật (Modern Treasury)
 
@@ -810,7 +810,7 @@ Corpus VN (lần 8): [`references/README.md`](../references/README.md) § VAS/IF
 
 | Need | Read |
 |------|------|
-| DR/CR amounts | [`core.foundation.md`](../core.foundation.md) §8–16 |
+| DR/CR amounts | [`core.sharedlib.md`](../core.sharedlib.md) §8–16 |
 | ADR AC/TC | [`adr/README.md`](../adr/README.md) — incl. **ADR-036** accrual basis |
 | Full ref index | [`references/README.md`](../references/README.md) — 124 files |
 | Accounting principles refs | §29.5 above |

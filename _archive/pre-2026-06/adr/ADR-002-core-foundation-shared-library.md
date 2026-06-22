@@ -1,11 +1,11 @@
-# ADR-002: `core.foundation` as the only shared library
+# ADR-002: `core.sharedlib` as the only shared library
 
 | Field | Value |
 |-------|-------|
 | Status | Accepted |
 | Date | 2026-06-03 |
 | Deciders | Engineering |
-| Related | [`core.foundation.md`](../core.foundation.md), [ADR-001](ADR-001-immutable-ledger.md) |
+| Related | [`core.sharedlib.md`](../core.sharedlib.md), [ADR-001](ADR-001-immutable-ledger.md) |
 
 ---
 
@@ -23,21 +23,21 @@ All three need the same API shape (envelope, paging, errors, ids/time). Without 
 
 ## Decision
 
-**`core.foundation` is the single shared design layer** at the bottom of the `core` stack (documented in [`core.foundation.md`](../core.foundation.md); technology choice is out of scope for this ADR).
+**`core.sharedlib` is the single shared design layer** at the bottom of the `core` stack (documented in [`core.sharedlib.md`](../core.sharedlib.md); technology choice is out of scope for this ADR).
 
 1. **Only foundation is shared** among Application, `core.wallet`, and `core.accounting`.
 2. **Foundation contains (design)** — shared API envelope, paging, error conventions, util rules; alignment with [`integration-surfaces.md`](../integration-surfaces.md), `open-api/`, `async-api/`.
 3. **Foundation must not contain** — domain entities for `wallet_*` / `coa_*`, persistence mapping, domain services, HTTP/Kafka bindings, wallet or accounting business rules.
-4. **Domain cores must not depend on each other** — no `core.wallet` ↔ `core.accounting` direct coupling; sync via Application event/API ([`core.foundation.md` §3](../core.foundation.md)).
-5. **New shared material** — add to foundation only if used by **≥ 2** consumers and passes checklist in [`core.foundation.md` §10](../core.foundation.md); otherwise keep in domain module or Application.
+4. **Domain cores must not depend on each other** — no `core.wallet` ↔ `core.accounting` direct coupling; sync via Application event/API ([`core.sharedlib.md` §3](../core.sharedlib.md)).
+5. **New shared material** — add to foundation only if used by **≥ 2** consumers and passes checklist in [`core.sharedlib.md` §10](../core.sharedlib.md); otherwise keep in domain module or Application.
 
 **Dependency direction (design):**
 
 ```
-Application  →  core.wallet | core.accounting  →  core.foundation
+Application  →  core.wallet | core.accounting  →  core.sharedlib
 ```
 
-`core.foundation` must not depend on `core.wallet` or `core.accounting`.
+`core.sharedlib` must not depend on `core.wallet` or `core.accounting`.
 
 ---
 
@@ -84,5 +84,5 @@ Application  →  core.wallet | core.accounting  →  core.foundation
 
 ## References
 
-- [`core.foundation.md`](../core.foundation.md) — Part I (foundation design §1–11)
+- [`core.sharedlib.md`](../core.sharedlib.md) — Part I (foundation design §1–11)
 - [`TERMINOLOGY.md`](../TERMINOLOGY.md) — `coa_*` vs `wallet_*` prefixes

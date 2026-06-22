@@ -64,7 +64,7 @@ Step order ngắn: [`design/orchestration/flows.md`](../design/orchestration/flo
 
 | Path | Was (root) | Role |
 |------|------------|------|
-| [`foundation.md`](foundation.md) | `core.foundation.md` | Shared lib + accounting fund flow |
+| [`foundation.md`](foundation.md) | `core.sharedlib.md` | Shared lib + accounting fund flow |
 | [`trd/accounting.md`](trd/accounting.md) | `core.accounting.trd.md` | Accounting service TRD |
 | [`trd/wallet.md`](trd/wallet.md) | `core.wallet.md` | Wallet design / TRD |
 | [`processes.md`](processes.md) | `core.business-processes.md` | End-to-end flows, saga, failure |
@@ -74,4 +74,4 @@ Step order ngắn: [`design/orchestration/flows.md`](../design/orchestration/flo
 | [`terminology.md`](terminology.md) | `TERMINOLOGY.md` | Naming quick lookup |
 | [`contracts/`](contracts/) | `spec/contracts/open-api/`, `spec/contracts/async-api/`, `spec/contracts/gateway/` | Wire truth (YAML) |
 
-Root filenames (`core.foundation.md`, …) là **redirect stubs** — nội dung canonical nằm ở đây.
+Root filenames (`core.sharedlib.md`, …) là **redirect stubs** — nội dung canonical nằm ở đây.
