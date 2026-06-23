@@ -1,6 +1,6 @@
 # Platform Architecture Overview — Two-Domain, TigerBeetle, Blnk PoC
 
-> **CF page ID:** 51576836 | **Parent:** 🏛️ Architecture & Principles (51642382)
+> **CF page ID:** 51609646 | **Parent:** 🏛️ Architecture & Principles (51642382)
 > **Source of truth:** `specs/011-architecture-overview/confluence-draft.md` → push to CF
 
 **Version:** 1.0.0 | **Reflects:** Constitution v1.0.0 (ratified 2026-06-15) | **Last reviewed:** 2026-06-18  
@@ -45,7 +45,7 @@ app/
 
 ### HTTP Gateways vs. Message Consumers
 
-Mỗi domain có hai entry point riêng biệt — một cho sync HTTP call từ orchestrator, một cho async message từ RabbitMQ. Hai loại này tách biệt để failure mode của worker không kéo xuống SLA của sync path.
+Each domain has two separate entry points — one for sync HTTP calls from the orchestrator, one for async messages from RabbitMQ. These two are separated so that worker failure modes do not drag down the sync path SLA.
 
 | Module | Type | Trigger | Calls into |
 |--------|------|---------|------------|
@@ -149,7 +149,7 @@ Blnk is an open-source Go ledger engine. Two patterns were ported to Java `core.
 
 - No Blnk binary — only patterns are adapted.
 - Not the production path for balance computation — `core.wallet` computes balances directly.
-- Not a replacement for `core.wallet` — Blnk is a reference, not a dependency.
+- Not a replacement for `core.wallet` in v1 — Blnk is a reference, not a dependency. S2 plan: `BlnkWalletGateway implements WalletGateway` (requires ADR before implementation).
 - `WalletBalanceMonitor` is a PoC alert hook, not a blocking transaction guard.
 
 ---
